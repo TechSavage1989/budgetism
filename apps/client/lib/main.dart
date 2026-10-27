@@ -4,11 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
+import 'money.dart';
+import 'local/local_api.dart';
+import 'local/storage.dart';
+import 'local/workspace_dialogs.dart';
+import 'local/transaction_editor.dart';
 import 'demo_finance_api.dart';
 import 'release_feed.dart';
 import 'release_download.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+export 'money.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +34,7 @@ class BudgetismApp extends StatefulWidget {
 
 class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver {
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  SharedPreferences? _preferences;
   ReleaseFeed? _releaseFeed;
   ReleaseCheckResult? _releaseResult;
   Timer? _releaseTimer;
@@ -47,6 +55,8 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
     try {
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
+      _preferences = prefs;
+      setState(() => _theme = prefs.getString('appearance.theme') == 'light' ? ThemeMode.light : ThemeMode.dark);
       _releaseFeed = ReleaseFeed(prefs: prefs);
       _checkUpdates();
       _releaseTimer = Timer.periodic(const Duration(minutes: 5), (_) {
@@ -75,6 +85,12 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
     if (manual) {
       _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(result.message)));
     }
+  }
+
+  Future<void> _toggleTheme() async {
+    setState(() => _theme = _theme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+    try { await _preferences?.setString('appearance.theme', _theme == ThemeMode.light ? 'light' : 'dark'); }
+    catch (_) { _messengerKey.currentState?.showSnackBar(const SnackBar(content: Text('Theme changed, but the preference could not be saved.'))); }
   }
 
   @override
@@ -184,9 +200,7 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
               api: _api!, username: _username,
               onCheckUpdates: () => _checkUpdates(manual: true),
               onLogout: () => setState(() { _api = null; _username = ''; }),
-              onToggleTheme: () => setState(() {
-                _theme = _theme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-              }),
+              onToggleTheme: _toggleTheme,
             ),
     );
   }
@@ -233,6 +247,15 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     }
   }
 
+  Future<void> _openLocal() async {
+    setState(() { _busy = true; _error = null; });
+    try {
+      final api = await openLocalWorkspace(context);
+      if (api != null && mounted) widget.onSignedIn(api, 'Local workspace');
+    } catch (error) { if (mounted) setState(() => _error = error.toString()); }
+    finally { if (mounted) setState(() => _busy = false); }
+  }
+
   void _openDemo() => widget.onSignedIn(DemoFinanceApi(), 'Demo');
 
   Future<void> _submit() async {
@@ -275,9 +298,16 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                   Text('Budgetism', textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  Text('Your finances. Your server.', textAlign: TextAlign.center,
+                  Text('Your finances. Your control.', textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 22),
+                  if (localStorageSupported) ...[
+                    FilledButton.icon(onPressed: _busy ? null : _openLocal,
+                      icon: const Icon(Icons.lock_outline), label: const Text('Open local workspace')),
+                    const SizedBox(height: 8),
+                    const Text('Encrypted, saved on this device. No server required.', textAlign: TextAlign.center),
+                    const SizedBox(height: 22),
+                  ],
                   TextField(controller: _server, decoration: const InputDecoration(
                     labelText: 'Private server URL', hintText: 'https://finance.private.example',
                     prefixIcon: Icon(Icons.dns_outlined), border: OutlineInputBorder(),
@@ -298,7 +328,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     ],
                     TextField(controller: _username, autocorrect: false,
                       decoration: const InputDecoration(labelText: 'Username',
-                        border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline))),
+                        border: OutlineInputBorder(), prefixIcon: const Icon(Icons.person_outline))),
                     const SizedBox(height: 12),
                     TextField(controller: _password, obscureText: true,
                       onSubmitted: (_) => _busy ? null : _submit(),
@@ -329,7 +359,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                   const Text('Demo changes are temporary and contain no personal data.',
                     textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 20),
-                  const Text('Development build 0.1.0-dev.1', textAlign: TextAlign.center,
+                  const Text('Development build $budgetismVersion', textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 11, color: Colors.grey)),
                 ]),
               ),
@@ -339,27 +369,6 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       ),
     );
   }
-}
-
-String money(Object? raw) {
-  final number = raw is num ? raw.toInt() : 0;
-  final negative = number < 0;
-  final integer = (number.abs() ~/ 100).toString();
-  final grouped = integer.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
-  final cents = (number.abs() % 100).toString().padLeft(2, '0');
-  return '${negative ? '-' : ''}\$$grouped.$cents';
-}
-
-int parseMinor(String input, {bool allowNegative = false}) {
-  final value = input.trim().replaceAll(',', '');
-  final pattern = allowNegative ? RegExp(r'^-?\d{1,12}(\.\d{1,2})?$')
-                                : RegExp(r'^\d{1,12}(\.\d{1,2})?$');
-  if (!pattern.hasMatch(value)) throw const FormatException('Enter a valid USD amount with up to two decimal places.');
-  final parts = value.split('.');
-  final negative = value.startsWith('-');
-  final units = int.parse(parts[0].replaceFirst('-', ''));
-  final cents = parts.length == 2 ? int.parse(parts[1].padRight(2, '0')) : 0;
-  return (negative ? -1 : 1) * (units * 100 + cents);
 }
 
 class FinanceShell extends StatefulWidget {
@@ -376,6 +385,10 @@ class FinanceShell extends StatefulWidget {
 
 class _FinanceShellState extends State<FinanceShell> {
   int _page = 0;
+  String _query = '';
+  String _filterAccount = '';
+  int _transactionLimit = 100;
+  bool get _local => widget.api is LocalFinanceApi;
   bool _loading = true;
   bool _updating = false;
   String? _error;
@@ -389,7 +402,7 @@ class _FinanceShellState extends State<FinanceShell> {
   void initState() {
     super.initState();
     _refresh();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _refresh(silent: true));
+    if (!_local) _timer = Timer.periodic(const Duration(seconds: 30), (_) => _refresh(silent: true));
   }
 
   Future<void> _refresh({bool silent = false}) async {
@@ -401,8 +414,10 @@ class _FinanceShellState extends State<FinanceShell> {
       if (!mounted) return;
       setState(() {
         _accounts = (snapshot['accounts'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        if (_filterAccount.isNotEmpty && !_accounts.any((a) => a['id'] == _filterAccount)) _filterAccount = '';
         _categories = (snapshot['categories'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
         _transactions = (snapshot['transactions'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _transactions.sort((a, b) => (a['effectiveDate'] as String).compareTo(b['effectiveDate'] as String));
         _error = null; _lastUpdated = DateTime.now();
       });
     } catch (error) {
@@ -416,16 +431,19 @@ class _FinanceShellState extends State<FinanceShell> {
   @override
   void dispose() { _timer?.cancel(); super.dispose(); }
 
-  Future<void> _createAccount() async {
+  Future<void> _createAccount({Map<String, dynamic>? existing}) async {
     final result = await showDialog<Map<String, dynamic>>(
-      context: context, builder: (_) => const CreateAccountDialog());
+      context: context, barrierDismissible: !_local,
+      builder: (_) => CreateAccountDialog(existing: existing,
+        onSave: _local ? widget.api.createAccount : null));
     if (result == null) return;
-    try { await widget.api.createAccount(result); await _refresh(); }
+    try { if (!_local) await widget.api.createAccount(result); await _refresh(); }
     catch (error) { _showError(error); }
   }
 
   Future<void> _createTransaction() async {
     if (_accounts.isEmpty) { _showError('Create an account first.'); return; }
+    if (_local) { await _editLocalTransaction(); return; }
     final result = await showDialog<Map<String, dynamic>>(
       context: context, builder: (_) => CreateTransactionDialog(
         accounts: _accounts, categories: _categories));
@@ -434,13 +452,31 @@ class _FinanceShellState extends State<FinanceShell> {
     catch (error) { _showError(error); }
   }
 
+  Future<void> _editLocalTransaction([Map<String, dynamic>? transaction]) async {
+    final api = widget.api as LocalFinanceApi;
+    await showDialog<bool>(context: context, barrierDismissible: false,
+      builder: (_) => LocalTransactionEditor(accounts: _accounts, categories: _categories,
+        existing: transaction, onSave: api.createTransaction, onVoid: api.voidTransaction));
+    if (mounted) await _refresh();
+  }
+
+  Future<void> _localOptions(String value) async {
+    try {
+      final api = widget.api as LocalFinanceApi;
+      if (value == 'backups') await showLocalBackups(context, api);
+      if (value == 'categories') await manageLocalCategories(context, api);
+      if (mounted) await _refresh();
+    } catch (error) { _showError(error); }
+  }
+
   void _showError(Object error) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
   }
 
   Future<void> _logout() async {
-    try { await widget.api.logout(); } catch (_) { widget.api.token = null; }
+    try { await widget.api.logout(); }
+    catch (error) { if (_local) { _showError(error); return; } widget.api.token = null; }
     if (mounted) widget.onLogout();
   }
 
@@ -466,6 +502,8 @@ class _FinanceShellState extends State<FinanceShell> {
         actions: [
           if (widget.api.isDemo) const Tooltip(message: 'Demo data exists only in memory',
             child: Icon(Icons.science_outlined, color: _accent))
+          else if (_local) const Tooltip(message: 'Encrypted local workspace. Not synchronized.',
+            child: Icon(Icons.lock_outline, color: _accent))
           else if (_error != null) Tooltip(message: 'Server unavailable; offline edits not yet implemented',
             child: const Icon(Icons.cloud_off_outlined, color: _accent))
           else const Tooltip(message: 'Connected to private server',
@@ -478,14 +516,22 @@ class _FinanceShellState extends State<FinanceShell> {
             onSelected: (v) {
               if (v == 'logout') _logout();
               if (v == 'updates') widget.onCheckUpdates();
+              if (v == 'backups' || v == 'categories') _localOptions(v);
             },
-            itemBuilder: (_) => [const PopupMenuItem(value: 'updates', child: Text('Check for updates')),
+            itemBuilder: (_) => [
+              if (_local) const PopupMenuItem(value: 'categories', child: Text('Manage categories')),
+              if (_local) const PopupMenuItem(value: 'backups', child: Text('Backups and storage')),
+              const PopupMenuItem(value: 'updates', child: Text('Check for updates')),
               PopupMenuItem(value: 'logout',
-              child: Text('Sign out (${widget.username})'))],
+              child: Text(_local ? 'Lock workspace' : 'Sign out (${widget.username})'))],
             icon: const Icon(Icons.account_circle_outlined)),
         ],
       ),
       body: Column(children: [
+        if (_local) const MaterialBanner(
+          content: Text('LOCAL PREVIEW: saved on this device only. No cross-device sync yet. Keep separate backups; not production-ready.'),
+          actions: [SizedBox.shrink()],
+        ),
         if (widget.api.isDemo) const MaterialBanner(
           content: Text('DEMO MODE: fictitious finances. Changes are in memory and disappear when you close the app.'),
           actions: [SizedBox.shrink()],
@@ -510,7 +556,7 @@ class _FinanceShellState extends State<FinanceShell> {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         if (_error != null) Card(color: Theme.of(context).colorScheme.errorContainer,
                           child: Padding(padding: const EdgeInsets.all(14),
-                            child: Text('Connection issue: $_error\nData shown may be out of date. Offline edits are not supported in this build.'))),
+                            child: Text(_local ? 'Local workspace issue: $_error' : 'Connection issue: $_error\nData shown may be out of date. Offline edits are not supported in this build.'))),
                         if (_page == 0) _dashboard(),
                         if (_page == 1) _accountsView(),
                         if (_page == 2) _transactionsView(),
@@ -590,17 +636,18 @@ class _FinanceShellState extends State<FinanceShell> {
       ]),
       _transactionList(_transactions.reversed.take(8).toList(), compact: true),
       if (_lastUpdated != null) Padding(padding: const EdgeInsets.only(top: 12),
-        child: Text(widget.api.isDemo ? 'Demo data refreshed' : 'Last server refresh: ${_lastUpdated!.toLocal()}',
+        child: Text(widget.api.isDemo ? 'Demo data refreshed' : _local ? 'Saved locally on this device' : 'Last server refresh: ${_lastUpdated!.toLocal()}',
           style: Theme.of(context).textTheme.bodySmall)),
     ]);
   }
 
   Widget _accountsView() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    _title('Accounts', widget.api.isDemo ? '${_accounts.length} sample accounts' : '${_accounts.length} accounts on your private server',
+    _title('Accounts', widget.api.isDemo ? '${_accounts.length} sample accounts' : _local ? '${_accounts.length} saved local accounts. Select an account to edit.' : '${_accounts.length} accounts on your private server',
       onAction: _createAccount, action: 'Add account'),
     if (_accounts.isEmpty) const _EmptyState(icon: Icons.account_balance_wallet_outlined,
       title: 'No accounts yet', details: 'Create checking, savings, cash, or credit accounts to begin.'),
     ..._accounts.map((a) => Card(child: ListTile(
+      onTap: _local ? () => _createAccount(existing: a) : null,
       leading: CircleAvatar(backgroundColor: _accent.withValues(alpha: .15),
         child: Icon(a['type'] == 'credit_card' ? Icons.credit_card : Icons.account_balance_outlined,
           color: _accent)),
@@ -614,21 +661,49 @@ class _FinanceShellState extends State<FinanceShell> {
   Widget _transactionsView() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     _title('Transactions', 'Journal-backed transactions, including account transfers',
       onAction: _createTransaction, action: 'Add transaction'),
-    _transactionList(_transactions.reversed.toList(), compact: false),
+    TextField(decoration: const InputDecoration(labelText: 'Search payee, notes, account, or category', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
+      onChanged: (v) => setState(() { _query = v; _transactionLimit = 100; })),
+    const SizedBox(height: 12),
+    DropdownButtonFormField<String>(key: ValueKey('account-filter:$_filterAccount'), initialValue: _filterAccount,
+      decoration: const InputDecoration(labelText: 'Account filter', border: OutlineInputBorder()),
+      items: [const DropdownMenuItem(value: '', child: Text('All accounts')),
+        ..._accounts.map((a) => DropdownMenuItem(value: a['id'] as String, child: Text(a['name'] as String)))],
+      onChanged: (v) => setState(() { _filterAccount = v ?? ''; _transactionLimit = 100; })),
+    const SizedBox(height: 12),
+    Text('${_filteredTransactions.length} matching transactions${_local ? '. Select one to edit.' : ''}'),
+    const SizedBox(height: 8),
+    _transactionList(_filteredTransactions, compact: false),
+    if (_filteredTransactions.length > _transactionLimit) TextButton(
+      onPressed: () => setState(() => _transactionLimit += 100), child: const Text('Show 100 more')),
+    const SizedBox(height: 80),
   ]);
+
+  List<Map<String, dynamic>> get _filteredTransactions {
+    final names = {for (final r in [..._accounts, ..._categories]) r['id']: r['name']};
+    final query = _query.trim().toLowerCase();
+    return _transactions.reversed.where((t) {
+      if (_filterAccount.isNotEmpty && t['accountId'] != _filterAccount &&
+          !(t['kind'] == 'transfer' && t['counterpartyAccountId'] == _filterAccount)) return false;
+      final parts = t['splits'] as List? ?? [];
+      final text = '${t['payee']} ${t['notes']} ${names[t['accountId']]} ${names[t['counterpartyAccountId']]} '
+          '${parts.map((p) => names[p['categoryId']]).join(' ')}'.toLowerCase();
+      return query.isEmpty || text.contains(query);
+    }).toList();
+  }
 
   Widget _transactionList(List<Map<String, dynamic>> entries, {required bool compact}) {
     if (entries.isEmpty) {
       return const _EmptyState(icon: Icons.receipt_long_outlined,
         title: 'No transactions', details: 'Record an expense, income, or transfer to get started.');
     }
-    final shown = compact ? entries : entries.take(500).toList();
+    final shown = compact ? entries : entries.take(_transactionLimit).toList();
     final accountNames = {for (final a in _accounts) a['id']: a['name']};
     final categoryNames = {for (final c in _categories) c['id']: c['name']};
     return Card(child: Column(children: [
       for (var i = 0; i < shown.length; i++) ...[
         if (i > 0) const Divider(height: 1, indent: 18, endIndent: 18),
         ListTile(
+          onTap: _local ? () => _editLocalTransaction(shown[i]) : null,
           leading: CircleAvatar(backgroundColor: _accent.withValues(alpha: .12),
             child: Icon(switch (shown[i]['kind']) {
               'income' => Icons.south_west,
@@ -639,7 +714,7 @@ class _FinanceShellState extends State<FinanceShell> {
           title: Text((shown[i]['payee'] as String).isEmpty
             ? (shown[i]['kind'] as String) : (shown[i]['payee'] as String)),
           subtitle: Text('${shown[i]['effectiveDate']} | ${accountNames[shown[i]['accountId']] ?? 'Account'}'
-            ' | ${categoryNames[shown[i]['counterpartyAccountId']] ?? accountNames[shown[i]['counterpartyAccountId']] ?? shown[i]['kind']}'),
+            ' | ${(shown[i]['splits'] as List? ?? []).isNotEmpty ? 'Split categories' : categoryNames[shown[i]['counterpartyAccountId']] ?? accountNames[shown[i]['counterpartyAccountId']] ?? shown[i]['kind']}'),
           trailing: Text('${shown[i]['kind'] == 'income' ? '+' : shown[i]['kind'] == 'expense' ? '-' : ''}'
             '${money(shown[i]['amountMinor'])}',
             style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -672,7 +747,9 @@ class _EmptyState extends StatelessWidget {
 }
 
 class CreateAccountDialog extends StatefulWidget {
-  const CreateAccountDialog({super.key});
+  const CreateAccountDialog({this.existing, this.onSave, super.key});
+  final Map<String, dynamic>? existing;
+  final Future<void> Function(Map<String, dynamic>)? onSave;
   @override
   State<CreateAccountDialog> createState() => _CreateAccountDialogState();
 }
@@ -681,15 +758,24 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
   final _name = TextEditingController();
   final _opening = TextEditingController(text: '0.00');
   String _type = 'checking';
+  bool _saving = false;
+  final _operation = const Uuid().v4();
   String? _error;
+  @override
+  void initState() {
+    super.initState();
+    final a = widget.existing;
+    if (a != null) { _name.text = a['name'] as String; _type = a['type'] as String;
+      _opening.text = decimalAmount(a['openingBalanceMinor'] as int); }
+  }
   @override
   void dispose() { _name.dispose(); _opening.dispose(); super.dispose(); }
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Create account'),
+  Widget build(BuildContext context) => PopScope(canPop: !_saving, child: AlertDialog(
+    title: Text(widget.existing == null ? 'Create account' : 'Edit account'),
     content: SizedBox(width: 430, child: SingleChildScrollView(child: Column(
       mainAxisSize: MainAxisSize.min, children: [
-        TextField(controller: _name, autofocus: true, maxLength: 100,
+        TextField(controller: _name, enabled: !_saving, autofocus: true, maxLength: 100,
           decoration: const InputDecoration(labelText: 'Account name', border: OutlineInputBorder())),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(initialValue: _type,
@@ -702,29 +788,35 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
             DropdownMenuItem(value: 'loan', child: Text('Loan')),
             DropdownMenuItem(value: 'asset', child: Text('Other asset')),
             DropdownMenuItem(value: 'liability', child: Text('Other liability')),
-          ], onChanged: (v) => setState(() => _type = v ?? _type)),
+          ], onChanged: _saving ? null : (v) => setState(() => _type = v ?? _type)),
         const SizedBox(height: 14),
-        TextField(controller: _opening,
+        TextField(controller: _opening, enabled: !_saving,
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
           decoration: const InputDecoration(labelText: 'Opening balance (USD)',
-            border: OutlineInputBorder(), helperText: 'For debt, use a negative amount.')),
+            border: OutlineInputBorder(), helperText: 'For debt, use a negative amount. This changes the opening balance, not a transaction.')),
         if (_error != null) Padding(padding: const EdgeInsets.only(top: 12),
           child: Text(_error!, style: const TextStyle(color: Colors.redAccent))),
       ]))),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-      FilledButton(onPressed: () {
+      TextButton(onPressed: _saving ? null : () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(onPressed: _saving ? null : () async {
         try {
           final amount = parseMinor(_opening.text, allowNegative: true);
           if (_name.text.trim().isEmpty) throw const FormatException('Name is required.');
-          Navigator.pop(context, {
-            'operationId': const Uuid().v4(), 'name': _name.text.trim(),
+          final result = <String, dynamic>{
+            'operationId': _operation, 'name': _name.text.trim(),
             'type': _type, 'currency': 'USD', 'openingBalanceMinor': amount,
-          });
-        } catch (error) { setState(() => _error = error.toString()); }
-      }, child: const Text('Create')),
+            if (widget.existing != null) ...{'id': widget.existing!['id'], 'expectedVersion': widget.existing!['version']},
+          };
+          if (widget.onSave != null) {
+            setState(() { _saving = true; _error = null; });
+            await widget.onSave!(result);
+          }
+          if (context.mounted) Navigator.pop(context, result);
+        } catch (error) { if (mounted) setState(() { _saving = false; _error = error.toString(); }); }
+      }, child: Text(_saving ? 'Saving...' : widget.existing == null ? 'Create' : 'Save account')),
     ],
-  );
+  ));
 }
 
 class CreateTransactionDialog extends StatefulWidget {
