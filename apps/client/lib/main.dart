@@ -8,6 +8,7 @@ import 'money.dart';
 import 'local/local_api.dart';
 import 'local/storage.dart';
 import 'local/workspace_dialogs.dart';
+import 'local/security_dialogs.dart';
 import 'local/transaction_editor.dart';
 import 'demo_finance_api.dart';
 import 'release_feed.dart';
@@ -463,6 +464,7 @@ class _FinanceShellState extends State<FinanceShell> {
   Future<void> _localOptions(String value) async {
     try {
       final api = widget.api as LocalFinanceApi;
+      if (value == 'security') await showWorkspaceSecurity(context, api.vault);
       if (value == 'backups') await showLocalBackups(context, api);
       if (value == 'categories' && mounted) await manageLocalCategories(context, api);
       if (mounted) await _refresh();
@@ -516,14 +518,17 @@ class _FinanceShellState extends State<FinanceShell> {
             onSelected: (v) {
               if (v == 'logout') _logout();
               if (v == 'updates') widget.onCheckUpdates();
-              if (v == 'backups' || v == 'categories') _localOptions(v);
+              if (v == 'backups' || v == 'categories' || v == 'security') _localOptions(v);
             },
             itemBuilder: (_) => [
+              if (_local) const PopupMenuItem(value: 'security', child: Text('Workspace security')),
               if (_local) const PopupMenuItem(value: 'categories', child: Text('Manage categories')),
               if (_local) const PopupMenuItem(value: 'backups', child: Text('Backups and storage')),
               const PopupMenuItem(value: 'updates', child: Text('Check for updates')),
               PopupMenuItem(value: 'logout',
-              child: Text(_local ? 'Lock workspace' : 'Sign out (${widget.username})'))],
+              child: Text(_local
+                  ? ((widget.api as LocalFinanceApi).vault.passwordRequired ? 'Lock workspace' : 'Close workspace')
+                  : 'Sign out (${widget.username})'))],
             icon: const Icon(Icons.account_circle_outlined)),
         ],
       ),

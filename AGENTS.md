@@ -2,7 +2,7 @@
 
 1. Before any changes, read this file, DEVELOPMENT_HANDOFF.md, and docs/IMPLEMENTATION_STATUS.md. Inspect current GitHub default branch, active branches, PRs, latest releases and workflows. Prefer newer verified repository work over this source ZIP.
 2. Repository: https://github.com/TechSavage1989/budgetism. Public source and development-workflow publication were explicitly authorized October 27, 2026. No releases exist. Do not infer permission to publish releases, tags, credentials, or change visibility.
-3. Working user-confirmed GUI baseline: 0.1.0-dev.1 Windows launch/sample mode. Current development: 0.1.0-dev.2 local persistence. Neither is a published production release. Consult the handoff for exact code/test refs.
+3. Working user-confirmed baseline: 0.1.0-dev.2 Windows launch and local data retention across restart. Current development: 0.1.0-dev.3 optional local passwords. Neither is a published production release. Consult the handoff for exact code/test refs.
 4. Product: private personal finance; Windows first, Flutter client for multiple platforms, .NET 10 API, PostgreSQL, and eventual encrypted native offline database. Do not change architecture or financial data ownership without approval.
 5. Current explicit exclusion: **No server setup, Codex CLI automation, unattended workers, payment setup or API-account setup.** API source exists from prior work, but its deployment and configuration must not be added in this scope.
 6. Never put real financial records or credentials in demo fixtures, screenshots, logs, test output, source, or generated release files. Demo is ephemeral, labelled, and uses invented entries only.
@@ -17,3 +17,5 @@
 15. Documentation: centered one-H1 README, short centered tagline, navigation row, exact current functionality. Keep this file and DEVELOPMENT_HANDOFF.md current. Release notes in docs/releases/, not tracked root.
 
 16. Native local workspace records must remain separate from ephemeral demo and private-server records. Never send local data to a backend without explicit sync implementation and authorization. Keep passphrases out of preferences/logs. See docs/LOCAL_STORAGE.md for format and metadata limitations.
+
+17. Local password protection is configurable. Existing format-1 workspaces remain protected until explicitly changed. New workspace setup defaults to device-unlocked access. Financial payloads stay encrypted in both modes; never add plaintext key/password fallback. Store random device keys only with OS protection, verify before DB commit, preserve saved records, reject stale-window keys, and keep portable backups independently password-protected. Read docs/LOCAL_STORAGE.md before changing mode formats or recovery behavior.

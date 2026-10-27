@@ -1,37 +1,48 @@
-# Local workspace format 1
+# Local storage and optional password protection
 
-## Scope
+## User behavior
 
-This is a native, device-local development workspace. It is not a synchronization implementation and does not call the private API. USD minor-unit values only. The original demo remains memory-only. The .NET/PostgreSQL architecture and eventual self-hosted synchronization are unchanged.
+New local workspaces default to password-free access. Setup and User options > Workspace security expose **Require a password to open this workspace**. Existing dev.2 workspaces keep their password until the owner explicitly disables it and confirms the current password once. Enabling protection again asks for a new password of at least 14 characters. No records are deleted or recreated by this setting.
 
-## Storage and encryption
+Password-free mode means no Budgetism password prompt, not unencrypted financial data. Anyone using the same OS account can open that workspace. Closing is labelled Close workspace rather than implying a password lock. This setting does not weaken private-server authentication, change demo behavior, or enable synchronization.
 
-Windows path: %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3. Other native targets use the platform application-support directory plus Budgetism/finance. Native targets other than Windows are not distribution-validated.
+## Stable location and formats
 
-The initial SQLite adapter stores a versioned encrypted ledger snapshot. It uses package:sqlite3 3.8.0 and its bundled native assets, not obsolete sqlite3_flutter_libs. This first adapter does not yet use generated Drift tables. Moving to relational Drift tables requires a tested format migration; do not silently reinterpret or replace this snapshot format.
+Windows database: %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3. Other native targets use their application-support directory plus Budgetism/finance. Only Windows distributions have hosted build coverage. The executable and settings paths are unchanged.
 
-Financial payloads are AES-256-GCM ciphertext. Each save uses a fresh 96-bit nonce and a 128-bit authentication tag. A unique 128-bit random salt and PBKDF2-HMAC-SHA256 with 600,000 iterations derive a 256-bit key from the workspace passphrase. The KDF runs in a compute isolate. Parameters and envelope version are fixed and validated before decrypting; format/revision metadata is bound as authenticated additional data. The passphrase and derived key are never saved.
+The SQLite table/schema remain version 1. Its current and previous entries contain encrypted financial snapshots. The app reads original format-1 envelopes without modifying them on open. Format 2 is used for new workspaces and explicit access-mode changes. Both use AES-256-GCM, fresh nonces, exact integer ledger values and authenticated metadata. Format 2 authenticates mode, KDF, salt and revision. An older app must refuse this envelope, never reset it.
 
-This is payload encryption, not full-database encryption. SQLite headers, schema, revision numbers, file sizes, and update timing are visible. Unlocked values exist in process memory. This does not protect against malware, screen capture, a compromised OS account while unlocked, or replacement with an older valid encrypted snapshot. It is not an independent security audit or a production-safety claim.
+Password mode uses PBKDF2-HMAC-SHA256, 600,000 iterations, a fresh 16-byte salt and a 256-bit key. The password is not saved. Device mode uses a fresh random 256-bit key stored through flutter_secure_storage under a random per-vault identifier. Its presence is verified before writing the new encrypted workspace. No key or password is stored in preferences, the SQLite envelope or logs. The Windows implementation uses encrypted per-user storage and Windows Credential Manager. Other native OS integrations require their own packaging/entitlement validation.
 
-## Commit and conflict behavior
+SQLite headers, schema, revisions, file sizes and timing are visible. Unlocked records exist in memory. Encryption does not protect against a compromised OS account, malicious app replacement, screen capture, or rollback to an older valid database. There is no security audit or production-safety claim.
 
-A mutation is validated on a detached ledger copy. Each transaction has balanced exact-integer postings. Opening balances have an offsetting conceptual equity posting; they are not income. Edits replace the active posting set and preserve before/after values in audit events. Voids retain the record and remove its financial effect.
+## Safe mode changes
 
-A local operation identifier and canonical request hash enforce retry idempotency. Different payloads may not reuse an identifier. Each transaction/account edit checks its expected record version. A SQLite BEGIN IMMEDIATE transaction also checks the workspace revision, preventing two app windows from silently overwriting each other. Data is shown as committed only after the database commit succeeds.
+Access-mode changes rotate the encryption key and salt, increment the workspace revision, and append a non-secret audit event. They preserve all accounts, transactions, categories and operation identifiers. Device keys are written and read back before the SQLite commit. A failed commit leaves the old workspace usable. Cleanup never deletes a key that the current saved envelope references.
 
-SQLite synchronous=FULL and rollback journaling are configured. Each successful write retains one previous encrypted snapshot in the same file. This is crash/correction assistance, not an independent disaster-recovery backup. There is no previous-snapshot recovery UI yet. Corruption, unknown schemas, wrong credentials, or a failed write never trigger automatic reset.
+After a successful change back to password mode, the obsolete device credential is deleted. A cleanup failure is reported as a warning after the successful mode change; the old key cannot open current data. Previously copied snapshots and external backups are not retroactively protected or erased. SQLite retains one previous encrypted snapshot for correction/crash assistance, not as independent disaster recovery.
 
-## Backup and restore
+Concurrent windows check key identity and revision. Once another window changes security, stale windows must close/reopen rather than silently rewriting under an old key. Corrupt envelopes, missing OS keys, unsupported formats and failed writes do not trigger reset or a plaintext fallback.
 
-Export returns an authenticated and schema-validated encrypted envelope. The file uses the workspace passphrase at export time. Restore verifies size, format, authentication, schema, identifiers, amounts, dates, category references, and balanced postings before committing. It replaces the complete workspace and increments the current revision. The restored data is re-encrypted with the current workspace key; the current passphrase stays the same. A restore event is retained in the recovered audit. Prior local data remains only in the previous encrypted snapshot and any separately exported backup.
+## Backups and recovery
 
-The preview limits plaintext snapshot size to 16 MiB and imported envelope size to 24 MiB. It favors correctness and portability over large-ledger performance. Encryption and file operations still need profiling on actual Windows hardware. Auto-lock on idle, OS keychain unlock, password changes, audit browsing, incremental sync/outbox and migrations to future schemas are not implemented.
+The export UI always asks for a separate backup password. It does not turn on the workspace password. Export authenticates the saved data and re-encrypts it with an independently derived key and fresh salt in the portable format-1 password envelope. Device keys are never exported. Old backups remain readable with the original password used to create them.
 
-## Dependency references
+Restore validates the password, size, schema, identifiers, postings and metadata before a single commit. It replaces the complete workspace only after explicit confirmation. The imported data is encrypted under the destination workspace's current key and mode. It does not import the source device's unlock setting. Export before restore; there is no undo-restore UI.
 
-- https://pub.dev/packages/sqlite3
+If the OS key store is lost, return to the original profile/key store or restore an independently exported backup into a new workspace on another profile/device. Copying just the SQLite database to another computer is not a portable backup. There is no password/key recovery, destructive reset helper or automatic downgrade.
+
+## Validation and dependencies
+
+- Unit tests include an independent fictional format-1 fixture, off/on conversion, lost keys, wrong passwords, failed OS writes, failed DB writes, stale windows, metadata tampering, cleanup warnings and portable backups.
+- Widget tests cover the default optional setup and new-password confirmation.
+- Windows integration tests use the real OS secure-storage plugin and SQLite, in separate write/read application processes, then exercise both access-mode conversions.
+- Exact performed checks and remaining limitations are recorded in DEVELOPMENT_HANDOFF.md and docs/VALIDATION.md.
+
+Primary dependency references:
+- https://pub.dev/packages/flutter_secure_storage
+- https://pub.dev/packages/flutter_secure_storage_windows
 - https://pub.dev/packages/cryptography
-- https://pub.dev/packages/file_selector
+- https://pub.dev/packages/sqlite3
 
-Dependencies are pinned for the new persistence components. Existing inherited dependency ranges remain as previously published. CI must validate the exact resolution and artifacts; a complete dependency lockfile is still an additional reproducibility improvement.
+New dependencies are pinned. Flutter and dependency resolutions used by a build must be verified from its own logs/artifacts. Mobile entitlements, macOS Keychain access, Linux keyrings and distribution remain unvalidated targets.

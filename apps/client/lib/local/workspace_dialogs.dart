@@ -7,41 +7,52 @@ import 'ledger.dart';
 import 'local_api.dart';
 import 'storage.dart';
 import 'vault.dart';
+import 'device_keys.dart';
+import 'security_dialogs.dart';
 
 Future<LocalFinanceApi?> openLocalWorkspace(BuildContext context) async {
   final storage = await openVaultStorage();
   try {
-    final creating = await storage.read() == null;
+    final saved = await storage.read();
+    final creating = saved == null;
+    if (saved != null && !LocalVault.requiresPassword(LocalVault.header(saved))) {
+      final vault = await LocalVault.open(storage, '', create: false, deviceKeys: const SecureDeviceKeys());
+      if (!context.mounted) { await vault.close(); return null; }
+      return LocalFinanceApi(vault);
+    }
     if (!context.mounted) { await storage.close(); return null; }
     final api = await showDialog<LocalFinanceApi>(context: context, barrierDismissible: false,
-      builder: (_) => _UnlockDialog(storage: storage, creating: creating));
+      builder: (_) => LocalWorkspaceAccessDialog(storage: storage, creating: creating));
     if (api == null) await storage.close();
     return api;
   } catch (_) { await storage.close(); rethrow; }
 }
 
-class _UnlockDialog extends StatefulWidget {
-  const _UnlockDialog({required this.storage, required this.creating});
+class LocalWorkspaceAccessDialog extends StatefulWidget {
+  const LocalWorkspaceAccessDialog({required this.storage, required this.creating, this.deviceKeys = const SecureDeviceKeys(), super.key});
   final VaultStorage storage;
   final bool creating;
+  final DeviceKeyStore deviceKeys;
   @override
-  State<_UnlockDialog> createState() => _UnlockDialogState();
+  State<LocalWorkspaceAccessDialog> createState() => LocalWorkspaceAccessDialogState();
 }
-class _UnlockDialogState extends State<_UnlockDialog> {
+class LocalWorkspaceAccessDialogState extends State<LocalWorkspaceAccessDialog> {
   final _password = TextEditingController();
   final _confirm = TextEditingController();
   bool _busy = false;
+  late bool _requirePassword = !widget.creating;
   String? _error;
   @override
   void dispose() { _password.dispose(); _confirm.dispose(); super.dispose(); }
   Future<void> _open() async {
     if (_busy) return;
-    if (widget.creating && _password.text != _confirm.text) {
-      setState(() => _error = 'Passphrases do not match.'); return;
+    if (widget.creating && _requirePassword && _password.text != _confirm.text) {
+      setState(() => _error = 'Passwords do not match.'); return;
     }
     setState(() { _busy = true; _error = null; });
     try {
-      final vault = await LocalVault.open(widget.storage, _password.text, create: widget.creating);
+      final vault = await LocalVault.open(widget.storage, _password.text, create: widget.creating,
+        requirePassword: _requirePassword, deviceKeys: widget.deviceKeys);
       if (!mounted) { await vault.close(); return; }
       Navigator.pop(context, LocalFinanceApi(vault));
     } catch (error) {
@@ -54,17 +65,24 @@ class _UnlockDialogState extends State<_UnlockDialog> {
     content: SizedBox(width: 440, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
       const Text('Records stay on this device. They are not synchronized with a server or other devices in this build.'),
       const SizedBox(height: 14),
-      TextField(controller: _password, obscureText: true, enableSuggestions: false, autocorrect: false,
-        autofocus: true, enabled: !_busy, onSubmitted: (_) { if (!widget.creating) _open(); },
-        decoration: InputDecoration(labelText: 'Workspace passphrase', border: const OutlineInputBorder(),
-          helperText: widget.creating ? 'At least 14 characters. Use a memorable, unique phrase.' : null)),
       if (widget.creating) ...[
+        SwitchListTile(contentPadding: EdgeInsets.zero,
+          title: const Text('Require a password to open this workspace'),
+          value: _requirePassword, onChanged: _busy ? null : (value) => setState(() => _requirePassword = value)),
+        if (!_requirePassword) const Text('No Budgetism password is needed. Records remain encrypted using an OS-protected device key. Anyone using this OS account can open the workspace. Export a backup for recovery if this OS profile is lost.'),
+        const SizedBox(height: 12),
+      ],
+      if (_requirePassword) TextField(controller: _password, obscureText: true, enableSuggestions: false, autocorrect: false,
+        autofocus: true, enabled: !_busy, onSubmitted: (_) { if (!widget.creating) _open(); },
+        decoration: InputDecoration(labelText: 'Workspace password', border: const OutlineInputBorder(),
+          helperText: widget.creating ? 'At least 14 characters. Use a memorable, unique password.' : null)),
+      if (widget.creating && _requirePassword) ...[
         const SizedBox(height: 12),
         TextField(controller: _confirm, obscureText: true, enableSuggestions: false, autocorrect: false,
           enabled: !_busy, onSubmitted: (_) => _open(),
-          decoration: const InputDecoration(labelText: 'Confirm passphrase', border: OutlineInputBorder())),
+          decoration: const InputDecoration(labelText: 'Confirm password', border: OutlineInputBorder())),
         const SizedBox(height: 12),
-        const Text('There is no passphrase recovery. Backups also require the original passphrase. This preview is not ready for your only copy of real financial records.'),
+        const Text('There is no password recovery. Exported backups use the separate password chosen at export. This preview is not ready for your only copy of real financial records.'),
       ],
       if (_busy) const Padding(padding: EdgeInsets.only(top: 16), child: LinearProgressIndicator()),
       if (_error != null) Padding(padding: const EdgeInsets.only(top: 12),
@@ -92,11 +110,13 @@ class _BackupDialogState extends State<_BackupDialog> {
   Future<void> _export() async {
     setState(() { _busy = true; _status = null; });
     try {
+      final password = await requestBackupPassword(context);
+      if (password == null || !mounted) return;
       final where = await getSaveLocation(suggestedName: 'Budgetism-${DateTime.now().toIso8601String().substring(0, 10)}.budgetism', acceptedTypeGroups: _types);
       if (where == null) return;
-      final data = await widget.api.vault.exportBackup();
+      final data = await widget.api.vault.exportBackup(password: password);
       await XFile.fromData(Uint8List.fromList(utf8.encode(data)), mimeType: 'application/octet-stream').saveTo(where.path);
-      if (mounted) setState(() => _status = 'Encrypted backup saved. Keep the passphrase separately.');
+      if (mounted) setState(() => _status = 'Encrypted backup saved. Keep the backup password separately.');
     } catch (error) { if (mounted) setState(() => _status = error.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
   }
@@ -112,7 +132,7 @@ class _BackupDialogState extends State<_BackupDialog> {
       final password = await showDialog<String>(context: context, builder: (_) => const _RestoreConfirmation());
       if (password == null) return;
       await widget.api.vault.restoreBackup(encoded, password);
-      if (mounted) setState(() => _status = 'Backup restored. Your current workspace passphrase is unchanged.');
+      if (mounted) setState(() => _status = 'Backup restored. Your current workspace security setting is unchanged.');
     } catch (error) { if (mounted) setState(() => _status = error.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
   }
@@ -121,10 +141,10 @@ class _BackupDialogState extends State<_BackupDialog> {
     final desktop = [TargetPlatform.windows, TargetPlatform.macOS, TargetPlatform.linux].contains(defaultTargetPlatform);
     return PopScope(canPop: !_busy, child: AlertDialog(title: const Text('Backups and storage'),
       content: SizedBox(width: 510, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Financial payloads are encrypted in a local SQLite file. No password is saved. The database header and revision numbers are not encrypted.'),
+        const Text('Financial payloads are encrypted in a local SQLite file. Password mode derives the key when you open the workspace; password-free mode uses an OS-protected random key. Database headers and revision numbers are not encrypted.'),
         const SizedBox(height: 12), SelectableText(widget.api.vault.location),
         const SizedBox(height: 14),
-        const Text('Export a backup before testing changes. Restore replaces the entire local workspace, not just selected transactions. Backups use the passphrase that was active when exported.'),
+        const Text('Export a backup before testing changes. Restore replaces the entire local workspace, not just selected transactions. New backups use the separate password you choose during export. Older backups still require their original workspace password.'),
         const SizedBox(height: 12),
         Wrap(spacing: 10, runSpacing: 8, children: [
           OutlinedButton.icon(onPressed: _busy || !desktop ? null : _export,
@@ -151,9 +171,9 @@ class _RestoreConfirmationState extends State<_RestoreConfirmation> {
   @override
   Widget build(BuildContext context) => AlertDialog(title: const Text('Replace local workspace?'),
     content: SizedBox(width: 420, child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Text('This replaces every current account, category, and transaction. Export your current workspace first. An incorrect passphrase or invalid backup will not change it.'),
+      const Text('This replaces every current account, category, and transaction. Export your current workspace first. An incorrect password or invalid backup will not change it.'),
       const SizedBox(height: 16), TextField(controller: _password, obscureText: true, autocorrect: false,
-        enableSuggestions: false, decoration: const InputDecoration(labelText: 'Backup passphrase', border: OutlineInputBorder())),
+        enableSuggestions: false, decoration: const InputDecoration(labelText: 'Backup password', border: OutlineInputBorder())),
       CheckboxListTile(value: _confirmed, onChanged: (v) => setState(() => _confirmed = v ?? false),
         title: const Text('Replace my current local workspace'), controlAffinity: ListTileControlAffinity.leading),
     ])), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
