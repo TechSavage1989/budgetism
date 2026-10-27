@@ -1,0 +1,104 @@
+name: Budgetism source and portable build checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check_layout.py --self-test
+      - run: python scripts/check_layout.py
+
+  backend-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet build services/api/Budgetism.Api.csproj --configuration Release
+      - run: dotnet run --project tests/ledger-contract/ledger-contract.csproj --configuration Release
+
+  updater-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - working-directory: tools/updater
+        run: go test -race ./...
+      - run: mkdir -p build/tools
+      - working-directory: tools/updater
+        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags='-H windowsgui' -o ../../build/tools/Budgetism-Updater.exe .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-updater-test-binary
+          path: build/tools/Budgetism-Updater.exe
+          if-no-files-found: error
+
+  flutter-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - working-directory: apps/client
+        run: |
+          flutter create --platforms=web --project-name budgetism --no-pub .
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.1
+
+  windows-portable:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+      - name: Build updater helper
+        shell: pwsh
+        run: |
+          New-Item build/tools -ItemType Directory -Force | Out-Null
+          Push-Location tools/updater
+          go test ./...
+          go build -ldflags='-H windowsgui' -o ../../build/tools/Budgetism-Updater.exe .
+          Pop-Location
+      - name: Build Flutter Windows app
+        working-directory: apps/client
+        shell: pwsh
+        run: |
+          flutter create --platforms=windows --project-name budgetism --no-pub .
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.1
+      - name: Package portable app with stable filename
+        shell: pwsh
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-Windows-x64-development
+          path: |
+            build/packages/Budgetism-Windows-x64.zip
+            build/packages/checksums.sha256
+          if-no-files-found: error
+
+# CI generates temporary workflow artifacts for build validation. It does not
+# push source, create tags, or publish GitHub Releases.

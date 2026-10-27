@@ -1,0 +1,17 @@
+secrets/
+.env
+*.log
+*.dump
+*.dump.age
+build/
+.dart_tool/
+.flutter-plugins*
+.pub-cache/
+.pub/
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.vscode/
+**/DerivedData/
+.DS_Store

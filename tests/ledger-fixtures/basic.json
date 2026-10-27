@@ -1,0 +1,17 @@
+{
+  "description": "Exact minor-unit ledger contract fixtures for account and credit-card invariants",
+  "operations": [
+    {"kind": "opening", "postings": {"checking": 100000, "opening_equity": -100000}},
+    {"kind": "expense", "postings": {"checking": -8000, "groceries": 8000}},
+    {"kind": "transfer", "postings": {"checking": -20000, "savings": 20000}},
+    {"kind": "expense", "postings": {"credit_card": -12500, "groceries": 12500}},
+    {"kind": "transfer", "postings": {"checking": -12500, "credit_card": 12500}}
+  ],
+  "expected_signed_balances": {
+    "checking": 59500,
+    "savings": 20000,
+    "credit_card": 0,
+    "groceries": 20500,
+    "opening_equity": -100000
+  }
+}
