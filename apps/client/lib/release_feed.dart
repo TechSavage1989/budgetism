@@ -150,7 +150,9 @@ class ReleaseFeed {
     final tag = source['tag_name']?.toString() ?? '';
     final page = source['html_url']?.toString() ?? '';
     if (source['draft'] == true || !page.startsWith('https://github.com/$budgetismRepository/releases/tag/') ||
-        !_validVersion(tag)) return null;
+        !_validVersion(tag)) {
+      return null;
+    }
     final assets = source['assets'];
     String? url;
     String? sha;

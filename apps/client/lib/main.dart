@@ -53,16 +53,20 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
         if (_active) _checkUpdates();
       });
     } catch (_) {
-      if (mounted) setState(() => _releaseResult = const ReleaseCheckResult(
-        ReleaseCheckStatus.error, 'Unable to initialize the update checker.'));
+      if (mounted) {
+        setState(() => _releaseResult = const ReleaseCheckResult(
+          ReleaseCheckStatus.error, 'Unable to initialize the update checker.'));
+      }
     }
   }
 
   Future<void> _checkUpdates({bool manual = false, bool focusReturn = false}) async {
     final feed = _releaseFeed;
     if (feed == null) {
-      if (manual) _messengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Update checker is initializing. Try again.')));
+      if (manual) {
+        _messengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Update checker is initializing. Try again.')));
+      }
       return;
     }
     final result = await feed.check(manual: manual, focusReturn: focusReturn);
@@ -614,8 +618,10 @@ class _FinanceShellState extends State<FinanceShell> {
   ]);
 
   Widget _transactionList(List<Map<String, dynamic>> entries, {required bool compact}) {
-    if (entries.isEmpty) return const _EmptyState(icon: Icons.receipt_long_outlined,
-      title: 'No transactions', details: 'Record an expense, income, or transfer to get started.');
+    if (entries.isEmpty) {
+      return const _EmptyState(icon: Icons.receipt_long_outlined,
+        title: 'No transactions', details: 'Record an expense, income, or transfer to get started.');
+    }
     final shown = compact ? entries : entries.take(500).toList();
     final accountNames = {for (final a in _accounts) a['id']: a['name']};
     final categoryNames = {for (final c in _categories) c['id']: c['name']};
@@ -767,14 +773,14 @@ class _CreateTransactionDialogState extends State<CreateTransactionDialog> {
               DropdownMenuItem(value: 'transfer', child: Text('Transfer / card payment')),
             ], onChanged: (v) => setState(() { _kind = v ?? 'expense'; _counterparty = null; })),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(value: _account,
+          DropdownButtonFormField<String>(initialValue: _account,
             decoration: const InputDecoration(labelText: 'From / primary account', border: OutlineInputBorder()),
             items: widget.accounts.map((a) => DropdownMenuItem<String>(
               value: a['id'] as String, child: Text(a['name'] as String))).toList(),
             onChanged: (v) => setState(() { _account = v; _counterparty = null; })),
           const SizedBox(height: 12),
           if (counterparts.isNotEmpty) DropdownButtonFormField<String>(
-            key: ValueKey('$_kind|$_account'), value: counter,
+            key: ValueKey('$_kind|$_account'), initialValue: counter,
             decoration: InputDecoration(labelText: _kind == 'transfer' ? 'To account' : 'Category',
               border: const OutlineInputBorder()),
             items: counterparts.map((a) => DropdownMenuItem<String>(

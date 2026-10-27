@@ -4,7 +4,7 @@ Budgetism 0.1.0-dev.1, October 27, 2026. **Source development, not a tested fina
 
 | Area | Current status |
 | --- | --- |
-| Repository | Source publication authorized for public Budgetism repository; no application release published |
+| Repository | Source baseline published to public Budgetism repo at e9c1b6ca; no application release published |
 | Flutter shell | Source has desktop/web/mobile responsive dashboard, accounts, transactions and initial connection screen; uncompiled |
 | Demo | Added ephemeral sample data with in-memory account and transaction changes; uncompiled |
 | Ledger | Prior exact-integer double-entry API source and C# fixture tests; uncompiled |
@@ -15,6 +15,6 @@ Budgetism 0.1.0-dev.1, October 27, 2026. **Source development, not a tested fina
 | Offline sync | Not implemented; demo mode is memory-only, not durable offline finance storage |
 | Budgeting and forecasts | UI placeholders, no engines |
 | Production data safety | Not established; migrations, local encryption and restore tests outstanding |
-| Publishing | Source publication authorized; do not create tags/releases or change visibility |
+| Publishing | Public source committed; source CI corrections in progress. No tags/releases/visibility changes |
 
 Read DEVELOPMENT_HANDOFF.md for exact commands and limitations. In this work, no server deployment or API-account setup has been added.

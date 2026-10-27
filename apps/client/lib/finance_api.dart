@@ -13,9 +13,7 @@ class FinanceApi {
   FinanceApi(this.serverUrl);
   final String serverUrl;
   bool get isDemo => false;
-  String? _token;
-  String? get token => _token;
-  set token(String? value) => _token = value;
+  String? token;
 
   Uri _uri(String path) {
     final base = serverUrl.trim().replaceFirst(RegExp(r'/$'), '');
@@ -25,7 +23,7 @@ class FinanceApi {
   Future<dynamic> request(String method, String path, [Map<String, dynamic>? body]) async {
     final headers = <String, String>{'Accept': 'application/json'};
     if (body != null) headers['Content-Type'] = 'application/json';
-    if (_token != null) headers['Authorization'] = 'Bearer $_token';
+    if (token != null) headers['Authorization'] = 'Bearer $token';
     try {
       final uri = _uri(path);
       final encoded = body == null ? null : jsonEncode(body);
@@ -66,12 +64,12 @@ class FinanceApi {
     final data = await request('POST', '/api/auth/login', {
       'username': username, 'password': password,
     }) as Map;
-    _token = data['token'] as String;
+    token = data['token'] as String;
     return data['username'] as String;
   }
 
   Future<void> logout() async {
-    try { await request('POST', '/api/auth/logout', {}); } finally { _token = null; }
+    try { await request('POST', '/api/auth/logout', {}); } finally { token = null; }
   }
 
   Future<Map<String, dynamic>> snapshot() async =>

@@ -3,15 +3,16 @@
 **Date:** October 27, 2026
 **App:** Budgetism
 **Version:** 0.1.0-dev.1
-**State:** Source baseline prepared for authorized publication to the existing public repository; no verified Windows Flutter app binary and no GitHub application release.
+**State:** Source published in the existing public repository. Hosted validation uncovered Flutter source-generation/test and analyzer findings; corrections are included in the next source update. No verified Windows Flutter app binary and no application release.
 
 ## Repository inspection performed first
 
 - URL: https://github.com/TechSavage1989/budgetism
 - Visibility: **public**, user has push/admin access; source publication explicitly authorized October 27, 2026.
-- Default branch: `main`, HEAD commit `ded152921fec3f8b141e94f10bba39dc55012e56` (initial README placeholder).
-- One root file `README.md` (11 bytes), no AGENTS.md or DEVELOPMENT_HANDOFF.md.
-- Active PRs: none. Branches listed: main only. Releases: none. No published update feed.
+- Initial placeholder commit: `ded152921fec3f8b141e94f10bba39dc55012e56`.
+- Published source baseline commit: `e9c1b6ca82b5b030cc949ed23e87ec120c6f49d3` (October 27, 2026). Further source and documentation fixes follow as normal non-release commits.
+- Before publication, the repo had only an 11-byte README; the source commit added the complete reviewed 43-file baseline.
+- Active PRs at publication: none. Branches listed: main only. Releases: none. The public release feed exists but has no release entries.
 - User authorized publishing source and development workflows to the public repository. This does not include release binaries, tags, access changes or repository visibility changes.
 
 ## Starting source and scope
@@ -87,8 +88,9 @@ Then build Go helper into `build/tools/Budgetism-Updater.exe` and run `scripts/p
 ## Publication notes
 
 - Authorized destination: public `TechSavage1989/budgetism`, default branch `main`. Do not force push.
-- Source publication should create one normal commit on top of the initial README placeholder and retain the original history.
-- Check CI results, repo tree and feed after upload. No release/tag is authorized.
+- Source was published by a normal commit on top of the initial README placeholder with no force-push or history rewrite.
+- The published tree contains the expected 43 files and no committed binaries or credentials. No release/tag is authorized.
+- First hosted Actions run: https://github.com/TechSavage1989/budgetism/actions/runs/40570606567. Its backend, updater and layout jobs passed. The web job failed because Flutter scaffolding generated a default `MyApp` widget test and analyzer informational findings were treated as fatal. Corrections add an authentic widget smoke test and address those findings; rerun must be checked. The Windows portable packaging job passed in hosted CI, but the packaged executable has not been launched or tested on a real Windows desktop.
 - Source is not production-safe for real financial data.
 
 ## Validation performed in this environment
@@ -97,7 +99,7 @@ Then build Go helper into `build/tools/Budgetism-Updater.exe` and run `scripts/p
 - Go updater archive unit tests, including good archive, wrong hash, wrong version, traversal, executable injection, wrong PE architecture and custom filename validation: PASS.
 - Go Windows x64 PE updater helper cross-compilation: PASS on Linux with Go 1.23.2. This is not a Windows run test.
 - Source ZIP integrity, extracted no-.git guard test and Markdown link scan: performed at packaging time.
-- Flutter SDK / .NET 10 SDK / Docker: unavailable in this environment. Therefore **Flutter analyze, Flutter unit/widget tests, Windows runnable app build, backend compilation, live database tests, install/restart/rollback native tests and hosted GitHub CI are not validated**.
+- Flutter SDK / .NET 10 SDK / Docker: unavailable locally. Hosted .NET build and ledger contract tests, Go tests and source layout passed on the initial publication commit. The hosted Windows compilation/packaging job passed, but the web Flutter analysis initially failed and the corrective rerun has not yet been verified; no live database, native install/restart/rollback, or financial production safety validation exists.
 
 ## Known blockers and next actions
 
@@ -105,8 +107,8 @@ Then build Go helper into `build/tools/Budgetism-Updater.exe` and run `scripts/p
 2. Test the native Windows updater with two genuine signed/not-signed test builds (including rollback, rename/custom executable, current window health, offline/focus/resume, cleanup and preservation of settings). Do **not** enable Install and restart until these tests pass.
 3. Add persistent encrypted native data, synchronized outbox and conflict resolution, versioned backend migrations and verified backup/restore before accepting real financial data.
 4. Add budgeting, recurring bills, forecasting, reporting and transaction reconciliation without breaking existing ledger invariants.
-5. Check GitHub HEAD, active branches/PRs, read-first docs and source package consistency before requesting explicit approval to push code to the public repo. Tag/build/release publication remains separately authorized.
+5. Check GitHub HEAD, active branches/PRs, read-first docs and source package consistency before further source changes. Source publication was authorized; tag/build/release publication remains separately authorized.
 
 ## Never claim
 
-Do not call this a production-ready finance application, tested native updater, successfully running Windows Flutter executable, deployed server, or GitHub-published release. The only compiled Windows artifact in this deliverable is the isolated updater helper, which is not the app.
+Do not call this a production-ready finance application, tested native updater, successfully running Windows Flutter executable, deployed server, or published application release. Public source publication is not an application release. The only compiled Windows artifact in this deliverable is the isolated updater helper, which is not the app.
