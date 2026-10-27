@@ -1,0 +1,33 @@
+name: Budgetism source archive
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check_layout.py --self-test
+      - name: Package exact source revision without Git metadata
+        run: |
+          mkdir -p build/source
+          git archive --format=zip --prefix=Budgetism/ --output=build/source/Budgetism-Source.zip HEAD
+          git rev-parse HEAD > build/source/source-commit.txt
+          cd build/source
+          sha256sum Budgetism-Source.zip > checksums.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-source-snapshot
+          path: build/source/
+          if-no-files-found: error
+
+# Source and provenance only. No release, tag, installation or deployment.
