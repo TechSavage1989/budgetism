@@ -1,20 +1,21 @@
 # Current implementation state
 
-Budgetism 0.1.0-dev.1, October 27, 2026. **Source development, not a tested finance release.**
+Budgetism 0.1.0-dev.2 development preview. No application release or tag.
 
-| Area | Current status |
+| Area | Status |
 | --- | --- |
-| Repository | Public repo; initial source e9c1b6ca and validated code commit 743daff; no release |
-| Flutter shell | Flutter web and Windows CI builds pass; desktop/mobile responsiveness still needs live UI validation |
-| Demo | Ephemeral sample accounts/transactions; demo unit and widget tests pass in hosted Flutter CI |
-| Ledger | Hosted .NET 10 build and ledger contract tests pass; live database not verified |
-| Updates discovery | Release checks and Dart tests compile/pass in hosted CI; real focus/timer/rate-limit behavior not native-tested |
-| Update download | Windows-only HTTPS allowlist + expected GitHub digest and staging; untested at runtime |
-| Windows helper | Go unit tests pass and PE32+ Windows x64 helper builds; installer not integrated or Windows-tested |
-| Windows package | Windows Flutter portable package built as a temporary GitHub Actions artifact; Windows GUI launch not verified |
-| Offline sync | Not implemented; demo mode is memory-only, not durable offline finance storage |
-| Budgeting and forecasts | UI placeholders, no engines |
-| Production data safety | Not established; migrations, local encryption and restore tests outstanding |
-| Publishing | Code commit 743daff passed all five hosted CI jobs; no tags/releases/visibility changes |
+| Prior Windows baseline | User confirmed dev.1 launches and sample mode works |
+| Local storage | Encrypted financial snapshot in native SQLite; requires passphrase each open |
+| Transactions | Local create/edit/void; exact cents, balanced postings and audit; split income/expenses |
+| Accounts/categories | Local create/edit account, create/rename category |
+| Backups | Encrypted export and full-workspace restore; no passphrase recovery |
+| Search/settings | Payee/notes/category/account search, account filter, saved theme |
+| Demo | Existing temporary sample workspace retained separately |
+| Web | Existing demo/server interface; local persistence disabled |
+| Sync | Not implemented for local workspace; no outbox or merge UI |
+| Budgets/forecasts | Placeholders; engines not implemented |
+| Updates | Existing checks/downloads retained; install disabled pending native validation |
+| Validation | New tests defined; see DEVELOPMENT_HANDOFF.md for exact performed results |
+| Production data | Not approved; use test records and keep independent backups |
 
-Read DEVELOPMENT_HANDOFF.md for exact commands and limitations. In this work, no server deployment or API-account setup has been added.
+No server/provider-account/payment setup or release publication is included.

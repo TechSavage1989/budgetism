@@ -145,7 +145,7 @@ class LocalLedger {
     final result = <Json>[{'ledgerId': t['accountId'], 'amountMinor': signed}];
     if (kind == 'transfer') {
       if (splits.isNotEmpty || t['accountId'] == t['counterpartyAccountId'] ||
-          !accounts.any((a) => a['id'] == t['counterpartyAccountId'])) fail('Choose a different destination account. Transfers cannot be split.');
+          !accounts.any((a) => a['id'] == t['counterpartyAccountId'])) { fail('Choose a different destination account. Transfers cannot be split.'); }
       result.add({'ledgerId': t['counterpartyAccountId'], 'amountMinor': amount});
     } else {
       final lines = splits.isEmpty ? <Json>[{'categoryId': t['counterpartyAccountId'], 'amountMinor': amount}] : splits;

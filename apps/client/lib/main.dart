@@ -328,7 +328,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     ],
                     TextField(controller: _username, autocorrect: false,
                       decoration: const InputDecoration(labelText: 'Username',
-                        border: OutlineInputBorder(), prefixIcon: const Icon(Icons.person_outline))),
+                        border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline))),
                     const SizedBox(height: 12),
                     TextField(controller: _password, obscureText: true,
                       onSubmitted: (_) => _busy ? null : _submit(),
@@ -464,7 +464,7 @@ class _FinanceShellState extends State<FinanceShell> {
     try {
       final api = widget.api as LocalFinanceApi;
       if (value == 'backups') await showLocalBackups(context, api);
-      if (value == 'categories') await manageLocalCategories(context, api);
+      if (value == 'categories' && mounted) await manageLocalCategories(context, api);
       if (mounted) await _refresh();
     } catch (error) { _showError(error); }
   }
@@ -683,7 +683,7 @@ class _FinanceShellState extends State<FinanceShell> {
     final query = _query.trim().toLowerCase();
     return _transactions.reversed.where((t) {
       if (_filterAccount.isNotEmpty && t['accountId'] != _filterAccount &&
-          !(t['kind'] == 'transfer' && t['counterpartyAccountId'] == _filterAccount)) return false;
+          !(t['kind'] == 'transfer' && t['counterpartyAccountId'] == _filterAccount)) { return false; }
       final parts = t['splits'] as List? ?? [];
       final text = '${t['payee']} ${t['notes']} ${names[t['accountId']]} ${names[t['counterpartyAccountId']]} '
           '${parts.map((p) => names[p['categoryId']]).join(' ')}'.toLowerCase();

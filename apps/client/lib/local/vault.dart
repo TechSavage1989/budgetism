@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'ledger.dart';
@@ -49,7 +48,7 @@ class LocalVault {
     }
     if (base64Decode(h['salt'] as String).length != 16 ||
         base64Decode(h['nonce'] as String).length != 12 ||
-        base64Decode(h['tag'] as String).length != 16) throw const FormatException('Invalid encryption metadata.');
+        base64Decode(h['tag'] as String).length != 16) { throw const FormatException('Invalid encryption metadata.'); }
     return h;
   }
   static List<int> _aad(int revision) => utf8.encode('$_format|1|$vaultIterations|$revision');
