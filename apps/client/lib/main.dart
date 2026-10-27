@@ -465,7 +465,7 @@ class _FinanceShellState extends State<FinanceShell> {
     try {
       final api = widget.api as LocalFinanceApi;
       if (value == 'security') await showWorkspaceSecurity(context, api.vault);
-      if (value == 'backups') await showLocalBackups(context, api);
+      if (value == 'backups' && mounted) await showLocalBackups(context, api);
       if (value == 'categories' && mounted) await manageLocalCategories(context, api);
       if (mounted) await _refresh();
     } catch (error) { _showError(error); }
