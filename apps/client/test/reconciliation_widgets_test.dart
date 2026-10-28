@@ -9,24 +9,35 @@ void main() {
   testWidgets('statement review preserves inputs after failed save and requires exact review consent', (tester) async {
     final l = reconcileFixture(); final a = accounts(l).first['id'] as String;
     var calls = 0; Json? saved;
+    // Form controls and transaction rows are built lazily. Scroll the outer
+    // form before finding them, without increasing the viewport or skipping checks.
+    Future<void> reveal(Finder target) async {
+      final form = find.descendant(of: find.byType(ListView).first,
+        matching: find.byType(Scrollable)).first;
+      await tester.scrollUntilVisible(target, 120, scrollable: form);
+      await tester.pumpAndSettle();
+    }
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: StatementReview(snapshot: l.snapshot(), accountId: a,
       onSave: (request) async { calls++; saved = request; throw StateError('Simulated write failure'); }))));
     await tester.enterText(find.byKey(const ValueKey('statement-date')), '2026-10-31');
     await tester.enterText(find.byKey(const ValueKey('statement-closing')), '1300.00');
-    await tester.ensureVisible(find.text('Review statement'));
+    await reveal(find.text('Review statement'));
     await tester.tap(find.text('Review statement')); await tester.pumpAndSettle();
     expect(calls, 0);
     for (final t in LocalLedger.rows(l.data['transactions'])) {
       final row = find.byKey(ValueKey('statement-row:${t['id']}'));
-      await tester.ensureVisible(row); await tester.tap(row); await tester.pumpAndSettle();
+      await reveal(row); await tester.tap(row); await tester.pumpAndSettle();
     }
+    await reveal(find.byKey(const ValueKey('statement-difference')));
     expect(tester.widget<Text>(find.byKey(const ValueKey('statement-difference'))).data, 'Statement difference: \$0.00');
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Finish reconciliation')).onPressed, isNull);
     for (final key in ['statement-upgrade', 'statement-reviewed']) {
-      final box = find.byKey(ValueKey(key)); await tester.ensureVisible(box); await tester.tap(box); await tester.pumpAndSettle();
+      final box = find.byKey(ValueKey(key)); await reveal(box); await tester.tap(box); await tester.pumpAndSettle();
     }
     await tester.tap(find.text('Finish reconciliation')); await tester.pumpAndSettle();
-    expect(calls, 1); expect(find.textContaining('Simulated write failure'), findsOneWidget);
+    expect(calls, 1);
+    await reveal(find.textContaining('Simulated write failure'));
+    expect(find.textContaining('Simulated write failure'), findsOneWidget);
     expect(saved!['closingMinor'], 130000); expect(saved!['transactionIds'].length, 2);
     final operation = saved!['operationId'];
     await tester.tap(find.text('Finish reconciliation')); await tester.pumpAndSettle();
