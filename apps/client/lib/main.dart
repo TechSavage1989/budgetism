@@ -12,6 +12,8 @@ import 'local/budget_widgets.dart';
 import 'local/schedule_widgets.dart';
 import 'local/planning_widgets.dart';
 import 'local/report_widgets.dart';
+import 'local/transaction_register.dart';
+import 'local/transaction_register_widgets.dart';
 import 'local/storage.dart';
 import 'local/workspace_dialogs.dart';
 import 'local/security_dialogs.dart';
@@ -396,6 +398,7 @@ class _FinanceShellState extends State<FinanceShell> {
   String _query = '';
   String _filterAccount = '';
   int _transactionLimit = 100;
+  RegisterFilter _registerFilter = const RegisterFilter();
   bool get _local => widget.api is LocalFinanceApi;
   bool _loading = true;
   bool _updating = false;
@@ -578,7 +581,11 @@ class _FinanceShellState extends State<FinanceShell> {
                             child: Text(_local ? 'Local workspace issue: $_error' : 'Connection issue: $_error\nData shown may be out of date. Offline edits are not supported in this build.'))),
                         if (_page == 0) _dashboard(),
                         if (_page == 1) _accountsView(),
-                        if (_page == 2) _transactionsView(),
+                        if (_page == 2 && _local) TransactionRegisterPanel(
+                          readSnapshot: () => (widget.api as LocalFinanceApi).vault.ledger.snapshot(includeVoided: true),
+                          initialFilter: _registerFilter, onFilterChanged: (value) => _registerFilter = value,
+                          onEdit: _editLocalTransaction, onImport: () => _localOptions('import')),
+                        if (_page == 2 && !_local) _transactionsView(),
                         if (_page == 3 && _local) BudgetPanel(api: widget.api as LocalFinanceApi,
                           month: _budgetMonth, onMonthChanged: (value) => setState(() => _budgetMonth = value),
                           onChanged: () => _refresh(silent: true), onOpenTransaction: _editLocalTransaction),
