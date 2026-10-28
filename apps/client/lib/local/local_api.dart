@@ -14,6 +14,8 @@ class LocalFinanceApi extends FinanceApi {
   Future<void> createAccount(Json data) => vault.apply('account', data);
   @override
   Future<void> createTransaction(Json data) => vault.apply('transaction', data);
+  Future<void> reconcile(Json data) => vault.apply('reconcile', data);
+  Future<void> reopenStatement(Json data) => vault.apply('reconcile-reopen', data);
   Future<void> importCsv(Json data) => vault.apply('import-csv', data);
   Future<void> saveCategory(Json data) => vault.apply('category', data);
   Future<void> voidTransaction(Json data) => vault.apply('void', data);

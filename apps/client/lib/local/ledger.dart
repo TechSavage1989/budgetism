@@ -6,6 +6,7 @@ import 'recurrence.dart';
 part 'schedule_rules.dart';
 part 'schedule_matching.dart';
 part 'import_rules.dart';
+part 'reconciliation.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -15,6 +16,7 @@ class LocalLedger {
   final Json data;
   static const schema = 3;
   static const importSchema = 4;
+  static const reconciliationSchema = 5;
   static const budgetSchema = 2;
   static const legacySchema = 1;
   static const maxMinor = 99999999999999;
@@ -124,6 +126,10 @@ class LocalLedger {
         final name = text(input['name'], 'Account name', 100);
         if (accounts.any((a) => a['id'] != id && (a['name'] as String).toLowerCase() == name.toLowerCase())) fail('An account already uses this name.');
         if (!accountTypes.contains(input['type']) || input['currency'] != 'USD') fail('Choose a supported USD account type.');
+        if (before != null && Reconciliation.active(data, id).isNotEmpty &&
+            (before['openingBalanceMinor'] != input['openingBalanceMinor'] || before['type'] != input['type'])) {
+          fail('Reopen the account statements before changing its opening balance or type.');
+        }
         after = {'id': id, 'name': name, 'type': input['type'], 'currency': 'USD',
           'openingBalanceMinor': minor(input['openingBalanceMinor'], signed: true),
           'version': (before?['version'] as int? ?? 0) + 1, 'archived': false};
@@ -148,6 +154,9 @@ class LocalLedger {
           before = transactions[index];
           if (input['expectedVersion'] != before['version']) fail('Transaction changed. Refresh before editing.');
           if (before['voided'] == true) fail('This transaction is already voided.');
+          if (Reconciliation.locked(data, id)) {
+            fail('This transaction is reconciled. Reopen its statement in Reconcile before editing or deleting it.');
+          }
         }
         if (action == 'void') {
           final original = before!;
@@ -218,6 +227,13 @@ class LocalLedger {
         next['budgets'] = budgets;
         after = {'sourceMonth': source, 'month': target, 'changes': changes};
         break;
+      case 'reconcile':
+        after = Reconciliation.finish(next, input, operation, id);
+        break;
+      case 'reconcile-reopen':
+        before = rows(next['reconciliations'] ?? <Json>[]).where((s) => s['id'] == id).firstOrNull;
+        after = Reconciliation.reopen(next, input, operation);
+        break;
       case 'import-csv':
         after = _ImportRules.apply(next, input, operation, accounts, categories, transactions);
         break;
@@ -271,7 +287,7 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema, reconciliationSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
     if (data['schema'] != legacySchema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
     if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
@@ -312,6 +328,7 @@ class LocalLedger {
     }
     _ScheduleRules.validate(data, accounts, categories, transactions, ids);
     _ImportRules.validate(data, accounts, transactions, ids);
+    Reconciliation.validate(data, accounts, transactions, ids);
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     for (final t in transactions.where((t) => t['voided'] != true)) {
@@ -332,7 +349,7 @@ class LocalLedger {
         if (balances.containsKey(p['ledgerId'])) balances[p['ledgerId']] = balances[p['ledgerId']]! + (p['amountMinor'] as int);
       }
     }
-    return {'schema': data['schema'], 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+    return {'schema': data['schema'], 'reconciliations': rows(clone(data)['reconciliations'] ?? <Json>[]), 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
       'schedules': rows(clone(data)['schedules'] ?? <Json>[]),
       'occurrences': rows(clone(data)['occurrences'] ?? <Json>[]),
       'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],

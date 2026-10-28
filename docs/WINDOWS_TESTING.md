@@ -1,17 +1,20 @@
-# Budgetism dev.8 Windows test
+# Budgetism dev.9 Windows test
 
-Use [successful dev.8 run 40717507066](https://github.com/TechSavage1989/budgetism/actions/runs/40717507066), application commit 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b. Download Budgetism-Windows-x64-development, artifact 12827924651, not an updater-only or source ZIP. Extract the outer artifact ZIP and then its inner Budgetism-Windows-x64.zip. Export an encrypted backup from the working dev.7 app and retain its separate password. Close all Budgetism windows, extract the complete new portable package into its own folder, and run Budgetism.exe under the same Windows account. Keep all DLLs/data files together; do not replace or recreate the per-user workspace.
+Download only the compiled Windows artifact from the verified run recorded after validation. Export an encrypted backup from working dev.8 and keep its password. Close every Budgetism window. Extract the complete portable package in its own folder; keep Budgetism.exe, DLLs and data directory together, using the same Windows account. Do not replace or recreate the stored workspace.
 
-## Test matching, not previous milestones again
+Open version 0.1.0-dev.9 and your existing workspace. Previous budgeting, forecasting, importing and matching already worked; no repeated setup exercise is needed.
 
-1. Confirm version 0.1.0-dev.8 and open the saved local workspace. Existing records and optional-password preference should remain.
-2. Use a fictional imported expense already in Transactions, or enter a fictional expense once. Note its account, category, amount and actual date.
-3. Create a monthly expense schedule with the same account/amount and that date as the first due date. Use an end date equal to the first date to keep this test to one occurrence. Creating this plan must not post the expense again.
-4. Note the current account balance, budget spending and transaction count. In Scheduled > Upcoming, choose Match existing for that occurrence. Do not choose Record transaction.
-5. Select the existing actual. Review its amount/date/categories, tick the confirmation and choose Link without new transaction. There should be no new transaction and no change to account balance or actual budget spending.
-6. History should show Matched. The occurrence should no longer be due, and Calendar/Forecasts should not add its planned amount again.
-7. Close and reopen dev.8. Confirm the same single transaction and matched history remain. An imported transaction's import history should still be present.
+## Test reconciliation only
 
-Use Include different amounts only for a deliberate variable-bill test. The actual amount/categories/date stay unchanged. Suggestions default to seven days around the due date; 30/90-day ranges are available. Only unlinked, non-voided transactions of the same type/account qualify; transfer direction must match. This preview has no unlink action, so review carefully.
+Use a fictional account with a known opening balance and recorded entries. For example, an opening balance of 1000 plus recorded income 500 minus recorded expense 200 has a balance of 1300.
 
-Matching introduces no new financial-format upgrade on an existing recurring/import workspace. No server setup or previous budgeting/forecasting setup test is required. Inspect the same run's Defender security-evidence artifact. Any new download detection still requires its exact name/file; a clean build-time scan is not universal reputation or publisher signing.
+1. Open Accounts > Reconcile statements (also available in User options). Select the test account and Start reconciliation.
+2. Enter the statement ending date, covering those entries, and closing balance 1300.00. Review statement must not alter actual balances.
+3. Check the two cleared entries. Selected cleared balance should be 1300.00 and difference 0.00. An omitted or extra entry must prevent completion if the difference is nonzero.
+4. After exporting a backup, confirm the format upgrade and statement review. Finish reconciliation must leave the account at 1300 with the same number of transactions.
+5. Close and reopen dev.9. Completed history and balance should remain. Trying to edit an included transaction should explain that its statement must first be reopened.
+6. Optionally reopen the latest statement with a reason. History remains, balances do not change, and those entries become outstanding for that account again.
+
+Credit-card/loan money owed uses a negative statement balance. A transfer reconciles each side independently and stays edit-protected while included in any active statement. Later statements start at the previous closing balance and can include older outstanding transactions.
+
+The first completed reconciliation upgrades to schema 5. Do not open the upgraded workspace with dev.8 or older. Retain the pre-upgrade backup. Viewing alone does not upgrade. Inspect the exact build's security-evidence artifact; a clean build-time scan is not signing or universal browser reputation.

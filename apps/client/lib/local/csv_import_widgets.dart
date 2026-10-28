@@ -265,7 +265,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         TextButton(onPressed: _busy || (_page + 1) * 25 >= entries.length ? null : () => setState(() => _page++), child: const Text('Next rows')),
       ]),
       ...entries.skip(_page * 25).take(25).map(_row),
-      if (_snapshot['schema'] != LocalLedger.importSchema) ...[
+      if ((_snapshot['schema'] as int) < LocalLedger.importSchema) ...[
         const Text('First import: export a backup first. This preserves finances and the password setting, but older builds cannot open the import-history format.'),
         CheckboxListTile(contentPadding: EdgeInsets.zero, value: _upgrade,
           title: const Text('I have a backup and understand this workspace will require dev.7 or newer'),

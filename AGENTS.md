@@ -2,7 +2,7 @@
 
 1. Before any changes, read this file, DEVELOPMENT_HANDOFF.md, and docs/IMPLEMENTATION_STATUS.md. Inspect current GitHub default branch, active branches, PRs, latest releases and workflows. Prefer newer verified repository work over this source ZIP.
 2. Repository: https://github.com/TechSavage1989/budgetism. Public source and development-workflow publication were explicitly authorized October 27, 2026. No releases exist. Do not infer permission to publish releases, tags, credentials, or change visibility.
-3. Working user-confirmed baseline: 0.1.0-dev.7 reviewed CSV imports and duplicate protection, plus prior calendar/forecast, budgeting, persistence and optional password. Current development: 0.1.0-dev.8 explicit matching of existing transactions to schedules. Neither is a production release; inspect exact branch/run evidence.
+3. Working user-confirmed baseline: 0.1.0-dev.8 existing-transaction schedule matching plus previous finance features. Current development: 0.1.0-dev.9 statement reconciliation. Neither is a production release; inspect exact run evidence.
 4. Product: private personal finance; Windows first, Flutter client for multiple platforms, .NET 10 API, PostgreSQL, and eventual encrypted native offline database. Do not change architecture or financial data ownership without approval.
 5. Current explicit exclusion: **No server setup, Codex CLI automation, unattended workers, payment setup or API-account setup.** API source exists from prior work, but its deployment and configuration must not be added in this scope.
 6. Never put real financial records or credentials in demo fixtures, screenshots, logs, test output, source, or generated release files. Demo is ephemeral, labelled, and uses invented entries only.
@@ -16,7 +16,7 @@
 14. Before any authorized repo push, recheck main branch SHA, branches, PRs and concurrent edits. Never force push or rewrite shared history. Never publish public source, release, tags or access changes without explicit authorization.
 15. Documentation: centered one-H1 README, short centered tagline, navigation row, exact current functionality. Keep this file and DEVELOPMENT_HANDOFF.md current. Release notes in docs/releases/, not tracked root.
 
-16. Native local workspace records must remain separate from ephemeral demo and private-server records. Never send local data to a backend without explicit sync implementation and authorization. Keep passphrases out of preferences/logs. See docs/LOCAL_STORAGE.md for format and metadata limitations.
+16. Native local workspace records must remain separate from ephemeral demo and private-server records. Never send local data to a backend without explicit sync implementation and authorization. Keep passphrases out of logs. See docs/LOCAL_STORAGE.md for format and metadata limitations.
 
 17. Local password protection is configurable. Existing format-1 workspaces remain protected until explicitly changed. New workspace setup defaults to device-unlocked access. Financial payloads stay encrypted in both modes; never add plaintext key/password fallback. Store random device keys only with OS protection, verify before DB commit, preserve saved records, reject stale-window keys, and keep portable backups independently password-protected. Read docs/LOCAL_STORAGE.md before changing mode formats or recovery behavior.
 
@@ -27,3 +27,5 @@
 20. CSV imports are local, previewed and explicitly committed. Financial schema 4 adds validated receipts only after consent. Retain all prior finance collections and security. Source identity survives edits/voids; matches never repost. Atomic receipt-plus-transaction writes and stale-preview guards are mandatory. Keep files out of logs/network; read docs/CSV_IMPORT.md.
 
 21. Scheduled matching is explicit and local. Match existing links an unlinked, non-voided transaction of the same type/account (and exact transfer direction) to one unresolved occurrence. Do not repost, recategorize, alter financial values, or erase import receipts. Preserve reciprocal links, versions, encrypted audit, atomic saves and stale-preview checks. No new financial schema or automatic matching. Read docs/MATCHING.md.
+
+22. Reconciliation uses explicit statement review, zero exact difference, auditable history and no balancing postings. Schema 5 is opt-in on first completion. Lock included transactions until all relevant statements are reopened, latest per account first. Preserve historical snapshots, import receipts and occurrence links. Read docs/RECONCILIATION.md.

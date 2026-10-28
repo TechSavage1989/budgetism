@@ -18,7 +18,7 @@ class _ImportRules {
     if (input['rows'] is! List || (input['rows'] as List).isEmpty || (input['rows'] as List).length > 500) {
       LocalLedger.fail('Select between 1 and 500 rows for this import.');
     }
-    if (next['schema'] != LocalLedger.importSchema) {
+    if ((next['schema'] as int) < LocalLedger.importSchema) {
       if (input['confirmImportUpgrade'] != true) LocalLedger.fail('Export a backup and confirm the import-history format upgrade first.');
       next.addAll({'schema': LocalLedger.importSchema, 'budgets': next['budgets'] ?? <Json>[],
         'schedules': next['schedules'] ?? <Json>[], 'occurrences': next['occurrences'] ?? <Json>[], 'imports': <Json>[]});
@@ -79,7 +79,7 @@ class _ImportRules {
     return {'fileName': label, 'accountId': accountId, 'receipts': newReceipts};
   }
   static void validate(Json data, List<Json> accounts, List<Json> transactions, Set<String> ids) {
-    if (data['schema'] != LocalLedger.importSchema) {
+    if ((data['schema'] as int) < LocalLedger.importSchema) {
       if (data.containsKey('imports') && (data['imports'] is! List || (data['imports'] as List).isNotEmpty)) {
         LocalLedger.fail('Import receipts require the upgraded workspace schema.');
       }

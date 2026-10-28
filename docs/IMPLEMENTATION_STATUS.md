@@ -1,18 +1,17 @@
 # Current implementation state
 
-Budgetism 0.1.0-dev.8 development preview. Application commit 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b passed all five jobs in [run 40717507066](https://github.com/TechSavage1989/budgetism/actions/runs/40717507066). Its downloaded Windows package was verified against the exact clean build-time Defender scan. Dev.7 is the user-confirmed working baseline; manual dev.8 testing is next.
+Dev.8 is user-confirmed functional. Dev.9 adds statement reconciliation; hosted validation and the exact package scan must be inspected before delivery.
 
 | Area | State |
 | --- | --- |
-| Existing finances | Accounts, budgets, schedules, CSV receipts, calendar/forecasts and optional password retained |
-| New workflow | Scheduled > Match existing; explicit selection/review links a manual or imported actual without reposting |
-| Suggestions | Same account/type/currency and transfer direction; 7/30/90-day range; optional different amounts; search |
-| Integrity | Atomic reciprocal links, revision checks, idempotent retry, preserved postings and import receipts |
-| History | Matched label and existing linked-transaction drilldown |
-| Schema/security | No new financial/encryption/container schema or dependency |
-| Tests | Full existing/new suite and Windows matching write/read process pair passed |
-| Scan/delivery | ZIP and extracted-file Defender scans reported no threats; downloaded package hashes verified |
-| Not included | Automatic matching, unlink/reopen, reconciliation, bank feeds, cross-device sync or updater installation |
-| Distribution | Development artifact only; unsigned, no release/tag or production approval |
+| Existing finances | Accounts, budgets, schedules, matching, imports and calendar/forecast retained |
+| Statement review | Account, ending date, signed balance and outstanding transaction selection |
+| Completion | Requires exact zero and explicit review; never posts an adjustment |
+| History | Completed/reopened statements with selected transaction snapshots |
+| Protection | Included entries cannot be edited/voided until applicable statements are reopened |
+| Recovery | Latest active statement per account can be reopened with a reason |
+| Migration | First completion explicitly upgrades to financial schema 5; all previous collections preserved |
+| Security | Existing encrypted storage, optional password and independent backups retained |
+| Distribution | Development artifacts only; Windows scan required; no release or updater installation |
 
-See DEVELOPMENT_HANDOFF.md and docs/VALIDATION.md for exact performed status.
+Read docs/RECONCILIATION.md and docs/VALIDATION.md for exact semantics and performed checks. Cross-device synchronization and production approval remain outside this milestone.

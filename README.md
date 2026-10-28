@@ -1,130 +1,62 @@
 <h1 align="center">Budgetism</h1>
-<p align="center">Personal money tracking, budgets and cash-flow planning with private local storage.</p>
-<p align="center"><a href="#download">Download</a> | <a href="#getting-started">Get started</a> | <a href="#features">Features</a> | <a href="#updates-and-settings">Updates</a> | <a href="#development">Development</a></p>
+<p align="center">Your finances. Your control.</p>
+<p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.8 development preview. Use fictional records and keep independent backups.** The user confirmed dev.7 CSV importing and duplicate protection alongside prior financial workflows. This iteration adds explicit matching of existing payments to scheduled occurrences; check the [handoff](DEVELOPMENT_HANDOFF.md) for the exact tested commit and build.
-
-## Calendar and scheduled cash flow
-
-Dev.6 adds a read-only monthly calendar and daily 30/60/90/365-day cash-flow forecasts. Select an individual account or all checking/savings/cash accounts, inspect daily activity, and set device-only low-balance minimums. Existing records and financial/security formats do not change when opening these screens.
-
-Starting balances include recorded entries dated today or earlier. Future-dated recorded entries enter on their effective dates. Confirmed occurrences appear only through their actual transaction; unresolved overdue items are disclosed separately and are not silently treated as paid. Budget allocations and unscheduled spending are not forecast. See [planning rules](docs/PLANNING.md) and [Windows test](docs/WINDOWS_TESTING.md).
-
-The build workflow now requires a Microsoft Defender scan of the exact Windows ZIP and its extracted contents before delivering the application artifact. Scan evidence is retained separately. A clean build-time scan is not code signing, an independent audit, or an explanation of an earlier browser alert. Inspect the exact run rather than assuming the scan passed.
-
-## CSV statement import
-
-Choose **Transactions > Import CSV** or **User options > Import CSV statement**. Map the date, description and signed amount (or separate debit/credit columns), preview every row, and decide whether to skip, import, transfer or match an existing transaction. CSV files stay on your device. Invalid rows and possible duplicates require review. New imports commit atomically and keep encrypted history so the same file cannot silently post twice.
-
-Use **Use fictional example CSV** with a test account for the first check. Export a backup before the first saved import: financial schema 4 requires dev.7 or newer afterward. Existing accounts, budgets, schedules, forecasts and the optional-password setting are preserved. CSV is UTF-8 with headers and USD decimal-point values; automatic bank/schedule matching, reconciliation and other statement formats are not included. See [CSV import behavior](docs/CSV_IMPORT.md) and [Windows testing](docs/WINDOWS_TESTING.md).
-
-## Match payments already recorded
-
-Use **Scheduled > Upcoming > Match existing** for a bill, income or transfer already imported or entered. Review an eligible transaction, confirm its amount/date/categories, and select **Link without new transaction**. Actual balances and budget spending do not change. The occurrence moves to History and its duplicate planned forecast item disappears. Use Record transaction only when no actual entry exists.
-
-Suggestions default to the same amount within seven days of the due date. Expand to 30/90 days or include different amounts explicitly for variable bills. Matching keeps the actual categories and splits and links one whole transaction to one occurrence. No new schema, dependency, cloud service or automatic match. There is no unlink action in this preview. See [matching rules](docs/MATCHING.md).
+**0.1.0-dev.9 development preview.** The user confirmed dev.8 matching and earlier finance workflows. This iteration adds statement reconciliation. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
 
 ## Features
 
-Budgetism is a Windows-first personal finance app with an encrypted local workspace. A server and bank connection are not required for local use.
+| Area | Implemented behavior |
+| --- | --- |
+| Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
+| Accounts and transactions | USD checking/savings/cash/debt, exact cents, balanced postings, transfers, splits, edits, voids, audit and search |
+| Budgets | Monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
+| Scheduled | Bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
+| Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
+| Calendar and forecasts | Read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
+| CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
+| Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
-- Save accounts, categories, transactions and history. Choose an optional workspace password or device-unlocked access.
-- Record exact-USD income, expenses, transfers and credit-card payments; edit, split or void actual transactions.
-- Set monthly category budgets, review actual spending, copy allocations, and optionally roll over unused money or overspending.
-- Plan weekly, every-two-weeks, monthly and yearly bills, paychecks and transfers. Review upcoming/overdue dates; record, postpone or skip an occurrence.
-- Explicitly match an imported/manual transaction to a scheduled occurrence without a second posting.
-- Review a recorded occurrence's transaction, pause/resume schedules and retain resolved history.
-- Export password-encrypted backups, restore a workspace, search transactions and retain light/dark appearance.
-- View the financial calendar, scheduled cash-flow projections and device-only low-balance warnings.
-- Import CSV statements through explicit mapping/review, match existing entries and retain encrypted import history.
-- Keep the separate temporary sample-data mode and existing-server client.
-
-Planned, not implemented: local cross-device synchronization, bank feeds, multi-currency local accounts, reconciliation, automatic transaction matching, reminders and validated update installation. Recurring schedules never execute payments or post automatically. Schedule templates use one category/destination; actual transactions can be split after recording.
+No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
 
 ## Download
 
-No GitHub release has been published. Windows preview packages are temporary artifacts under [GitHub Actions](https://github.com/TechSavage1989/budgetism/actions). Select only the successful run for the exact version/commit recorded in the handoff. Artifact downloads may require GitHub sign-in. Development branches can be ahead of main; do not confuse a source snapshot with the compiled application.
+Use **Budgetism-Windows-x64-development** from the successful GitHub Actions run recorded in [the handoff](DEVELOPMENT_HANDOFF.md). Do not download the source snapshot or updater-only binary to run the application. Extract the outer artifact ZIP and then the inner **Budgetism-Windows-x64.zip**. Keep Budgetism.exe, every DLL and the data folder together.
 
-The [releases index](https://github.com/TechSavage1989/budgetism/releases) is the future public updater feed, not the current CI download location. No stable latest-release shortcut applies yet.
+Development artifacts are temporary test downloads, not GitHub releases. Before delivery, CI must build/test and scan both the exact Windows ZIP and extracted runtime files with Microsoft Defender. Scan evidence is retained separately. A clean scan is not signing, an independent audit or universal browser reputation. Do not bypass antivirus detections; retain the exact detection name and affected file for investigation.
 
 ## Requirements
 
-Windows 64-bit is the primary portable target. Keep the complete extracted folder, including DLLs and data. A writable Windows user-profile application-data folder is required. Local mode needs no administrator permissions, server or provider account.
-
-Browser builds retain sample mode and the existing-server interface, not a local financial workspace. Android, iOS, macOS and Linux distributions are not validated by this preview. Building requires the configured Flutter SDK and native Windows toolchain; the existing API source requires .NET 10. No server deployment is included.
+Windows x64 for the validated portable distribution. No Flutter, developer tools, bank connection or server is required to run the saved local workspace. Other native targets remain unvalidated. Use the same Windows account and its protected key store when replacing only the program folder.
 
 ## Getting started
 
-1. Before upgrading, export an encrypted backup from your working version and keep its password. Close all Budgetism windows.
-2. Download Budgetism-Windows-x64-development from the verified successful Actions run. Extract its outer ZIP, then extract Budgetism-Windows-x64.zip inside it into a separate testing folder.
-3. Run **Budgetism.exe** with its support files under the same Windows account. Do not run inside the archive or move only the executable.
-4. Select **Open local workspace**. Existing records and the security setting remain in your Windows profile. New workspaces offer password-free access by default, with optional password protection.
-5. Create or open a test account. Use Transactions, Budgets and Scheduled for the workflows below. The profile menu contains Workspace security, Manage categories and Backups and storage.
+Export a backup before testing a newer build, retain its separate password, and close all Budgetism windows. Extract the new application into its own folder and launch Budgetism.exe. Choose **Open local workspace** for saved records; **Explore with sample data** is temporary and separate. Do not delete or recreate the saved workspace when updating.
 
-Sample mode is temporary and never copies its invented records into your saved workspace. Device-unlocked mode depends on your Windows profile/OS key store. Anyone using that Windows account can open it. There is no password/key recovery. Export portable backups rather than copying only the database.
+User options contains Workspace security, Manage categories, Backups and storage, Import CSV statement, and Reconcile statements. Local password prompting is optional; independently encrypted exports still require a backup password. There is no recovery of a forgotten backup password or lost device key without a usable backup.
 
 ## How to use
 
-**Accounts and transactions:** Add checking, savings, cash, credit-card, loan, asset or liability accounts. Opening debt is negative. Transfers/card payments are not additional spending. Edit a transaction to change its details or split its categories. Void removes its financial effect while keeping history.
+Record actual income/expenses/transfers in Transactions. Budget allocations and schedules do not move money. Record a scheduled occurrence only when appropriate, or use Match existing when its actual transaction is already present. CSV preview is read-only until explicit import; review signs, dates, categories, transfer direction and duplicate decisions.
 
-**Budgets:** Select a month and edit an expense category's allocation. Review allocated, carried-in, spent and remaining values. Rollover can be off, unused money only, or unused money and overspending. Copy previous month copies allocations/rules, not spending. Allocating a budget never moves account money. Select a category to inspect contributing expenses.
+Accounts > Reconcile statements compares outstanding recorded entries with a signed statement closing balance. The first statement starts at the account opening balance; later statements start at the prior completed closing balance. Select only entries cleared on the statement. Finish requires exact zero difference and review confirmation. No balancing transactions are created. Reopen the latest statement with a reason before correcting a protected transaction. Transfers remain protected while reconciled on either side.
 
-**Scheduled:** Add a schedule, choose its account, category/destination, amount, first date and frequency. Upcoming includes all unresolved overdue dates plus the selected future range. Record transaction explicitly creates one actual entry with the confirmed amount/date; Postpone changes only this occurrence; Skip settles it without money movement. Neither planning nor postponing changes balances. Use History to open recorded transactions. Voiding one does not regenerate its occurrence.
-
-Schedule financial edits affect unconfirmed dates. To change recurrence dates, pause the old schedule and create a new one. Short months use their last day, then return to the original anchor. Pausing hides unresolved dates until resumed; nothing catches up automatically. Do not record the same real payment twice. After entering or importing an actual payment, use Match existing for its scheduled occurrence. Alternatively, record through Scheduled first and match that actual transaction during CSV review. Neither matching path is automatic.
-
-**Workspace upgrade:** Export a backup before saving your first schedule in an existing workspace. The explicit confirmation upgrades the financial schema to 3 while preserving financial records, budgets and security mode. Older builds cannot open it afterward. Opening the app alone does not upgrade old data. See [Windows testing](docs/WINDOWS_TESTING.md).
-
-**Security:** User options > Workspace security controls the password requirement. Existing protected data stays protected until you change it. Device-unlocked access uses an OS-protected random key; it does not store your password in preferences. Missing keys never trigger an automatic reset.
-
-**Backups:** Export a .budgetism file with a separate password. Restore replaces the complete workspace only after confirmation, validates records before committing, and preserves the destination security mode. Back up current data first. Keep exported backups and their passwords separately; there is no undo-restore screen.
-
-**Existing server:** The server client remains for an already configured private system. Local records are not uploaded or synchronized. Calendar and forecasts use saved local records only; they are not enabled for server workspaces.
+The first reconciliation completion requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](docs/RECONCILIATION.md) and [the new-feature desktop test](docs/WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
 
 ## Updates and settings
 
-Update discovery retains startup, five-minute active and focus-return checks, ETags, cooldowns and backoff. Offline/failed checks do not claim the app is up to date. Downloads are manual and require an expected SHA-256 digest, which is not publisher signing.
+The public release checker uses caching, rate limits and verified downloads. No release feed exists yet and installation remains disabled pending native end-to-end update validation. Stable filenames are Budgetism.exe and Budgetism-Windows-x64.zip. Settings and data are per-user, not beside the executable.
 
-**Install and restart remains disabled** until native replacement/relaunch/rollback is validated. CI does not create releases or tags.
-
-- Stable executable: Budgetism.exe; portable package: Budgetism-Windows-x64.zip.
-- Windows data: %LOCALAPPDATA%\Budgetism\finance\workspace.sqlite3.
-- Financial payloads remain encrypted in both local access modes; database headers/revisions are not. See [storage design](docs/LOCAL_STORAGE.md).
-- Theme/update cache and downloads remain in per-user storage, not the executable folder. Updater logs use %LOCALAPPDATA%\Budgetism\logs\updater.log.
-
-Do not delete application-data files to troubleshoot. Read [recurring behavior](docs/RECURRING.md) and [development notes](docs/releases/0.1.0-dev.8.md) for this iteration.
+Windows workspace: %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3. Copying that database alone is not a portable backup. Read [local storage](docs/LOCAL_STORAGE.md) before changing recovery or security behavior.
 
 ## Troubleshooting
 
-**Data missing:** Open the local workspace, not sample mode, under the original Windows account.
-
-**Password/key unavailable:** Preserve the database and original OS profile. Use a valid exported backup and its password for recovery. The app cannot reset encryption credentials to decrypt the old data.
-
-**Changed in another window:** Refresh or reopen before retrying. Stale financial, budget and occurrence changes are rejected rather than silently overwriting records.
-
-**Save fails:** Editors keep entered values. Correct the issue and retry. A failed confirmation must not be treated as a recorded transaction.
-
-**An occurrence is already recorded/skipped:** Review History. It cannot be recorded twice under a different request, even after restart or transaction voiding.
-
-**No release / install disabled:** Expected. Obtain development builds from the verified Actions run, not the empty release feed.
+Keep all supporting files after extraction. An older executable must not open a newer financial schema; use the pre-upgrade exported backup for recovery rather than deleting application data. Stale-window errors require closing and reopening the workspace. A nonzero statement difference requires reviewing entries and balances, not forcing an adjustment. Report the exact message without posting private financial data.
 
 ## Development
 
-Read [AGENTS.md](AGENTS.md), [DEVELOPMENT_HANDOFF.md](DEVELOPMENT_HANDOFF.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md) first. The client is in apps/client, API in services/api, updater in tools/updater, and build scripts in scripts. No new server setup is required or provided.
+Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-From apps/client on the configured Flutter Windows build host:
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation write/read process pairs and planning test. Build Windows/web with APP_VERSION=0.1.0-dev.9. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
-~~~powershell
-flutter create --platforms=windows,web --project-name budgetism --no-pub .
-flutter pub get
-flutter analyze
-flutter test
-flutter test integration_test/device_restart_test.dart -d windows
-flutter test integration_test/schedule_restart_test.dart -d windows
-flutter test integration_test/planning_native_test.dart -d windows
-flutter test integration_test/import_restart_test.dart -d windows
-flutter test integration_test/matching_restart_test.dart -d windows
-flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.8
-~~~
-
-CI also runs the security, schedule, import and matching tests in distinct write/read processes. The planning test is a same-process SQLite reopen check. CI builds from an extracted source archive without .git. The handoff records exact flags and evidence. Run python scripts/check_layout.py --self-test and python scripts/verify_windows_package.py --self-test from the source root. Build/package commands and remaining gates are in the handoff and [validation log](docs/VALIDATION.md). Do not infer a test pass merely from a listed command.
+Supporting details: [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.9.md).

@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'money.dart';
 import 'local/local_api.dart';
+import 'local/reconciliation_widgets.dart';
 import 'local/csv_import_widgets.dart';
 import 'local/budget_widgets.dart';
 import 'local/schedule_widgets.dart';
@@ -472,6 +473,7 @@ class _FinanceShellState extends State<FinanceShell> {
       if (value == 'security') await showWorkspaceSecurity(context, api.vault);
       if (value == 'backups' && mounted) await showLocalBackups(context, api);
       if (value == 'categories' && mounted) await manageLocalCategories(context, api);
+      if (value == 'reconcile' && mounted) await showReconciliation(context, api);
       if (value == 'import' && mounted) await showCsvImport(context, api);
       if (mounted) await _refresh();
     } catch (error) { _showError(error); }
@@ -526,9 +528,10 @@ class _FinanceShellState extends State<FinanceShell> {
             onSelected: (v) {
               if (v == 'logout') _logout();
               if (v == 'updates') widget.onCheckUpdates();
-              if (v == 'backups' || v == 'categories' || v == 'security' || v == 'import') _localOptions(v);
+              if (v == 'backups' || v == 'categories' || v == 'security' || v == 'import' || v == 'reconcile') _localOptions(v);
             },
             itemBuilder: (_) => [
+              if (_local) const PopupMenuItem(value: 'reconcile', child: Text('Reconcile statements')),
               if (_local) const PopupMenuItem(value: 'import', child: Text('Import CSV statement')),
               if (_local) const PopupMenuItem(value: 'security', child: Text('Workspace security')),
               if (_local) const PopupMenuItem(value: 'categories', child: Text('Manage categories')),
@@ -672,6 +675,8 @@ class _FinanceShellState extends State<FinanceShell> {
   }
 
   Widget _accountsView() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    if (_local) OutlinedButton.icon(onPressed: () => _localOptions('reconcile'),
+      icon: const Icon(Icons.fact_check_outlined), label: const Text('Reconcile statements')),
     _title('Accounts', widget.api.isDemo ? '${_accounts.length} sample accounts' : _local ? '${_accounts.length} saved local accounts. Select an account to edit.' : '${_accounts.length} accounts on your private server',
       onAction: _createAccount, action: 'Add account'),
     if (_accounts.isEmpty) const _EmptyState(icon: Icons.account_balance_wallet_outlined,
