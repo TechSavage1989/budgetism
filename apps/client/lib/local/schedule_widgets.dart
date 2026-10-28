@@ -122,9 +122,10 @@ class _SchedulePanelState extends State<SchedulePanel> {
       ]),
       const SizedBox(height: 16),
       if (_view == 'Upcoming') ...[
-        SizedBox(width: 300, child: DropdownButtonFormField<int>(initialValue: _days,
+        SizedBox(width: 300, child: DropdownButtonFormField<int>(initialValue: _days, isExpanded: true,
           decoration: const InputDecoration(labelText: 'Upcoming range', border: OutlineInputBorder()),
-          items: [for (final days in [30, 60, 90, 365]) DropdownMenuItem(value: days, child: Text('Next $days days + all overdue'))],
+          items: [for (final days in [30, 60, 90, 365]) DropdownMenuItem(value: days,
+            child: Text('Next $days days + all overdue', maxLines: 1, overflow: TextOverflow.ellipsis))],
           onChanged: (value) => setState(() => _days = value!))),
         const SizedBox(height: 12),
         Text('As of $today. Confirm a bill only when it has actually been paid.'),
