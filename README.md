@@ -1,8 +1,16 @@
 <h1 align="center">Budgetism</h1>
-<p align="center">Personal money tracking, budgets and recurring planning with private local storage.</p>
+<p align="center">Personal money tracking, budgets and cash-flow planning with private local storage.</p>
 <p align="center"><a href="#download">Download</a> | <a href="#getting-started">Get started</a> | <a href="#features">Features</a> | <a href="#updates-and-settings">Updates</a> | <a href="#development">Development</a></p>
 
-**0.1.0-dev.5 development preview. Use fictional records and keep independent backups.** Dev.4 monthly budgeting and restart persistence were confirmed by the user. This iteration adds recurring planning; check the [handoff](DEVELOPMENT_HANDOFF.md) for the exact tested commit and build.
+**0.1.0-dev.6 development preview. Use fictional records and keep independent backups.** The user reports dev.5 works; budgeting, restart persistence and optional-password operation were confirmed earlier. This iteration adds a calendar and cash-flow forecasts; check the [handoff](DEVELOPMENT_HANDOFF.md) for the exact tested commit and build.
+
+## Calendar and scheduled cash flow
+
+Dev.6 adds a read-only monthly calendar and daily 30/60/90/365-day cash-flow forecasts. Select an individual account or all checking/savings/cash accounts, inspect daily activity, and set device-only low-balance minimums. Existing records and financial/security formats do not change when opening these screens.
+
+Starting balances include recorded entries dated today or earlier. Future-dated recorded entries enter on their effective dates. Confirmed occurrences appear only through their actual transaction; unresolved overdue items are disclosed separately and are not silently treated as paid. Budget allocations and unscheduled spending are not forecast. See [planning rules](docs/PLANNING.md) and [Windows test](docs/WINDOWS_TESTING.md).
+
+The build workflow now requires a Microsoft Defender scan of the exact Windows ZIP and its extracted contents before delivering the application artifact. Scan evidence is retained separately. A clean build-time scan is not code signing, an independent audit, or an explanation of an earlier browser alert. Inspect the exact run rather than assuming the scan passed.
 
 ## Features
 
@@ -16,7 +24,7 @@ Budgetism is a Windows-first personal finance app with an encrypted local worksp
 - Export password-encrypted backups, restore a workspace, search transactions and retain light/dark appearance.
 - Keep the separate temporary sample-data mode and existing-server client.
 
-Planned, not implemented: local cross-device synchronization, financial calendar/forecasting, bank feeds, multi-currency local accounts, reconciliation, automatic transaction matching, reminders and validated update installation. Recurring schedules never execute payments or post automatically. Schedule templates use one category/destination; actual transactions can be split after recording.
+Planned, not implemented: local cross-device synchronization, bank feeds, multi-currency local accounts, reconciliation, automatic transaction matching, reminders and validated update installation. Recurring schedules never execute payments or post automatically. Schedule templates use one category/destination; actual transactions can be split after recording.
 
 ## Download
 
@@ -56,7 +64,7 @@ Schedule financial edits affect unconfirmed dates. To change recurrence dates, p
 
 **Backups:** Export a .budgetism file with a separate password. Restore replaces the complete workspace only after confirmation, validates records before committing, and preserves the destination security mode. Back up current data first. Keep exported backups and their passwords separately; there is no undo-restore screen.
 
-**Existing server:** The server client remains for an already configured private system. Local records are not uploaded or synchronized. Forecasts remain a labelled placeholder.
+**Existing server:** The server client remains for an already configured private system. Local records are not uploaded or synchronized. Calendar and forecasts use saved local records only; they are not enabled for server workspaces.
 
 ## Updates and settings
 
@@ -69,7 +77,7 @@ Update discovery retains startup, five-minute active and focus-return checks, ET
 - Financial payloads remain encrypted in both local access modes; database headers/revisions are not. See [storage design](docs/LOCAL_STORAGE.md).
 - Theme/update cache and downloads remain in per-user storage, not the executable folder. Updater logs use %LOCALAPPDATA%\Budgetism\logs\updater.log.
 
-Do not delete application-data files to troubleshoot. Read [recurring behavior](docs/RECURRING.md) and [development notes](docs/releases/0.1.0-dev.5.md) for this iteration.
+Do not delete application-data files to troubleshoot. Read [recurring behavior](docs/RECURRING.md) and [development notes](docs/releases/0.1.0-dev.6.md) for this iteration.
 
 ## Troubleshooting
 
@@ -98,7 +106,8 @@ flutter analyze
 flutter test
 flutter test integration_test/device_restart_test.dart -d windows
 flutter test integration_test/schedule_restart_test.dart -d windows
-flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.5
+flutter test integration_test/planning_native_test.dart -d windows
+flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.6
 ~~~
 
-CI also runs the native tests in distinct write/read processes and builds from an extracted source archive without .git. The handoff records exact flags and evidence. Run python scripts/check_layout.py --self-test and python scripts/verify_windows_package.py --self-test from the source root. Build/package commands and remaining gates are in the handoff and [validation log](docs/VALIDATION.md). Do not infer a test pass merely from a listed command.
+CI also runs the security and schedule tests in distinct write/read processes. The planning test is a same-process SQLite reopen check. CI builds from an extracted source archive without .git. The handoff records exact flags and evidence. Run python scripts/check_layout.py --self-test and python scripts/verify_windows_package.py --self-test from the source root. Build/package commands and remaining gates are in the handoff and [validation log](docs/VALIDATION.md). Do not infer a test pass merely from a listed command.

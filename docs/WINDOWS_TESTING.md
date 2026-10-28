@@ -1,24 +1,19 @@
-# Budgetism dev.5 Windows test
+# Budgetism dev.6 Windows testing
 
-Use [successful dev.5 build 40616768105](https://github.com/TechSavage1989/budgetism/actions/runs/40616768105), tested application commit 39353fd46314aa22866ff85dcf0aad352fa39601, not a source ZIP or an older run. Download Budgetism-Windows-x64-development, extract the artifact and its inner Budgetism-Windows-x64.zip, keep all supporting files, and launch Budgetism.exe under the same Windows account.
+Use only the successful dev.6 Windows artifact linked after validation. Export an encrypted backup in the working application, close all Budgetism windows, and extract the complete portable folder into a new testing folder. Launch Budgetism.exe under the same Windows account. Do not delete, copy over or recreate the per-user workspace.
 
-## Before opening the next build
+## Existing data
 
-In the working dev.4 app, choose User options > Backups and storage > Export encrypted backup. Keep the backup and its independent password separately. Close every Budgetism window. Extract dev.5 into its own testing folder. Do not copy, delete or replace the per-user database.
+Open local workspace, confirm version 0.1.0-dev.6, verify existing accounts/transactions/schedules and password preference. Merely opening Calendar or Forecasts must not trigger migration or alter balances. Budgeting was already tested; this test focuses on planning.
 
-## Existing records
+## Forecast test
 
-Confirm version 0.1.0-dev.5. Open the saved local workspace and verify accounts, transactions, budgets and the optional-password setting. Opening does not automatically convert an existing financial schema.
+Use a fictional checking account with a 1000.00 opening balance. Create a monthly income schedule for 500.00 tomorrow and an expense schedule for 200.00 the following day, using existing fictional categories. Open Forecasts and select this test account. The starting balance should be 1000.00, tomorrow 1500.00, and the following day 1300.00. Actual account balances must not change merely from opening these screens.
 
-## Recurring test using fictional records
+Select the dates in Calendar and inspect the two events and per-account changes. Confirm one occurrence through Scheduled using its planned date and amount. It must appear as Recorded (or Recorded future), not a second scheduled item. The future projection must not double count it. Restore/reopen only using the existing supported controls; no new financial-format conversion is needed by this feature.
 
-1. Record the balance of a test checking account and the current spending in a test expense category.
-2. Open Scheduled > Add schedule. Name it Test bill, choose that account/category, expected amount 10.00, Monthly, and today's date as the first due date.
-3. After exporting the backup, confirm the dev.5 format-upgrade notice and Save schedule. Existing records should stay intact. The account balance and actual budget spending should not change yet.
-4. In Upcoming, choose Record transaction for that Test bill. Use actual amount 10.00 and today's recorded date, then confirm. The balance should fall by 10.00, expense spending should increase by 10.00, and History should contain the recorded occurrence with one linked transaction.
-5. Close and reopen dev.5. Confirm the schedule, budget effect, transaction and security preference are retained. The same occurrence must not appear as due again.
-6. For a later occurrence, choose Postpone and a later date. It should move only that occurrence, without another transaction or a change to subsequent original dates. Skip a different test occurrence and verify History and unchanged balances.
+Set a low-balance minimum for the test account, close/reopen the app and confirm that device preference remains. It is not included in encrypted financial backups. Test an overdue item separately: it should be disclosed, not silently deducted on today's date. Do not manually enter the same payment and also record its schedule.
 
-The first saved schedule upgrades the financial schema. Do not use dev.4 or earlier against it afterward. Keep the pre-upgrade backup for recovery. Recurring schedules do not match existing manual transactions yet: recording a real payment both manually and through Scheduled would double count it. Use fictional entries during this preview.
+## Security evidence
 
-This does not configure a server, move real money, send reminders, or enable updater installation. Exported backups still require their own password even when local password prompting is off.
+Check the same build's Budgetism-Windows-security-evidence artifact for the exact archive hash and Defender output. A clean scan is limited to that engine/signature/time and does not guarantee every browser will trust an unsigned build. Do not disable antivirus or add exclusions if another alert occurs; record its detection name and affected file.

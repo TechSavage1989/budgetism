@@ -63,7 +63,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.5
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.6
 
   windows-portable:
     runs-on: windows-latest
@@ -134,15 +134,31 @@ jobs:
       - name: Test native schedules - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/schedule_restart_test.dart -d windows --dart-define=SCHEDULE_TEST_PHASE=read --dart-define="SCHEDULE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-schedule-restart"
+      - name: Test native read-only calendar and forecast
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/planning_native_test.dart -d windows
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.5
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.6
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.5'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.6'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.5 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.6 --checksums build/packages/checksums.sha256 --self-test
+      - name: Scan the exact Windows archive and extracted contents with Defender
+        timeout-minutes: 10
+        working-directory: ${{ env.BUDGETISM_SOURCE }}
+        run: ./scripts/scan_windows_package.ps1 -Archive build/packages/Budgetism-Windows-x64.zip -ReportDirectory build/security
+      - name: Retain build security evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-Windows-security-evidence
+          path: |
+            ${{ env.BUDGETISM_SOURCE }}/build/security/*.json
+            ${{ env.BUDGETISM_SOURCE }}/build/security/*.txt
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: Budgetism-Windows-x64-development
