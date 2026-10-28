@@ -2,7 +2,7 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.9 development preview.** The user confirmed dev.8 matching and earlier finance workflows. This iteration adds statement reconciliation. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.10 development preview.** The user confirmed dev.9 reconciliation and earlier finance workflows. This iteration adds read-only financial reports and explicit CSV exports. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
 
 ## Features
 
@@ -15,6 +15,7 @@
 | Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
 | Calendar and forecasts | Read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
 | CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
+| Reports | Historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
 No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
@@ -41,7 +42,9 @@ Record actual income/expenses/transfers in Transactions. Budget allocations and 
 
 Accounts > Reconcile statements compares outstanding recorded entries with a signed statement closing balance. The first statement starts at the account opening balance; later statements start at the prior completed closing balance. Select only entries cleared on the statement. Finish requires exact zero difference and review confirmation. No balancing transactions are created. Reopen the latest statement with a reason before correcting a protected transaction. Transfers remain protected while reconciled on either side.
 
-The first reconciliation completion requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](docs/RECONCILIATION.md) and [the new-feature desktop test](docs/WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
+Reports reads existing records without a new format upgrade. Select dates/accounts and inspect Overview, Categories, Monthly or Balances. CSV exports are unencrypted, require explicit confirmation and are not backups. See [report semantics](docs/REPORTS.md), including the limits of undated opening balances.
+
+The first reconciliation completion still requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](docs/RECONCILIATION.md) and [the new-feature desktop test](docs/WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
 
 ## Updates and settings
 
@@ -57,6 +60,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation write/read process pairs and planning test. Build Windows/web with APP_VERSION=0.1.0-dev.9. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation write/read process pairs and planning/report preservation tests. Build Windows/web with APP_VERSION=0.1.0-dev.10. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
-Supporting details: [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.9.md).
+Supporting details: [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.10.md).

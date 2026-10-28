@@ -11,6 +11,7 @@ import 'local/csv_import_widgets.dart';
 import 'local/budget_widgets.dart';
 import 'local/schedule_widgets.dart';
 import 'local/planning_widgets.dart';
+import 'local/report_widgets.dart';
 import 'local/storage.dart';
 import 'local/workspace_dialogs.dart';
 import 'local/security_dialogs.dart';
@@ -498,6 +499,7 @@ class _FinanceShellState extends State<FinanceShell> {
     (label: 'Scheduled', icon: Icons.event_repeat_outlined),
     (label: 'Calendar', icon: Icons.calendar_month_outlined),
     (label: 'Forecasts', icon: Icons.show_chart_outlined),
+    (label: 'Reports', icon: Icons.assessment_outlined),
   ];
 
   @override
@@ -589,6 +591,10 @@ class _FinanceShellState extends State<FinanceShell> {
                         if ((_page == 5 || _page == 6) && _local) PlanningPanel(
                           key: ValueKey('planning:$_page'), api: widget.api as LocalFinanceApi, calendar: _page == 5,
                           onOpenTransaction: _editLocalTransaction, onOpenScheduled: () => setState(() => _page = 4)),
+                        if (_page == 7 && _local) ReportPanel(readSnapshot: () =>
+                          (widget.api as LocalFinanceApi).vault.ledger.snapshot(includeVoided: true)),
+                        if (_page == 7 && !_local) _futureFeature('Reports', Icons.assessment_outlined,
+                          'Open your saved local workspace to report on recorded financial activity.'),
                         if ((_page == 5 || _page == 6) && !_local) _futureFeature('Calendar and forecasts', Icons.show_chart_outlined,
                             'Open your saved local workspace to view its calendar and scheduled cash flow.'),
                       ])),

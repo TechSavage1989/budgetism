@@ -1,19 +1,17 @@
 # Current implementation state
 
-Dev.8 is user-confirmed functional. Dev.9 application 1ba16145c8e9cec3cf88b39eceadbbfd8cab6b06 passed all five jobs in [run 40728930400](https://github.com/TechSavage1989/budgetism/actions/runs/40728930400). Its downloaded Windows package matched the checksum, identity, runtime dependencies and a no-threats-detected Defender scan. Manual dev.9 desktop confirmation remains pending.
+Dev.9 is user-confirmed functional, including statement reconciliation and restart retention. Dev.10 adds financial reports; hosted validation and exact-package security evidence must be confirmed before delivery.
 
 | Area | State |
 | --- | --- |
-| Existing finances | Accounts, budgets, schedules, matching, imports and calendar/forecast retained |
-| Statement review | Account, ending date, signed balance and outstanding transaction selection |
-| Completion | Requires exact zero and explicit review; never posts an adjustment |
-| History | Completed/reopened statements with selected transaction snapshots |
-| Protection | Included entries cannot be edited/voided until applicable statements are reopened |
-| Recovery | Latest active statement per account can be reopened with a reason |
-| Migration | First completion explicitly upgrades to financial schema 5; all previous collections preserved |
-| Security | Existing encrypted storage, optional password and independent backups retained |
-| Automated checks | Full suite, existing native tests and new reconciliation process pair passed |
-| Windows package | Verified artifact 12834822871 from the exact successful run |
-| Distribution | Development artifact only; unsigned, no GitHub release/tag or updater installation |
+| Existing finances | Ledger, budgets, schedules, imports, matching, calendar/forecasts and reconciliation retained |
+| Reports | Historical date/account filters, income/spending/net totals and recorded balances |
+| Categories | Exact split contributions and read-only transaction drilldown |
+| Monthly trends | Income, expenses, net income and recorded closing balances, including zero months |
+| CSV export | Explicit unencrypted export, desktop destination picker and text neutralization |
+| Financial migration | None; read-only calculations and export never change workspace records |
+| Security | Existing optional password, encryption, backups and mandatory package scan retained |
+| Automated checks | New report/unit/widget/native tests added; inspect exact hosted run |
+| Distribution | Development artifacts only; unsigned, no release/tag or updater installation |
 
-Read docs/RECONCILIATION.md and docs/VALIDATION.md for exact semantics and performed checks. Cross-device synchronization and production approval remain outside this milestone.
+No cross-device synchronization, bank connection or server setup is added. Web remains the existing demo/server interface, not browser-local financial storage. Read docs/REPORTS.md for scope and opening-balance limitations.

@@ -1,20 +1,17 @@
-# Budgetism dev.9 Windows test
+# Budgetism dev.10 Windows test
 
-Use [successful dev.9 run 40728930400](https://github.com/TechSavage1989/budgetism/actions/runs/40728930400), application commit 1ba16145c8e9cec3cf88b39eceadbbfd8cab6b06. Download Budgetism-Windows-x64-development, artifact 12834822871, not the source snapshot or updater-only binary. Extract the outer ZIP, then Budgetism-Windows-x64.zip inside it. Export an encrypted backup from working dev.8 and keep its password. Close every Budgetism window. Extract the complete portable package in its own folder; keep Budgetism.exe, DLLs and data directory together, using the same Windows account. Do not replace or recreate the stored workspace.
+Download only the verified compiled Windows artifact from the exact successful run recorded after validation. Export an encrypted backup from working dev.9 and retain its password. Close all Budgetism windows; extract the complete portable package into its own folder, keeping Budgetism.exe, DLLs and data together. Use the same Windows account and existing local workspace. Do not copy, replace or recreate the database.
 
-Open version 0.1.0-dev.9 and your existing workspace. Previous budgeting, forecasting, importing and matching already worked; no repeated setup exercise is needed.
+## Test the new Reports screen
 
-## Test reconciliation only
+Previous reconciliation, matching, importing, forecasting and budgeting are confirmed. Do not repeat those setup exercises.
 
-Use a fictional account with a known opening balance and recorded entries. For example, an opening balance of 1000 plus recorded income 500 minus recorded expense 200 has a balance of 1300.
+1. Confirm version 0.1.0-dev.10. Open Reports and select a known fictional account through Report accounts. Choose a range covering its recorded activity.
+2. For an account with opening balance 1000, recorded income 500 and recorded expense 200, expect Income 500, Expenses 200, Net income 300 and Closing recorded net balance 1300, provided it has no other activity. The account opening balance is not income. Transfers and card payments are not expenses.
+3. Open Categories and select an expense category. A split transaction must show the category contribution separately from the whole transaction. Monthly shows exact totals for all months in range; Balances shows starting, change and closing values.
+4. Optionally choose a CSV report and Export CSV. Confirm that this file is unencrypted and choose a private .csv destination. Check its date range and totals. Cancelled/failed exports must not affect workspace records.
+5. Close/reopen. Existing account balances, transaction counts, statement history and optional-password setting must remain unchanged. The report can be regenerated from the same records. Viewing or exporting requires no new workspace-format upgrade.
 
-1. Open Accounts > Reconcile statements (also available in User options). Select the test account and Start reconciliation.
-2. Enter the statement ending date, covering those entries, and closing balance 1300.00. Review statement must not alter actual balances.
-3. Check the two cleared entries. Selected cleared balance should be 1300.00 and difference 0.00. An omitted or extra entry must prevent completion if the difference is nonzero.
-4. After exporting a backup, confirm the format upgrade and statement review. Finish reconciliation must leave the account at 1300 with the same number of transactions.
-5. Close and reopen dev.9. Completed history and balance should remain. Trying to edit an included transaction should explain that its statement must first be reopened.
-6. Optionally reopen the latest statement with a reason. History remains, balances do not change, and those entries become outstanding for that account again.
+Reports are recorded historical activity, not the scheduled forecast. Future-dated recorded entries are excluded until their dates fall within the selected historical range. Saved opening balances have no opening dates, so recorded balances are not independently verified historical valuations. CSV is not a backup; sensitive text may be visibly prefixed with Text: for spreadsheet safety.
 
-Credit-card/loan money owed uses a negative statement balance. A transfer reconciles each side independently and stays edit-protected while included in any active statement. Later statements start at the previous closing balance and can include older outstanding transactions.
-
-The first completed reconciliation upgrades to schema 5. Do not open the upgraded workspace with dev.8 or older. Retain the pre-upgrade backup. Viewing alone does not upgrade. Inspect the exact build's security-evidence artifact; a clean build-time scan is not signing or universal browser reputation.
+Use the same build's Defender security-evidence artifact. A no-threats result is limited to that scanner/signature/time; the application remains unsigned and no universal browser-reputation claim is made.
