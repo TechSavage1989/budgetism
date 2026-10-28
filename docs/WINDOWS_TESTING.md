@@ -1,6 +1,6 @@
 # Budgetism dev.9 Windows test
 
-Download only the compiled Windows artifact from the verified run recorded after validation. Export an encrypted backup from working dev.8 and keep its password. Close every Budgetism window. Extract the complete portable package in its own folder; keep Budgetism.exe, DLLs and data directory together, using the same Windows account. Do not replace or recreate the stored workspace.
+Use [successful dev.9 run 40728930400](https://github.com/TechSavage1989/budgetism/actions/runs/40728930400), application commit 1ba16145c8e9cec3cf88b39eceadbbfd8cab6b06. Download Budgetism-Windows-x64-development, artifact 12834822871, not the source snapshot or updater-only binary. Extract the outer ZIP, then Budgetism-Windows-x64.zip inside it. Export an encrypted backup from working dev.8 and keep its password. Close every Budgetism window. Extract the complete portable package in its own folder; keep Budgetism.exe, DLLs and data directory together, using the same Windows account. Do not replace or recreate the stored workspace.
 
 Open version 0.1.0-dev.9 and your existing workspace. Previous budgeting, forecasting, importing and matching already worked; no repeated setup exercise is needed.
 

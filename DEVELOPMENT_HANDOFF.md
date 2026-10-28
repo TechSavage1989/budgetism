@@ -1,6 +1,8 @@
 # Budgetism development handoff
 
 **Development version:** 0.1.0-dev.9, local statement reconciliation.
+**Verified application:** 1ba16145c8e9cec3cf88b39eceadbbfd8cab6b06, tree 113f9f79d896a92b5bd74943c81867b7149da39c.
+**Successful CI:** [run 40728930400](https://github.com/TechSavage1989/budgetism/actions/runs/40728930400), all five jobs passed, including the native reconciliation process pair and exact-package Defender scan.
 **User-confirmed baseline:** dev.8 matching worked. Prior imports, forecasts, budgets, schedules, persistence and optional passwords are confirmed; do not repeat those setup tests.
 **Starting main:** 1de69f0f3598aa275e52b910714cb30e5fcdac14, documentation follow-up to tested application 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b. Dev.8 successful run 40717507066.
 
@@ -16,7 +18,13 @@ New files: local/reconciliation.dart (ledger part and derived helpers), local/re
 
 ## Validation and delivery
 
-Local SDKs and Windows GUI are unavailable. Source/archive and layout checks are not compilation evidence. Inspect the exact hosted run before delivery. Retain all existing Flutter tests and native process pairs; add reconciliation write/read with RECONCILE_TEST_PHASE and an isolated RECONCILE_TEST_DIRECTORY. Keep Windows/web build gates and the exact ZIP/extracted Defender scan. Never suppress an analyzer/test failure or bypass a scan detection.
+All existing/new Flutter tests and web/Windows compilation passed. Retained native test pairs and the new reconciliation write/read pair passed with actual Windows SQLite/OS keys. The exact ZIP and extracted contents passed the required Defender scan. Downloaded source/package provenance, hashes, native files and actual updater verify-only acceptance were independently checked. See docs/VALIDATION.md for exact evidence and corrected failures.
+
+Use the successful run above, artifact Budgetism-Windows-x64-development, ID 12834822871. Outer SHA-256: 009a8d8e527e3d3af68da6a189c8de47633f0c5216c8f0adfb2395a8d718180d. Inner portable ZIP: 16,126,748 bytes, SHA-256 9c76464b6934d0f430cbb3b24efe7c9627627cd80e88a3c0c5fbd0e71f7a5e5c. Security artifact 12834608380 identifies this same hash and reports no threats in both scans. The executables remain unsigned, and the user's dev.9 GUI workflow is not yet confirmed.
+
+No local Flutter/Dart/.NET SDK or Windows GUI was available; hosted execution is distinguished from local source/package checks. Reconciliation integration uses RECONCILE_TEST_PHASE=write/read and the same isolated RECONCILE_TEST_DIRECTORY in two separate native app processes. All prior gates remain enabled. Do not suppress failures or bypass scan detections.
+
+This documentation-only follow-up changes no tested application code/version. Identify the binary by the application commit, not a later documentation-only HEAD. Recheck expected branch heads before normal fast-forward publication; preserve historical branches.
 
 Stable names Budgetism.exe and Budgetism-Windows-x64.zip. User data remains %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 under the same Windows profile/key store. Root allowlist is unchanged. No build outputs, keys, databases or logs in tracked source. GitHub Actions artifacts are the preferred user delivery route; no release or automatic installation is authorized.
 
