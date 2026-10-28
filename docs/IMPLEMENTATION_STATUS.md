@@ -1,18 +1,18 @@
 # Current implementation state
 
-Dev.10 financial reports and CSV export are user-confirmed. Dev.11 adds reviewed local categorization rules; the exact hosted build and package scan remain required before delivery.
+Dev.11 categorization rules are user-confirmed. Dev.12 application 605ffe4334f20a94197f923fff12562e9de8737d is being validated in run 40772902439. Web/Windows analysis and unit/widget tests passed, including 179 tests on the web runner, and web compilation passed. Native Windows tests, packaging and exact-package scanning must finish before delivery.
 
 | Area | State |
 | --- | --- |
-| Existing finances | Accounts, budgets, schedules, imports, matching, forecasts, reports and reconciliation retained |
-| Rules | Payee/account/type/source/current-category/amount conditions; ordering and enable/disable |
-| Review | Inclusive dates, before/after category and winning rule; nothing selected automatically |
-| Apply | Explicit selected batch, exact revision/version checks, atomic before/after audit and idempotent retry |
-| Protection | Reconciled, split, transfer and voided entries excluded |
-| Accounting | Account balances, transaction count, values, receipts and schedule links preserved; categories affect budgets/reports |
-| Migration | First rule save requires backup/consent for schema 6; no change merely on open/preview |
-| Privacy | Rule text remains encrypted, with existing optional password and independent backups |
-| Validation | New unit/storage/widget tests and native two-process rules test authored; inspect hosted results |
+| Existing finances | All dev.11 ledger, budgets, schedules, reports, rules, imports, matching, forecasting and reconciliation preserved |
+| Search | AND words, quoted phrases, exclusions across payee/notes/accounts/categories |
+| Filters | Combined date/account/category/type/amount/source/reconciliation or voided status |
+| Sorting and counts | Stable date/amount/payee order; all matches counted, display in batches of 100 |
+| Financial totals | Split category shares when filtered; transfers separate; voided rows excluded |
+| Details | Read-only splits, receipt references, schedule links and active statement locks |
+| Editing | Explicit handoff to existing editor; voided or globally reconciled entries blocked |
+| Persistence | No new financial schema or stored search data; session state retained across navigation |
+| Validation | Web/Windows analysis and unit/widget suites plus web build passed; native/package/scan still pending |
 | Distribution | Development artifacts only; unsigned; no release/tag, server setup or updater installation |
 
-No rule runs automatically. Bank feeds, synchronization, advanced rule actions and batch undo remain unfinished. See CATEGORIZATION_RULES.md and VALIDATION.md.
+Saved searches, tags, bank feeds, cross-device synchronization and global multi-entity search remain unfinished. See TRANSACTION_REGISTER.md.

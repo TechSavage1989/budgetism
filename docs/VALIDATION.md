@@ -1,17 +1,27 @@
-# Validation: Budgetism 0.1.0-dev.11
+# Validation: Budgetism 0.1.0-dev.12
 
-## Starting baseline
+## Verified starting source
 
-User-confirmed dev.10 application 63b5b6cef441ca1889117d6a3b43ec05f5e5aa34, successful run 40737797353. Starting main 17a5a04b3e8ca1688afce38f4d60859d9ac8c522 is its documentation-only follow-up. The source archive matched outer SHA-256 0514844ad3d66100d260a88fd896d368f0fe2c8d040ec5a67a0629765e75e7bc and inner 66f1ce0e50df25520a659dcca8f3422dbb8005e8e51ed000590a85b6e6800bc0. Its recorded commit and independently recomputed Git tree matched 5f2d6f429fdbfc83a373608227de4d609d562c59. Live comparison confirmed that main differs only in five documentation files.
+The user confirmed dev.11 rules. Starting application 6296272ca9d6635379928fd783f17be57e5d4a83 on development/rules-dev11 has successful run 40746717030. Main was still the dev.10 documentation follow-up 17a5a04b3e8ca1688afce38f4d60859d9ac8c522; this iteration preserves the newer branch.
 
-## Local checks
+The downloaded dev.11 source archive outer SHA-256 is 5c00a452b17ab93555390d920d38b234353da3aa3a214536c378cbcbb0cb4949. Its inner ZIP SHA-256 is 9820412aa2e2b52ef875c0a5e0de76be310dee9333b871ac8ebd997777636280. Source commit and independently recomputed Git tree matched 07731ab027b035b331f39f23117700e57018d479 before editing.
 
-Source-layout and deliberate-clutter checks, package-verifier negative controls, diff whitespace, unchanged Go race tests and go vet passed. New code was reviewed for atomic category-only changes, protected/split exclusions, stale revisions, explicit rule precedence and retained import/schedule links. No local Flutter/Dart/.NET SDK or Windows GUI exists. Authored tests are not passing runtime evidence.
+## Current hosted evidence
 
-## Added validation coverage
+Application 605ffe4334f20a94197f923fff12562e9de8737d, tree 507235f9a15065c51b0251cbd0083ef90ecf4263, is under validation in [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439). Web analysis, all 179 unit/widget tests and web compilation passed on Ubuntu. Windows analysis and the complete unit/widget suite also passed. Backend/accounting, updater-security and source-layout jobs passed. Native Windows tests, compilation/package upload and exact-package Defender scanning remain pending. No compiled download is claimed ready by this interim record.
 
-Rule migration only on explicit consent; older schemas and financial preservation; precedence including no-op and disabled rules; payee/source/account/category/amount/date conditions; protected/split/voided/transfer exclusions; exact category budget effects; stale/forged/duplicated batches and replay; corruption rejection; limits; preserved imports and matched schedules. Storage tests cover failed-save atomicity, encrypted SQLite reopening, stale windows and backup restoration. Widget tests cover migration/review consent, retained fields/selection on failure, retry, single-flight, date invalidation and narrow layouts. The native rules test runs write/read in separate Windows processes.
+Source artifact 12851604858 from run 40772902155 matched outer SHA-256 29f1d769b602096a9d860a9404f40c60a6ea0e024bbc6bd8070e2826dd6719f7 and inner SHA-256 6bc8ffebc3b573adbf737e40d58173da33e7e4ce5793a45f37471d0cea08b057. Every one of its 137 files matched the intended source; independently recomputing the complete archived Git tree produced the application tree above.
 
-## Required hosted gate
+## Local validation
 
-Run the full retained/new Flutter suite, every native process pair, planning/report tests, Windows/web compilation, backend/updater checks, package identity/dependencies and exact ZIP/extracted Defender scans. Inspect and record the exact commit, run and artifact hashes before providing a Windows download. Do not bypass failures. No release/tag or production approval. A clean scan is limited to its scanner/signature/time and is not publisher signing or universal browser reputation.
+Source-layout with deliberate clutter, package-verifier negative controls, unchanged Go race tests and go vet, diff whitespace, 44 local documentation links and the README single centered H1 passed. Forty existing local-finance/backend/updater files are byte-identical to dev.11. No local Flutter/Dart/.NET SDK or Windows GUI is available; authored tests are not compilation/runtime evidence. Exact hosted build/test/package results remain pending until recorded below. No scan or test gates are disabled.
+
+## Added checks
+
+Read-only snapshot preservation, future recorded entries vs plans, all-match totals, split contributions vs whole-amount filters, exact-cent/date validation, query phrases/AND/exclusions and malformed query rejection, account-side import/reconciliation state, global transfer locks, voided history, deterministic sorting, 101-row totals, unavailable selections, immutable result copies, schema 1-6 reads and exact aggregate limits.
+
+Widget tests cover 430/1100-pixel layouts, search/filter reset and invalid-state handling, details, explicit editor handoff, changed protection before edit, voided records, expanding 100 rows and real-shell navigation preserving session filters. The native register test uses actual Windows SQLite/OS keys and confirms unchanged ciphertext/revision/JSON and protected edits after same-process close/reopen. All previous separate-process test pairs remain required.
+
+## Delivery gate
+
+Full Flutter analysis/tests, Windows/web builds, all existing native pairs and new register preservation test, source/backend/updater checks, archive identity/dependencies/CRC/hashes and Defender scans of the exact ZIP and extracted files. Record exact application commit, run/artifacts and scan evidence before delivery. Unsigned development artifact only; no release/tag, audit or production-safety claim. Manual dev.12 desktop check remains required.
