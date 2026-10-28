@@ -24,6 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
@@ -91,6 +95,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/check_layout.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Initialize Defender on the ephemeral build machine
+        timeout-minutes: 3
+        working-directory: ${{ env.BUDGETISM_SOURCE }}
+        run: powershell -NoProfile -File ./scripts/prepare_ci_defender.ps1 -ReportDirectory build/security
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -149,7 +157,7 @@ jobs:
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/scan_windows_package.ps1 -Archive build/packages/Budgetism-Windows-x64.zip -ReportDirectory build/security
+        run: powershell -NoProfile -File ./scripts/scan_windows_package.ps1 -Archive build/packages/Budgetism-Windows-x64.zip -ReportDirectory build/security
       - name: Retain build security evidence
         if: always()
         uses: actions/upload-artifact@v4
