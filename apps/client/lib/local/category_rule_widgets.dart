@@ -60,9 +60,11 @@ class _CategoryRulesPageState extends State<CategoryRulesPage> {
   Future<void> _edit([Json? rule]) async {
     final saved = await showDialog<bool>(context: context, barrierDismissible: false,
       builder: (_) => CategoryRuleEditor(data: _data, existing: rule, onSave: widget.onSave));
-    if (saved == true && mounted) setState(() {
-      _data = widget.snapshot(); _invalidate(); _notice = 'Rule saved. No transactions were changed.';
-    });
+    if (saved == true && mounted) {
+      setState(() {
+        _data = widget.snapshot(); _invalidate(); _notice = 'Rule saved. No transactions were changed.';
+      });
+    }
   }
   void _generate() {
     try {
@@ -91,10 +93,12 @@ class _CategoryRulesPageState extends State<CategoryRulesPage> {
     setState(() { _busy = true; _error = null; });
     try {
       await widget.onApply(request);
-      if (mounted) setState(() {
-        _data = widget.snapshot(); _invalidate();
-        _notice = '$count transactions recategorized. Account balances and transaction count are unchanged.';
-      });
+      if (mounted) {
+        setState(() {
+          _data = widget.snapshot(); _invalidate();
+          _notice = '$count transactions recategorized. Account balances and transaction count are unchanged.';
+        });
+      }
     } catch (e) { if (mounted) setState(() => _error = e.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
   }
