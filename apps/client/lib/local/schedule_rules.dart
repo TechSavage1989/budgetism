@@ -20,7 +20,9 @@ class _ScheduleRules {
     LocalLedger.text(schedule['notes'], 'Notes', 500, optional: true);
     Recurrence.parse(schedule['startDate']);
     if (!Recurrence.frequencies.contains(schedule['frequency']) || schedule['paused'] is! bool ||
-        schedule['version'] is! int || schedule['version'] < 1) fail('Invalid recurring schedule.');
+        schedule['version'] is! int || schedule['version'] < 1) {
+      fail('Invalid recurring schedule.');
+    }
     if (schedule['endDate'] != null) {
       Recurrence.parse(schedule['endDate']);
       if ((schedule['endDate'] as String).compareTo(schedule['startDate'] as String) < 0) {
@@ -156,7 +158,9 @@ class _ScheduleRules {
           !statuses.contains(occurrence['status']) || occurrence['version'] is! int || occurrence['version'] < 1 ||
           occurrence['scheduleVersion'] is! int || occurrence['scheduleVersion'] < 1 ||
           occurrence['scheduleVersion'] > schedule['version'] ||
-          !occurrenceKeys.add('${schedule['id']}/${occurrence['index']}')) fail('Invalid or duplicate schedule occurrence.');
+          !occurrenceKeys.add('${schedule['id']}/${occurrence['index']}')) {
+        fail('Invalid or duplicate schedule occurrence.');
+      }
       final transactionId = occurrence['transactionId'];
       if (occurrence['status'] == 'confirmed') {
         final transaction = txById[transactionId];
