@@ -1,17 +1,17 @@
 # Current implementation state
 
-Budgetism 0.1.0-dev.6 source iteration. Dev.5 is user-reported functional on Windows; earlier budget persistence and optional password are confirmed. New hosted validation must be checked before delivering this iteration.
+Budgetism 0.1.0-dev.7 source iteration. User confirmed dev.6 calendar/forecast behavior; earlier accounts, persistence, optional password, budgeting and recurring features remain the working baseline. Hosted validation must be verified before delivering dev.7.
 
 | Area | State |
 | --- | --- |
-| Existing finances | Accounts, transactions, budgets, recurring schedules and optional security retained |
-| Calendar | Read-only month/date activity, recorded/planned/overdue/skipped/voided status and drilldown |
-| Forecast | Daily 30/60/90/365-day recorded-only and scheduled projections; individual or combined cash views |
-| Accuracy | Overdue excluded/disclosed; future recorded entries applied by date; no confirmed-plan double count |
-| Minimums | Per-account device-only warning preference; no ledger change |
-| Financial migration | None introduced by dev.6 planning |
-| Scan gate | New Defender ZIP/extracted-content scan and separate evidence artifact; execution pending |
-| Web | Existing sample/server access; browser-local finances not enabled |
-| Sync/automatic posting | Not implemented; no new server setup |
-| Updater | Existing checks/downloads; install remains disabled |
-| Release/production | Development artifacts only; no release, signing or production approval |
+| Existing finances | Dev.6 accounts, budgets, schedules, calendar and forecasts retained |
+| CSV import | Local UTF-8 header/column mapping, explicit date/sign convention and preview |
+| Review | Per-row skip/import/transfer or exact-date/amount existing-transaction match |
+| Duplicate protection | Source digest/row and optional unique bank IDs, plus reviewed possible matches |
+| History | Encrypted receipts survive edits, voids, backups and restarts |
+| Save/migration | Atomic batch and stale revision check; first import explicitly upgrades financial schema to 4 |
+| Security | Existing optional password, device keys, encrypted backups and Defender delivery gate retained |
+| Tests | New parser/ledger/storage/widget and native two-process tests added; inspect hosted results |
+| Web | Existing demo/server only; no browser-local financial data |
+| Not included | Schedule auto-matching, reconciliation, bank feeds, multi-currency, synchronization or updater installation |
+| Distribution | Development artifacts only; no GitHub release/tag, signing or production approval |

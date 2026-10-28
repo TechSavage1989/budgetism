@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'recurrence.dart';
 
 part 'schedule_rules.dart';
+part 'import_rules.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -12,6 +13,7 @@ class LocalLedger {
   LocalLedger(Json source) : data = clone(source) { validate(); }
   final Json data;
   static const schema = 3;
+  static const importSchema = 4;
   static const budgetSchema = 2;
   static const legacySchema = 1;
   static const maxMinor = 99999999999999;
@@ -103,7 +105,7 @@ class LocalLedger {
       next['schema'] = budgetSchema;
       next['budgets'] = budgets;
     }
-    if (_ScheduleRules.actions.contains(action) && next['schema'] != schema) {
+    if (_ScheduleRules.actions.contains(action) && (next['schema'] as int) < schema) {
       if (input['confirmScheduleUpgrade'] != true) {
         fail('Export a backup and confirm the recurring-schedule format upgrade first.');
       }
@@ -215,6 +217,9 @@ class LocalLedger {
         next['budgets'] = budgets;
         after = {'sourceMonth': source, 'month': target, 'changes': changes};
         break;
+      case 'import-csv':
+        after = _ImportRules.apply(next, input, operation, accounts, categories, transactions);
+        break;
       case 'schedule':
       case 'schedule-state':
       case 'schedule-confirm':
@@ -264,7 +269,7 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
     if (data['schema'] != legacySchema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
     if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
@@ -304,6 +309,7 @@ class LocalLedger {
       if (!budgetKeys.add('$month|${b['categoryId']}')) fail('Duplicate category budget for the same month.');
     }
     _ScheduleRules.validate(data, accounts, categories, transactions, ids);
+    _ImportRules.validate(data, accounts, transactions, ids);
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     for (final t in transactions.where((t) => t['voided'] != true)) {
@@ -324,7 +330,7 @@ class LocalLedger {
         if (balances.containsKey(p['ledgerId'])) balances[p['ledgerId']] = balances[p['ledgerId']]! + (p['amountMinor'] as int);
       }
     }
-    return {'schema': data['schema'], 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+    return {'schema': data['schema'], 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
       'schedules': rows(clone(data)['schedules'] ?? <Json>[]),
       'occurrences': rows(clone(data)['occurrences'] ?? <Json>[]),
       'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],

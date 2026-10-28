@@ -121,7 +121,7 @@ class _ScheduleRules {
 
   static void validate(Json data, List<Json> accounts, List<Json> categories,
       List<Json> transactions, Set<String> ids) {
-    if (data['schema'] != LocalLedger.schema) {
+    if ((data['schema'] as int) < LocalLedger.schema) {
       for (final key in ['schedules', 'occurrences']) {
         if (data.containsKey(key) && (data[key] is! List || (data[key] as List).isNotEmpty)) {
           fail('Recurring records require the upgraded workspace schema.');

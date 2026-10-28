@@ -1,19 +1,20 @@
-# Budgetism dev.6 Windows testing
+# Budgetism dev.7 Windows test
 
-Use only the successful dev.6 Windows artifact linked after validation. Export an encrypted backup in the working application, close all Budgetism windows, and extract the complete portable folder into a new testing folder. Launch Budgetism.exe under the same Windows account. Do not delete, copy over or recreate the per-user workspace.
+Download only the verified Windows artifact from the exact successful run recorded in the handoff. Export an encrypted backup from dev.6, retain its independent password, close every Budgetism window, and extract the entire new portable package in a separate testing folder. Keep Budgetism.exe, its DLLs and data directory together under the same Windows user account. Do not replace or recreate the per-user workspace.
 
-## Existing data
+## Test only the new import workflow
 
-Open local workspace, confirm version 0.1.0-dev.6, verify existing accounts/transactions/schedules and password preference. Merely opening Calendar or Forecasts must not trigger migration or alter balances. Budgeting was already tested; this test focuses on planning.
+Budgeting and forecasting have already been user-confirmed; do not repeat those setup exercises.
 
-## Forecast test
+1. Confirm version 0.1.0-dev.7 and open the existing local workspace. Verify the optional-password preference remains.
+2. Create a fictional checking account named CSV test with a 1000.00 opening balance.
+3. Open Transactions > Import CSV (also in User options). Choose CSV test as the destination and select Use fictional example CSV.
+4. Leave the displayed YYYY-MM-DD and signed-amount mapping. Preview the two fictional rows: +500.00 income and -200.00 expense. Confirm the date, sign and visible categories. The actual balance must still be 1000.00 during preview.
+5. After exporting the backup, accept the import-format upgrade and review checkbox. Import the two selected rows. The account should show 1300.00 and exactly two new transactions.
+6. Close and reopen dev.7. Open the same example again on the same day with the same account and preview it. Both rows should be already handled, with zero selected and no additional balance change. Import history should list the two receipts.
 
-Use a fictional checking account with a 1000.00 opening balance. Create a monthly income schedule for 500.00 tomorrow and an expense schedule for 200.00 the following day, using existing fictional categories. Open Forecasts and select this test account. The starting balance should be 1000.00, tomorrow 1500.00, and the following day 1300.00. Actual account balances must not change merely from opening these screens.
+The example generates today's date. For an exact-file repeat across different days, save and reuse the same fictional CSV rather than generating a new example with different dates. Renaming that same file must not bypass duplicate detection.
 
-Select the dates in Calendar and inspect the two events and per-account changes. Confirm one occurrence through Scheduled using its planned date and amount. It must appear as Recorded (or Recorded future), not a second scheduled item. The future projection must not double count it. Restore/reopen only using the existing supported controls; no new financial-format conversion is needed by this feature.
+After the first import, older builds cannot open the upgraded workspace. Keep the pre-import backup for recovery. Existing transaction matching does not settle unrecorded schedules. Do not enter or import a real payment twice, and do not use this preview as your only record of finances.
 
-Set a low-balance minimum for the test account, close/reopen the app and confirm that device preference remains. It is not included in encrypted financial backups. Test an overdue item separately: it should be disclosed, not silently deducted on today's date. Do not manually enter the same payment and also record its schedule.
-
-## Security evidence
-
-Check the same build's Budgetism-Windows-security-evidence artifact for the exact archive hash and Defender output. A clean scan is limited to that engine/signature/time and does not guarantee every browser will trust an unsigned build. Do not disable antivirus or add exclusions if another alert occurs; record its detection name and affected file.
+The same build's security-evidence artifact contains Defender output for the exact package. A clean scan is limited to its engine/signatures/time and does not establish code signing or universal browser reputation.

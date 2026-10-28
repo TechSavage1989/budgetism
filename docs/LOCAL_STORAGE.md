@@ -1,6 +1,10 @@
 # Local storage and optional password protection
 
 
+## Financial schema 4: CSV imports
+
+Dev.7 adds validated import receipts inside the encrypted payload, with explicit consent on the first import. Existing schema 1/2/3 remains unchanged on open. Transactions and receipts commit together, and the access mode and encryption/SQLite formats remain unchanged. Older builds cannot open schema 4. See [CSV importing](CSV_IMPORT.md).
+
 ## Financial schema 3: recurring schedules
 
 Dev.5 keeps the SQLite container and encryption envelopes unchanged. The inner financial payload schema 3 adds schedules, occurrence resolution and linked-transaction validation. Existing schema 1/2 stays unchanged on open; the first saved schedule requires explicit backup/upgrade confirmation. Older apps cannot read schema 3. See [recurring behavior](RECURRING.md) for atomic posting, migration and recovery details.

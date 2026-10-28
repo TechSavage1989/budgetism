@@ -69,7 +69,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
     }
     final saved = await showDialog<bool>(context: context, barrierDismissible: false,
       builder: (_) => ScheduleEditor(accounts: accounts, categories: LocalLedger.rows(data['categories']),
-        existing: existing, requiresUpgrade: data['schema'] != LocalLedger.schema, onSave: widget.api.saveSchedule));
+        existing: existing, requiresUpgrade: (data['schema'] as int) < LocalLedger.schema, onSave: widget.api.saveSchedule));
     if (saved == true && mounted) await widget.onChanged();
   }
 

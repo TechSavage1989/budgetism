@@ -2,7 +2,7 @@
 <p align="center">Personal money tracking, budgets and cash-flow planning with private local storage.</p>
 <p align="center"><a href="#download">Download</a> | <a href="#getting-started">Get started</a> | <a href="#features">Features</a> | <a href="#updates-and-settings">Updates</a> | <a href="#development">Development</a></p>
 
-**0.1.0-dev.6 development preview. Use fictional records and keep independent backups.** The user reports dev.5 works; budgeting, restart persistence and optional-password operation were confirmed earlier. This iteration adds a calendar and cash-flow forecasts; check the [handoff](DEVELOPMENT_HANDOFF.md) for the exact tested commit and build.
+**0.1.0-dev.7 development preview. Use fictional records and keep independent backups.** The user confirmed dev.6 calendar/forecast behavior and the earlier budgeting, persistence, recurring and optional-password workflows. This iteration adds reviewed CSV importing; check the [handoff](DEVELOPMENT_HANDOFF.md) for the exact tested commit and build.
 
 ## Calendar and scheduled cash flow
 
@@ -11,6 +11,12 @@ Dev.6 adds a read-only monthly calendar and daily 30/60/90/365-day cash-flow for
 Starting balances include recorded entries dated today or earlier. Future-dated recorded entries enter on their effective dates. Confirmed occurrences appear only through their actual transaction; unresolved overdue items are disclosed separately and are not silently treated as paid. Budget allocations and unscheduled spending are not forecast. See [planning rules](docs/PLANNING.md) and [Windows test](docs/WINDOWS_TESTING.md).
 
 The build workflow now requires a Microsoft Defender scan of the exact Windows ZIP and its extracted contents before delivering the application artifact. Scan evidence is retained separately. A clean build-time scan is not code signing, an independent audit, or an explanation of an earlier browser alert. Inspect the exact run rather than assuming the scan passed.
+
+## CSV statement import
+
+Choose **Transactions > Import CSV** or **User options > Import CSV statement**. Map the date, description and signed amount (or separate debit/credit columns), preview every row, and decide whether to skip, import, transfer or match an existing transaction. CSV files stay on your device. Invalid rows and possible duplicates require review. New imports commit atomically and keep encrypted history so the same file cannot silently post twice.
+
+Use **Use fictional example CSV** with a test account for the first check. Export a backup before the first saved import: financial schema 4 requires dev.7 or newer afterward. Existing accounts, budgets, schedules, forecasts and the optional-password setting are preserved. CSV is UTF-8 with headers and USD decimal-point values; automatic bank/schedule matching, reconciliation and other statement formats are not included. See [CSV import behavior](docs/CSV_IMPORT.md) and [Windows testing](docs/WINDOWS_TESTING.md).
 
 ## Features
 
@@ -22,6 +28,8 @@ Budgetism is a Windows-first personal finance app with an encrypted local worksp
 - Plan weekly, every-two-weeks, monthly and yearly bills, paychecks and transfers. Review upcoming/overdue dates; record, postpone or skip an occurrence.
 - Review a recorded occurrence's transaction, pause/resume schedules and retain resolved history.
 - Export password-encrypted backups, restore a workspace, search transactions and retain light/dark appearance.
+- View the financial calendar, scheduled cash-flow projections and device-only low-balance warnings.
+- Import CSV statements through explicit mapping/review, match existing entries and retain encrypted import history.
 - Keep the separate temporary sample-data mode and existing-server client.
 
 Planned, not implemented: local cross-device synchronization, bank feeds, multi-currency local accounts, reconciliation, automatic transaction matching, reminders and validated update installation. Recurring schedules never execute payments or post automatically. Schedule templates use one category/destination; actual transactions can be split after recording.
@@ -56,7 +64,7 @@ Sample mode is temporary and never copies its invented records into your saved w
 
 **Scheduled:** Add a schedule, choose its account, category/destination, amount, first date and frequency. Upcoming includes all unresolved overdue dates plus the selected future range. Record transaction explicitly creates one actual entry with the confirmed amount/date; Postpone changes only this occurrence; Skip settles it without money movement. Neither planning nor postponing changes balances. Use History to open recorded transactions. Voiding one does not regenerate its occurrence.
 
-Schedule financial edits affect unconfirmed dates. To change recurrence dates, pause the old schedule and create a new one. Short months use their last day, then return to the original anchor. Pausing hides unresolved dates until resumed; nothing catches up automatically. Do not record the same real payment manually and again through Scheduled: matching existing transactions is not implemented.
+Schedule financial edits affect unconfirmed dates. To change recurrence dates, pause the old schedule and create a new one. Short months use their last day, then return to the original anchor. Pausing hides unresolved dates until resumed; nothing catches up automatically. Do not record the same real payment manually and again through Scheduled: automatic schedule matching is not implemented. Record the schedule first, then match its actual transaction during CSV review.
 
 **Workspace upgrade:** Export a backup before saving your first schedule in an existing workspace. The explicit confirmation upgrades the financial schema to 3 while preserving financial records, budgets and security mode. Older builds cannot open it afterward. Opening the app alone does not upgrade old data. See [Windows testing](docs/WINDOWS_TESTING.md).
 
@@ -77,7 +85,7 @@ Update discovery retains startup, five-minute active and focus-return checks, ET
 - Financial payloads remain encrypted in both local access modes; database headers/revisions are not. See [storage design](docs/LOCAL_STORAGE.md).
 - Theme/update cache and downloads remain in per-user storage, not the executable folder. Updater logs use %LOCALAPPDATA%\Budgetism\logs\updater.log.
 
-Do not delete application-data files to troubleshoot. Read [recurring behavior](docs/RECURRING.md) and [development notes](docs/releases/0.1.0-dev.6.md) for this iteration.
+Do not delete application-data files to troubleshoot. Read [recurring behavior](docs/RECURRING.md) and [development notes](docs/releases/0.1.0-dev.7.md) for this iteration.
 
 ## Troubleshooting
 
@@ -107,7 +115,8 @@ flutter test
 flutter test integration_test/device_restart_test.dart -d windows
 flutter test integration_test/schedule_restart_test.dart -d windows
 flutter test integration_test/planning_native_test.dart -d windows
-flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.6
+flutter test integration_test/import_restart_test.dart -d windows
+flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.7
 ~~~
 
-CI also runs the security and schedule tests in distinct write/read processes. The planning test is a same-process SQLite reopen check. CI builds from an extracted source archive without .git. The handoff records exact flags and evidence. Run python scripts/check_layout.py --self-test and python scripts/verify_windows_package.py --self-test from the source root. Build/package commands and remaining gates are in the handoff and [validation log](docs/VALIDATION.md). Do not infer a test pass merely from a listed command.
+CI also runs the security, schedule and import tests in distinct write/read processes. The planning test is a same-process SQLite reopen check. CI builds from an extracted source archive without .git. The handoff records exact flags and evidence. Run python scripts/check_layout.py --self-test and python scripts/verify_windows_package.py --self-test from the source root. Build/package commands and remaining gates are in the handoff and [validation log](docs/VALIDATION.md). Do not infer a test pass merely from a listed command.

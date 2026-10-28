@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'money.dart';
 import 'local/local_api.dart';
+import 'local/csv_import_widgets.dart';
 import 'local/budget_widgets.dart';
 import 'local/schedule_widgets.dart';
 import 'local/planning_widgets.dart';
@@ -471,6 +472,7 @@ class _FinanceShellState extends State<FinanceShell> {
       if (value == 'security') await showWorkspaceSecurity(context, api.vault);
       if (value == 'backups' && mounted) await showLocalBackups(context, api);
       if (value == 'categories' && mounted) await manageLocalCategories(context, api);
+      if (value == 'import' && mounted) await showCsvImport(context, api);
       if (mounted) await _refresh();
     } catch (error) { _showError(error); }
   }
@@ -524,9 +526,10 @@ class _FinanceShellState extends State<FinanceShell> {
             onSelected: (v) {
               if (v == 'logout') _logout();
               if (v == 'updates') widget.onCheckUpdates();
-              if (v == 'backups' || v == 'categories' || v == 'security') _localOptions(v);
+              if (v == 'backups' || v == 'categories' || v == 'security' || v == 'import') _localOptions(v);
             },
             itemBuilder: (_) => [
+              if (_local) const PopupMenuItem(value: 'import', child: Text('Import CSV statement')),
               if (_local) const PopupMenuItem(value: 'security', child: Text('Workspace security')),
               if (_local) const PopupMenuItem(value: 'categories', child: Text('Manage categories')),
               if (_local) const PopupMenuItem(value: 'backups', child: Text('Backups and storage')),
@@ -686,6 +689,8 @@ class _FinanceShellState extends State<FinanceShell> {
   ]);
 
   Widget _transactionsView() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    if (_local) Align(alignment: Alignment.centerRight, child: OutlinedButton.icon(
+      onPressed: () => _localOptions('import'), icon: const Icon(Icons.file_upload_outlined), label: const Text('Import CSV'))),
     _title('Transactions', 'Journal-backed transactions, including account transfers',
       onAction: _createTransaction, action: 'Add transaction'),
     TextField(decoration: const InputDecoration(labelText: 'Search payee, notes, account, or category', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
