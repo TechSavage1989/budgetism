@@ -10,7 +10,7 @@ class _ScheduleChange {
 /// Runs inside the same detached ledger mutation and SQLite commit as the
 /// resulting transaction. A settled occurrence can never create another one.
 class _ScheduleRules {
-  static const actions = ['schedule', 'schedule-state', 'schedule-confirm', 'schedule-postpone', 'schedule-skip'];
+  static const actions = ['schedule', 'schedule-state', 'schedule-confirm', 'schedule-match', 'schedule-postpone', 'schedule-skip'];
   static const statuses = ['postponed', 'confirmed', 'skipped'];
   static Never fail(String message) => LocalLedger.fail(message);
 
@@ -108,6 +108,9 @@ class _ScheduleRules {
         transaction['postings'] = LocalLedger.postingsFor(transaction, accounts, categories);
         transactions.add(transaction);
         after.addAll({'status': 'confirmed', 'transactionId': transaction['id']});
+      } else if (action == 'schedule-match') {
+        final transactionId = ScheduleMatching._link(next, input, operation, schedule, after, transactions);
+        after.addAll({'status': 'confirmed', 'transactionId': transactionId});
       } else if (action == 'schedule-skip') {
         after['status'] = 'skipped';
       } else {

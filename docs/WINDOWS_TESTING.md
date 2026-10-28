@@ -1,20 +1,17 @@
-# Budgetism dev.7 Windows test
+# Budgetism dev.8 Windows test
 
-Use [successful dev.7 run 40708091217](https://github.com/TechSavage1989/budgetism/actions/runs/40708091217), tested application commit 0dec77e3372a7ceb5745e29a54301a6622de414b. Download Budgetism-Windows-x64-development, extract its outer ZIP and inner Budgetism-Windows-x64.zip. Do not select the source or updater-only artifact. Export an encrypted backup from dev.6, retain its independent password, close every Budgetism window, and extract the entire new portable package in a separate testing folder. Keep Budgetism.exe, its DLLs and data directory together under the same Windows user account. Do not replace or recreate the per-user workspace.
+Download only the verified successful dev.8 application artifact recorded in the handoff, not an updater-only or source ZIP. Export an encrypted backup from the working dev.7 app and retain its separate password. Close all Budgetism windows, extract the complete new portable package into its own folder, and run Budgetism.exe under the same Windows account. Keep all DLLs/data files together; do not replace or recreate the per-user workspace.
 
-## Test only the new import workflow
+## Test matching, not previous milestones again
 
-Budgeting and forecasting have already been user-confirmed; do not repeat those setup exercises.
+1. Confirm version 0.1.0-dev.8 and open the saved local workspace. Existing records and optional-password preference should remain.
+2. Use a fictional imported expense already in Transactions, or enter a fictional expense once. Note its account, category, amount and actual date.
+3. Create a monthly expense schedule with the same account/amount and that date as the first due date. Use an end date equal to the first date to keep this test to one occurrence. Creating this plan must not post the expense again.
+4. Note the current account balance, budget spending and transaction count. In Scheduled > Upcoming, choose Match existing for that occurrence. Do not choose Record transaction.
+5. Select the existing actual. Review its amount/date/categories, tick the confirmation and choose Link without new transaction. There should be no new transaction and no change to account balance or actual budget spending.
+6. History should show Matched. The occurrence should no longer be due, and Calendar/Forecasts should not add its planned amount again.
+7. Close and reopen dev.8. Confirm the same single transaction and matched history remain. An imported transaction's import history should still be present.
 
-1. Confirm version 0.1.0-dev.7 and open the existing local workspace. Verify the optional-password preference remains.
-2. Create a fictional checking account named CSV test with a 1000.00 opening balance.
-3. Open Transactions > Import CSV (also in User options). Choose CSV test as the destination and select Use fictional example CSV.
-4. Leave the displayed YYYY-MM-DD and signed-amount mapping. Preview the two fictional rows: +500.00 income and -200.00 expense. Confirm the date, sign and visible categories. The actual balance must still be 1000.00 during preview.
-5. After exporting the backup, accept the import-format upgrade and review checkbox. Import the two selected rows. The account should show 1300.00 and exactly two new transactions.
-6. Close and reopen dev.7. Open the same example again on the same day with the same account and preview it. Both rows should be already handled, with zero selected and no additional balance change. Import history should list the two receipts.
+Use Include different amounts only for a deliberate variable-bill test. The actual amount/categories/date stay unchanged. Suggestions default to seven days around the due date; 30/90-day ranges are available. Only unlinked, non-voided transactions of the same type/account qualify; transfer direction must match. This preview has no unlink action, so review carefully.
 
-The example generates today's date. For an exact-file repeat across different days, save and reuse the same fictional CSV rather than generating a new example with different dates. Renaming that same file must not bypass duplicate detection.
-
-After the first import, older builds cannot open the upgraded workspace. Keep the pre-import backup for recovery. Existing transaction matching does not settle unrecorded schedules. Do not enter or import a real payment twice, and do not use this preview as your only record of finances.
-
-The same build's security-evidence artifact contains Defender output for the exact package. A clean scan is limited to its engine/signatures/time and does not establish code signing or universal browser reputation.
+Matching introduces no new financial-format upgrade on an existing recurring/import workspace. No server setup or previous budgeting/forecasting setup test is required. Inspect the same run's Defender security-evidence artifact. Any new download detection still requires its exact name/file; a clean build-time scan is not universal reputation or publisher signing.

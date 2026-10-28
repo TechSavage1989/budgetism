@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'recurrence.dart';
 
 part 'schedule_rules.dart';
+part 'schedule_matching.dart';
 part 'import_rules.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -223,6 +224,7 @@ class LocalLedger {
       case 'schedule':
       case 'schedule-state':
       case 'schedule-confirm':
+      case 'schedule-match':
       case 'schedule-postpone':
       case 'schedule-skip':
         final change = _ScheduleRules.apply(next, action, input, operation, accounts, categories, transactions);

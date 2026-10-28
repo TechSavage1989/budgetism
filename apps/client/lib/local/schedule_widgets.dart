@@ -6,6 +6,7 @@ import 'ledger.dart';
 import 'local_api.dart';
 import 'recurrence.dart';
 import 'schedules.dart';
+import 'schedule_match_dialog.dart';
 
 String _kindLabel(String kind) => switch (kind) {
   'income' => 'Income', 'transfer' => 'Transfer / card payment', _ => 'Bill / expense',
@@ -81,6 +82,13 @@ class _SchedulePanelState extends State<SchedulePanel> {
     if (changed == true && mounted) await widget.onChanged();
   }
 
+  Future<void> _match(ScheduledOccurrence occurrence) async {
+    final changed = await showDialog<bool>(context: context, barrierDismissible: false,
+      builder: (_) => ScheduleMatchDialog(occurrence: occurrence, snapshot: widget.api.vault.ledger.snapshot(),
+        onSave: widget.api.matchOccurrence));
+    if (changed == true && mounted) await widget.onChanged();
+  }
+
   Future<void> _pause(Json schedule) async {
     final paused = schedule['paused'] == true;
     final yes = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
@@ -110,6 +118,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
       ..sort((a, b) => (b['resolvedAtUtc'] as String).compareTo(a['resolvedAtUtc'] as String));
     final scheduleById = {for (final s in schedules) s['id']: s};
     final allTransactions = {for (final t in LocalLedger.rows(widget.api.vault.ledger.data['transactions'])) t['id']: t};
+    final matchedOccurrences = LocalLedger.rows(widget.api.vault.ledger.data['audit'])
+        .where((a) => a['action'] == 'schedule-match').map((a) => a['objectId']).toSet();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Scheduled bills and income', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 8),
@@ -129,6 +139,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
           onChanged: (value) => setState(() => _days = value!))),
         const SizedBox(height: 12),
         Text('As of $today. Confirm a bill only when it has actually been paid.'),
+        const Text('Already imported or entered it? Choose Match existing to avoid recording the payment twice.'),
         if (page.items.isEmpty) const Padding(padding: EdgeInsets.symmetric(vertical: 24),
           child: Text('No active occurrences in this range. Add a schedule or check paused schedules.')),
         for (final occurrence in page.items) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(
@@ -146,6 +157,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
             const SizedBox(height: 10),
             Wrap(spacing: 10, runSpacing: 8, children: [
               OutlinedButton(onPressed: () => _occurrence(occurrence, 'confirm'), child: const Text('Record transaction')),
+              OutlinedButton(onPressed: () => _match(occurrence), child: const Text('Match existing')),
               TextButton(onPressed: () => _occurrence(occurrence, 'postpone'), child: const Text('Postpone')),
               TextButton(onPressed: () => _occurrence(occurrence, 'skip'), child: const Text('Skip')),
             ]),
@@ -182,7 +194,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
           return Card(child: ListTile(
             title: Text(schedule['name'] as String),
             subtitle: Text('Scheduled ${record['originalDueDate']} | '
-              '${record['status'] == 'skipped' ? 'Skipped' : voided ? 'Recorded transaction was voided' : 'Recorded ${transaction?['effectiveDate']}'}'),
+              '${record['status'] == 'skipped' ? 'Skipped' : voided ? 'Recorded transaction was voided' : '${matchedOccurrences.contains(record['id']) ? 'Matched' : 'Recorded'} ${transaction?['effectiveDate']}'}'),
             trailing: Text(money(transaction?['amountMinor'] ?? record['plannedAmountMinor'])),
             onTap: transaction == null || voided ? null : () async {
               await widget.onOpenTransaction(transaction);

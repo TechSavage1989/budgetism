@@ -22,6 +22,7 @@ class LocalFinanceApi extends FinanceApi {
   Future<void> copyBudgets(Json data) => vault.apply('budget-copy', data);
   Future<void> saveSchedule(Json data) => vault.apply('schedule', data);
   Future<void> setSchedulePaused(Json data) => vault.apply('schedule-state', data);
+  Future<void> matchOccurrence(Json data) => vault.apply('schedule-match', data);
   Future<void> confirmOccurrence(Json data) => vault.apply('schedule-confirm', data);
   Future<void> postponeOccurrence(Json data) => vault.apply('schedule-postpone', data);
   Future<void> skipOccurrence(Json data) => vault.apply('schedule-skip', data);
