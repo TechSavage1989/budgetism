@@ -148,6 +148,10 @@ class ReportEngine {
       return byDate != 0 ? byDate : a.id.compareTo(b.id);
     });
     final starting = _sum(before.values), finalBalance = _sum(closing.values);
+    // Validate derived deltas inside the engine so the screen can show a
+    // recoverable range error before reading any report getter.
+    add(finalBalance, -starting);
+    for (final id in selected) { add(closing[id]!, -before[id]!); }
     var running = starting, month = from.substring(0, 7);
     final lastMonth = through.substring(0, 7), months = <ReportMonth>[];
     while (true) {
