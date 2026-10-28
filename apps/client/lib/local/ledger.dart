@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
+import 'recurrence.dart';
+
+part 'schedule_rules.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -8,7 +11,8 @@ typedef Json = Map<String, dynamic>;
 class LocalLedger {
   LocalLedger(Json source) : data = clone(source) { validate(); }
   final Json data;
-  static const schema = 2;
+  static const schema = 3;
+  static const budgetSchema = 2;
   static const legacySchema = 1;
   static const maxMinor = 99999999999999;
   static const accountTypes = ['checking', 'savings', 'cash', 'credit_card', 'loan', 'asset', 'liability'];
@@ -25,6 +29,7 @@ class LocalLedger {
         {'id': const Uuid().v4(), 'name': name, 'kind': 'Income', 'currency': 'USD'},
     ],
     'operations': <String, dynamic>{}, 'audit': <Json>[], 'budgets': <Json>[],
+    'schedules': <Json>[], 'occurrences': <Json>[],
   });
 
   static Never fail(String message) => throw FormatException(message);
@@ -95,8 +100,15 @@ class LocalLedger {
       if (input['confirmSchemaUpgrade'] != true) {
         fail('Export a backup and confirm the budgeting format upgrade before saving your first budget.');
       }
-      next['schema'] = schema;
+      next['schema'] = budgetSchema;
       next['budgets'] = budgets;
+    }
+    if (_ScheduleRules.actions.contains(action) && next['schema'] != schema) {
+      if (input['confirmScheduleUpgrade'] != true) {
+        fail('Export a backup and confirm the recurring-schedule format upgrade first.');
+      }
+      next.addAll({'schema': schema, 'budgets': budgets,
+        'schedules': <Json>[], 'occurrences': <Json>[]});
     }
     switch (action) {
       case 'account':
@@ -147,6 +159,9 @@ class LocalLedger {
             'splits': input['splits'] ?? <Json>[], 'voided': false,
             'version': (before?['version'] as int? ?? 0) + 1,
             'createdUtc': before?['createdUtc'] ?? DateTime.now().toUtc().toIso8601String(),
+            if (before?.containsKey('scheduleId') == true) ...{
+              'scheduleId': before!['scheduleId'], 'occurrenceIndex': before['occurrenceIndex'],
+            },
           };
           date(after['effectiveDate']);
           after['postings'] = postingsFor(after, accounts, categories);
@@ -200,6 +215,14 @@ class LocalLedger {
         next['budgets'] = budgets;
         after = {'sourceMonth': source, 'month': target, 'changes': changes};
         break;
+      case 'schedule':
+      case 'schedule-state':
+      case 'schedule-confirm':
+      case 'schedule-postpone':
+      case 'schedule-skip':
+        final change = _ScheduleRules.apply(next, action, input, operation, accounts, categories, transactions);
+        id = change.id; before = change.before; after = change.after;
+        break;
       default:
         fail('Unsupported local operation.');
     }
@@ -241,8 +264,8 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] is! int || ![legacySchema, schema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
-    if (data['schema'] == schema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
+    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] != legacySchema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
     if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
     final accounts = rows(data['accounts']);
@@ -280,6 +303,7 @@ class LocalLedger {
       }
       if (!budgetKeys.add('$month|${b['categoryId']}')) fail('Duplicate category budget for the same month.');
     }
+    _ScheduleRules.validate(data, accounts, categories, transactions, ids);
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     for (final t in transactions.where((t) => t['voided'] != true)) {
@@ -301,6 +325,8 @@ class LocalLedger {
       }
     }
     return {'schema': data['schema'], 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+      'schedules': rows(clone(data)['schedules'] ?? <Json>[]),
+      'occurrences': rows(clone(data)['occurrences'] ?? <Json>[]),
       'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],
       'categories': rows(clone(data)['categories']),
       'transactions': transactions.where((t) => includeVoided || t['voided'] != true).toList()};

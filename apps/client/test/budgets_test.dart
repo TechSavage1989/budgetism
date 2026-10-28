@@ -183,7 +183,7 @@ void main() {
     expect(old.data, legacyData);
     expect(() => old.apply('budget', plan('migration', groceries, '2026-10', 1000)), throwsFormatException);
     final updated = old.apply('budget', plan('migration', groceries, '2026-10', 1000, upgrade: true));
-    expect(updated.data['schema'], LocalLedger.schema);
+    expect(updated.data['schema'], LocalLedger.budgetSchema);
     expect(updated.data['accounts'], old.data['accounts']);
     expect(updated.data['categories'], old.data['categories']);
     expect(updated.data['transactions'], old.data['transactions']);

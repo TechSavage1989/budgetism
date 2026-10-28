@@ -7,6 +7,7 @@ import 'finance_api.dart';
 import 'money.dart';
 import 'local/local_api.dart';
 import 'local/budget_widgets.dart';
+import 'local/schedule_widgets.dart';
 import 'local/storage.dart';
 import 'local/workspace_dialogs.dart';
 import 'local/security_dialogs.dart';
@@ -489,6 +490,7 @@ class _FinanceShellState extends State<FinanceShell> {
     (label: 'Accounts', icon: Icons.account_balance_wallet_outlined),
     (label: 'Transactions', icon: Icons.swap_horiz),
     (label: 'Budgets', icon: Icons.pie_chart_outline),
+    (label: 'Scheduled', icon: Icons.event_repeat_outlined),
     (label: 'Forecasts', icon: Icons.show_chart_outlined),
   ];
 
@@ -572,8 +574,12 @@ class _FinanceShellState extends State<FinanceShell> {
                           onChanged: () => _refresh(silent: true), onOpenTransaction: _editLocalTransaction),
                         if (_page == 3 && !_local) _futureFeature('Budgets', Icons.pie_chart_outline,
                             'Monthly budgets are available in a saved local workspace. Demo and server budgets are not implemented.'),
-                        if (_page == 4) _futureFeature('Forecasts', Icons.show_chart_outlined,
-                            'Daily cash flow forecasting and scheduled bills are planned next.'),
+                        if (_page == 4 && _local) SchedulePanel(api: widget.api as LocalFinanceApi,
+                          onChanged: () => _refresh(silent: true), onOpenTransaction: _editLocalTransaction),
+                        if (_page == 4 && !_local) _futureFeature('Scheduled', Icons.event_repeat_outlined,
+                          'Recurring bills and income are available in the saved local workspace.'),
+                        if (_page == 5) _futureFeature('Forecasts', Icons.show_chart_outlined,
+                            'Daily cash-flow forecasting and a financial calendar are planned next.'),
                       ])),
                   )),
                 ]),
@@ -588,6 +594,7 @@ class _FinanceShellState extends State<FinanceShell> {
           : null,
       bottomNavigationBar: isWide ? null : NavigationBar(
         height: 70,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         selectedIndex: _page,
         onDestinationSelected: (i) => setState(() => _page = i),
         destinations: _destinations.map((d) => NavigationDestination(
@@ -642,6 +649,9 @@ class _FinanceShellState extends State<FinanceShell> {
       const SizedBox(height: 24),
       if (_local) BudgetOverview(snapshot: (widget.api as LocalFinanceApi).vault.ledger.snapshot(),
         onOpen: () => setState(() { _page = 3; _budgetMonth = DateTime.now().toIso8601String().substring(0, 7); })),
+      if (_local) ScheduleOverview(snapshot: (widget.api as LocalFinanceApi).vault.ledger.snapshot(),
+        onOpen: () => setState(() => _page = 4)),
+      const SizedBox(height: 16),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text('Recent transactions', style: Theme.of(context).textTheme.titleLarge),
         TextButton(onPressed: () => setState(() => _page = 2), child: const Text('View all')),

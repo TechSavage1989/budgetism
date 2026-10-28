@@ -1,5 +1,10 @@
 # Local storage and optional password protection
 
+
+## Financial schema 3: recurring schedules
+
+Dev.5 keeps the SQLite container and encryption envelopes unchanged. The inner financial payload schema 3 adds schedules, occurrence resolution and linked-transaction validation. Existing schema 1/2 stays unchanged on open; the first saved schedule requires explicit backup/upgrade confirmation. Older apps cannot read schema 3. See [recurring behavior](RECURRING.md) for atomic posting, migration and recovery details.
+
 ## User behavior
 
 New local workspaces default to password-free access. Setup and User options > Workspace security expose **Require a password to open this workspace**. Existing dev.2 workspaces keep their password until the owner explicitly disables it and confirms the current password once. Enabling protection again asks for a new password of at least 14 characters. No records are deleted or recreated by this setting.

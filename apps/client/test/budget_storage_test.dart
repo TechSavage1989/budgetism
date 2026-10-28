@@ -52,7 +52,7 @@ void main() {
       await vault.close(); vault = null;
       vault = await LocalVault.open(SqliteVaultStorage(path), password, create: false);
       expect(row(vault.ledger, '2026-10', id).allocated, 10000);
-      expect(vault.ledger.data['schema'], LocalLedger.schema);
+      expect(vault.ledger.data['schema'], LocalLedger.budgetSchema);
       destination = await LocalVault.open(TestStorage(), '', create: true, requirePassword: false, deviceKeys: TestDeviceKeys());
       await destination.restoreBackup(backup, backupPassword);
       expect(destination.passwordRequired, false);
