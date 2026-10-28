@@ -9,6 +9,7 @@ import 'storage.dart';
 import 'vault.dart';
 import 'device_keys.dart';
 import 'security_dialogs.dart';
+import 'category_rule_widgets.dart';
 
 Future<LocalFinanceApi?> openLocalWorkspace(BuildContext context) async {
   final storage = await openVaultStorage();
@@ -195,6 +196,13 @@ Future<void> manageLocalCategories(BuildContext context, LocalFinanceApi api) as
           } catch (error) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString()))); }
         })).toList())),
     actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
+      TextButton(onPressed: () async {
+        try {
+          await showCategoryRules(context, api);
+          categories = LocalLedger.rows((await api.snapshot())['categories']);
+          if (context.mounted) setState(() {});
+        } catch (error) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString()))); }
+      }, child: const Text('Categorization rules')),
       FilledButton(onPressed: () async {
         final result = await showDialog<Json>(context: context, builder: (_) => const _CategoryDialog());
         if (result == null) return;

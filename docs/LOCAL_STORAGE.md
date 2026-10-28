@@ -1,5 +1,9 @@
 # Local storage and optional password protection
 
+## Financial schema 6: saved categorization rules
+
+Dev.11 stores rule definitions inside the encrypted financial payload. Viewing or previewing does not upgrade schemas 1 through 5. The first rule save requires explicit backup/upgrade consent and preserves all prior collections. Rule application uses the existing atomic ledger commit and audit with no new postings to accounts. Older builds refuse schema 6. Encryption envelopes, SQLite container, OS keys, optional-password setting and independent backup format are unchanged. See [categorization rules](CATEGORIZATION_RULES.md).
+
 ## Financial schema 5: statement reconciliation
 
 Dev.9 adds completed/reopened statement history inside the encrypted payload after explicit first-completion consent. Opening schemas 1 through 4 does not upgrade them. Completion preserves financial records and all prior collections, including CSV receipts. Import and recurring operations accept schema 5 without downgrading it. Active statements protect included transactions and opening-balance changes; explicit latest-statement reopening retains history. Encryption, keys, access mode, SQLite container and backup envelope remain unchanged. Older builds cannot open schema 5. See [statement reconciliation](RECONCILIATION.md).

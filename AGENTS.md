@@ -2,7 +2,7 @@
 
 1. Before any changes, read this file, DEVELOPMENT_HANDOFF.md, and docs/IMPLEMENTATION_STATUS.md. Inspect current GitHub default branch, active branches, PRs, latest releases and workflows. Prefer newer verified repository work over this source ZIP.
 2. Repository: https://github.com/TechSavage1989/budgetism. Public source and development-workflow publication were explicitly authorized October 27, 2026. No releases exist. Do not infer permission to publish releases, tags, credentials, or change visibility.
-3. Working user-confirmed baseline: 0.1.0-dev.9 statement reconciliation and all earlier finance features. Current development: 0.1.0-dev.10 read-only financial reports. Neither is a production release; inspect exact run evidence.
+3. Working user-confirmed baseline: 0.1.0-dev.10 reports and CSV export, with all earlier finance features. Current development: 0.1.0-dev.11 reviewed categorization rules. Neither is a production release; inspect exact run evidence.
 4. Product: private personal finance; Windows first, Flutter client for multiple platforms, .NET 10 API, PostgreSQL, and eventual encrypted native offline database. Do not change architecture or financial data ownership without approval.
 5. Current explicit exclusion: **No server setup, Codex CLI automation, unattended workers, payment setup or API-account setup.** API source exists from prior work, but its deployment and configuration must not be added in this scope.
 6. Never put real financial records or credentials in demo fixtures, screenshots, logs, test output, source, or generated release files. Demo is ephemeral, labelled, and uses invented entries only.
@@ -31,3 +31,5 @@
 22. Reconciliation uses explicit statement review, zero exact difference, auditable history and no balancing postings. Schema 5 is opt-in on first completion. Lock included transactions until all relevant statements are reopened, latest per account first. Preserve historical snapshots, import receipts and occurrence links. Read docs/RECONCILIATION.md.
 
 23. Reports are read-only derived views. Preserve ledger schema, balances, transactions, receipts and reconciliation locks. Separate net income from balance movement; transfers are not spending. Use historical inclusive dates and disclose undated opening balances. CSV export is explicit, unencrypted, desktop-only and never a backup. Neutralize formula-like text without changing ledger values. Read docs/REPORTS.md.
+
+24. Categorization rules are local, encrypted and explicitly applied. Schema 6 is opt-in on first rule save. First enabled priority match wins without cascading. Preview never writes; atomic selected batches preserve account balances, transaction identity, receipts, schedule links and audit. Reconciled, split, voided and transfer entries are excluded. No automatic application or external data transfer. Read docs/CATEGORIZATION_RULES.md.

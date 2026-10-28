@@ -1,46 +1,39 @@
 # Budgetism development handoff
 
-**Development version:** 0.1.0-dev.10, read-only financial reports and explicit CSV export.
-**Verified application:** 63b5b6cef441ca1889117d6a3b43ec05f5e5aa34, tree 5f2d6f429fdbfc83a373608227de4d609d562c59.
-**Successful build:** [run 40737797353](https://github.com/TechSavage1989/budgetism/actions/runs/40737797353), all five jobs passed including native report/export preservation and Defender scans.
-**User-confirmed baseline:** dev.9 statement reconciliation worked, with previous matching/imports/calendar/forecast/budgets/persistence and optional passwords confirmed. Do not repeat those setup exercises.
-**Starting main:** 05933bd381a9ede2150fe0ed2021a1171664bc5e, documentation follow-up to tested dev.9 application 1ba16145c8e9cec3cf88b39eceadbbfd8cab6b06. Successful dev.9 run 40728930400. Original application tree 113f9f79d896a92b5bd74943c81867b7149da39c.
+**Development version:** 0.1.0-dev.11, reviewed local categorization rules.
+**Starting main:** 17a5a04b3e8ca1688afce38f4d60859d9ac8c522, documentation follow-up to application 63b5b6cef441ca1889117d6a3b43ec05f5e5aa34, tree 5f2d6f429fdbfc83a373608227de4d609d562c59.
+**User-confirmed baseline:** dev.10 reports and CSV export worked. Earlier reconciliation, matching, imports, budgets, schedules, forecasts, persistence and optional-password behavior are confirmed. Do not repeat their setup exercises.
+**Starting successful run:** 40737797353. GitHub Actions artifacts are the preferred delivery route.
 
 ## Read first and scope
 
-Read AGENTS.md, docs/IMPLEMENTATION_STATUS.md, docs/REPORTS.md and docs/LOCAL_STORAGE.md. Inspect current refs, PRs, releases and workflows before changes. Public source and development workflows are authorized. Releases/tags, visibility or credential changes, server/provider/payment setup, unattended workers and Codex CLI automation are not. Preserve newer work and history; never force-push. All fixtures must remain fictional.
+Read AGENTS.md, docs/IMPLEMENTATION_STATUS.md, docs/CATEGORIZATION_RULES.md and docs/LOCAL_STORAGE.md. Inspect live branches, PRs, releases and workflows before editing. Public source and non-release development workflows are authorized. No releases/tags, credential/visibility changes, server/provider/payment setup, unattended workers or Codex CLI automation. Never force-push, overwrite concurrent work, or commit real financial records. The default branch at the start includes all dev.10 code; do not revert to older milestone branches.
 
 ## This iteration
 
-Reports is a new navigation destination for saved local workspaces. Date/account selection drives Overview, Categories with contribution drilldowns, Monthly trends and recorded Balances. Only non-voided, historical recorded activity enters income/expense totals. Plans, allocations, transfers and opening balances are not spending/income. Account movement still uses both transfer sides correctly. Undated opening balances limit the historical interpretation, which is disclosed on screen and in docs/REPORTS.md.
+Rules are available through User options > Manage categories > Categorization rules, leaving the existing navigation shell unchanged. Rule editor supports payee Contains/Exact/Starts with, account, type, source, existing category, amount bounds, priority and enable/disable. Saving does not edit history. Dated preview requires selected rows and explicit review before an atomic category-only batch.
 
-The screen receives a read-only snapshot callback, not the financial mutation API. No schema migration or library dependency is introduced. Core ledger, encryption, SQLite, device keys, budgeting, forecasting, importing, schedule matching, reconciliation, backend and updater implementations remain unchanged. CSV export requires explicit unencrypted-data consent and a destination; only .csv filenames are accepted. Failed/cancelled exports preserve all records and controls. Formula-like text uses a visible Text: prefix; exact trusted amounts remain numeric.
+Schema 6 is opt-in on first rule save and preserves all earlier collections. Exclude reconciled, split, voided and transfer entries. Account postings, amounts, transaction identity/count, import receipts and schedule links remain unchanged. Budgets and reports recalculate category effects. No automatic application or transmission. Rule text remains encrypted, included in backups, and unaffected by ordinary app updates.
 
 ## Source map
 
-- apps/client/lib/local/reports.dart: immutable report values, date/account calculations and display-oriented CSV serialization.
-- apps/client/lib/local/report_widgets.dart: responsive views, filters, category detail, export consent and native save function.
-- apps/client/lib/main.dart: Reports navigation/integration only.
-- apps/client/test/reports_test.dart, reports_limits_test.dart and report_widgets_test.dart: calculation, CSV and widget tests.
-- apps/client/integration_test/reports_native_test.dart: actual SQLite report/export preservation and close/reopen validation.
-- .github/workflows/build-checks.yml: version and additional native reports test; all prior tests and exact-package Defender scan retained.
+- apps/client/lib/local/category_rules.dart: ledger part for definitions, validation, read-only suggestions, precedence and audited atomic category application.
+- category_rule_widgets.dart: management/editor, date preview, explicit selection/review, failure retention and single-flight controls.
+- ledger.dart / local_api.dart: schema and mutation integration; no encryption or storage changes.
+- workspace_dialogs.dart: one category-management entrypoint; existing workspace/backup behavior retained.
+- test/category_rules_test.dart, category_rules_storage_test.dart, category_rule_widgets_test.dart: financial/validation/storage/widget regression coverage.
+- integration_test/category_rules_restart_test.dart: actual Windows OS-key/SQLite rules and applied-category persistence in separate write/read app processes.
 
-## Build and delivery gate
+Existing main shell, budget/report/planning engines, imports, reconciliation, matching, recurrence, transaction editor, encryption, SQLite, OS keys, backend and updater remain preserved. No new package dependency. Stable Budgetism.exe and Budgetism-Windows-x64.zip; workspace path remains %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 under the same OS account.
 
-Flutter remains pinned to 3.47.8. Generate temporary runners, resolve packages, analyze and run all existing/new unit/widget tests. Retain all native security/schedule/import/matching/reconciliation write/read process pairs and the planning test. Add reports_native_test.dart on Windows. This new report test is same-process reopen, not a separate-process test; existing process pairs remain the separate-process evidence.
+## Validation and delivery gate
 
-Build/package with APP_VERSION=0.1.0-dev.10. Stable names Budgetism.exe and Budgetism-Windows-x64.zip. Verify exact artifact identity, dependencies, CRC/digests and the same ZIP's Defender results before offering it. No test suppression, analyzer bypass, antivirus exclusions or positive-detection bypass. No release or updater installation is authorized.
+Flutter remains pinned to 3.47.8. Retain all analysis, unit/widget, native process pairs, planning/report preservation tests, web/Windows builds, package-verifier negative controls and Defender scan of the exact ZIP/extracted files. Add the new rules pair with RULE_TEST_PHASE=write/read and a shared isolated RULE_TEST_DIRECTORY. Build/package as 0.1.0-dev.11. No analyzer suppression, skipped tests, scanner bypass or updater installation.
 
-Hosted analysis, the full unit/widget suite, all retained native process tests, the new native report/export test, Windows/web compilation and exact-package scans passed for the application commit above. Downloaded artifact digests, version, native libraries and actual updater verify-only acceptance were checked separately. Local Flutter/Dart/.NET SDK and Windows GUI remain unavailable; no local compilation or manual user GUI run is claimed. Exact evidence and remaining gates are in docs/VALIDATION.md. GitHub Actions is the preferred delivery route because chat links previously failed.
+Local source-layout and package negative controls and unchanged Go tests passed. There is no local Flutter/Dart/.NET SDK or Windows GUI. Hosted tests/builds and exact-package scan must be inspected before delivery; no passing compilation is implied by authored tests. Record exact run, commit, artifact hashes and performed checks in docs/VALIDATION.md after completion.
 
-Root allowlist remains README.md, AGENTS.md, DEVELOPMENT_HANDOFF.md and .gitignore. No generated runners, binaries, keys, databases or temporary logs in source. Windows data remains %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 under the same profile/key store. Independent encrypted backups and optional local password remain unchanged.
-
-## Delivered artifact and continuity
-
-Use the successful run above and Budgetism-Windows-x64-development, artifact 12837643904. Outer SHA-256 2e29524f65ed1a520aa0fb5be4aa0425fd9ffb395e03d30ab8a8d120c5c38270. Inner Budgetism-Windows-x64.zip is 16,189,811 bytes with SHA-256 f6ce8f3b1c3243969510a7fef947f140a478018c24f386203dcf75fe9fa7638b. Security artifact 12838707119 reports no threats in that exact ZIP and extracted runtime files. Both executables remain unsigned. The complete source snapshot matched all 124 files and the tested Git tree.
-
-Initial analyzer findings were corrected without suppressing checks. An exact-byte CSV test correction and the final aggregate-movement range guard were proactive review improvements; the final full run passed. This follow-up changes documentation only, not the tested application/version. Recheck branch heads and open PRs before a normal fast-forward to main, preserve historical branches, and never force-push. No release/tag was created.
+Root allowlist remains README.md, AGENTS.md, DEVELOPMENT_HANDOFF.md and .gitignore. Support documents stay in docs; generated output belongs under ignored build. No binaries, databases, private keys or temporary logs in tracked source. New saved rules require a pre-upgrade encrypted backup; older apps cannot read schema 6.
 
 ## Next desktop check
 
-Back up the working dev.9 workspace. Open dev.10 under the same Windows account. Use Reports with a known fictional account and dates: recorded income 500 and expense 200 should show income 500, expenses 200 and net income 300. A 1000 opening balance gives a 1300 recorded closing balance if there is no other activity. Verify category contributions and the optional CSV export, then reopen and confirm statement history/security are unchanged. Viewing or exporting reports must not prompt for a workspace-format upgrade. No repeated budgeting/import setup is required.
+Use one new fictional non-reconciled expense with payee Rule test store, amount 12.34 and category Other spending. Note its balance/count after recording it once. Add a rule containing Rule test, restricted to Other spending, targeting Groceries. After backing up, approve first-rule upgrade. Generate preview for its date, select that entry, review and apply. Category changes to Groceries with unchanged amount/balance/count. Restart: rule and category remain. The same preview proposes no further change for that transaction. Do not reopen schema 6 using dev.10 or older. No earlier feature setup exercises or server installation are required.

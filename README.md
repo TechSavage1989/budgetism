@@ -2,7 +2,7 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.10 development preview.** The user confirmed dev.9 reconciliation and earlier finance workflows. This iteration adds read-only financial reports and explicit CSV exports. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.11 development preview.** The user confirmed dev.10 reports/CSV export and earlier finance workflows. This iteration adds saved local categorization rules with explicit preview and selected application. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
 
 ## Features
 
@@ -16,6 +16,7 @@
 | Calendar and forecasts | Read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
 | CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
 | Reports | Historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
+| Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
 No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
@@ -34,7 +35,7 @@ Windows x64 for the validated portable distribution. No Flutter, developer tools
 
 Export a backup before testing a newer build, retain its separate password, and close all Budgetism windows. Extract the new application into its own folder and launch Budgetism.exe. Choose **Open local workspace** for saved records; **Explore with sample data** is temporary and separate. Do not delete or recreate the saved workspace when updating.
 
-User options contains Workspace security, Manage categories, Backups and storage, Import CSV statement, and Reconcile statements. Local password prompting is optional; independently encrypted exports still require a backup password. There is no recovery of a forgotten backup password or lost device key without a usable backup.
+User options contains Workspace security, Manage categories, Backups and storage, Import CSV statement, and Reconcile statements. Manage categories also opens Categorization rules. Local password prompting is optional; independently encrypted exports still require a backup password. There is no recovery of a forgotten backup password or lost device key without a usable backup.
 
 ## How to use
 
@@ -45,6 +46,8 @@ Accounts > Reconcile statements compares outstanding recorded entries with a sig
 Reports reads existing records without a new format upgrade. Select dates/accounts and inspect Overview, Categories, Monthly or Balances. CSV exports are unencrypted, require explicit confirmation and are not backups. See [report semantics](docs/REPORTS.md), including the limits of undated opening balances.
 
 The first reconciliation completion still requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](docs/RECONCILIATION.md) and [the new-feature desktop test](docs/WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
+
+Categorization rules are opened from **User options > Manage categories > Categorization rules**. Add a rule, then generate a dated preview and select the entries to change. Saving a rule does not change transactions, and no rule runs automatically. Category changes can move spending between budgets, but account balances and transaction counts stay unchanged. Reconciled, split, transfer and voided entries are excluded. The first rule save needs backup/consent for financial schema 6; older builds cannot open it. See [categorization rules](docs/CATEGORIZATION_RULES.md).
 
 ## Updates and settings
 
@@ -60,6 +63,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation write/read process pairs and planning/report preservation tests. Build Windows/web with APP_VERSION=0.1.0-dev.10. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules write/read process pairs and planning/report preservation tests. Build Windows/web with APP_VERSION=0.1.0-dev.11. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
-Supporting details: [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.10.md).
+Supporting details: [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.11.md).
