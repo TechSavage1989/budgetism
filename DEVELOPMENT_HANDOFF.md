@@ -1,6 +1,8 @@
 # Budgetism development handoff
 
 **Development version:** 0.1.0-dev.8, explicit matching of existing actual transactions to scheduled occurrences.
+**Verified application:** 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b, tree d7b80b45ffbb1cb6fc7a6889de621234ffe55827.
+**Successful CI:** [run 40717507066](https://github.com/TechSavage1989/budgetism/actions/runs/40717507066), all five jobs passed including Windows matching write/read processes and Defender scans.
 **User-confirmed baseline:** dev.7 CSV importing, persistence and repeat-import protection, with earlier calendar/forecast, budgets, schedules and optional password already reported working. Do not repeat previous feature setup exercises.
 **Starting repository commit:** b6057f6fbee794b86d8a8fe1bb23e0ce88318ee8 on main; application source 0dec77e3372a7ceb5745e29a54301a6622de414b, Git tree d97461e0c2945f39ba2d9f20fa97ef163a9b419b, successful run 40708091217. The documentation-only follow-up does not alter application code.
 
@@ -30,9 +32,17 @@ Core encryption, SQLite, device keys, budget/planning engines, imports, transact
 
 Flutter 3.47.8 remains pinned. Generate temporary Windows/web runners, resolve packages, analyze and test. Retain all security/schedule/import two-process native tests and the read-only planning native test. Add matching_restart_test.dart with MATCH_TEST_PHASE=write/read and shared isolated MATCH_TEST_DIRECTORY. Standalone invocation is only same-process reopen, not equivalent to the two CI processes. Build/package using 0.1.0-dev.8, verify native dependencies, then scan the exact ZIP and extracted files with the existing Defender gate. No suppression, test skipping, antivirus exclusion or protection bypass.
 
-Source archive hashes and the entire dev.7 Git tree were checked before editing. Local SDKs and Windows GUI are unavailable. Source/root/package checks are not passing Flutter tests. Inspect the exact hosted run and downloaded artifacts, then record actual results in docs/VALIDATION.md. Do not call dev.8 compiled or scanned until those steps finish.
+Source archive hashes and the entire dev.7 Git tree were checked before editing. The final source artifact matched all 108 local files and the verified Git tree. Hosted analysis/tests, native execution, Windows/web builds, packaging and Defender scans passed for the exact application commit above. Local artifact checks confirmed hashes, version, native libraries and updater verify-only acceptance. Local SDKs and Windows GUI remain unavailable; no local Flutter or manual GUI test is claimed. See docs/VALIDATION.md for exact evidence and remaining gates.
 
 Stable executable Budgetism.exe and archive Budgetism-Windows-x64.zip. Data remains %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 under the same OS profile/key store. Local passwords remain optional; backups remain independently password-protected. Delivery uses verified GitHub Actions artifacts because the user's chat downloads failed. No GitHub release/tag or production approval. Update installation remains disabled.
+
+## Delivered artifact and build correction
+
+Use the successful Actions run above and artifact Budgetism-Windows-x64-development, ID 12827924651. Outer SHA-256 a57facb7b915161125c9f8a11795494649ff90669e6f8a68e87716e66f1732ad. Inner Budgetism-Windows-x64.zip: 16,110,219 bytes, 18 entries, SHA-256 b03dc760226524056b44ddd8fc53a0a174bed856f7f578da9de7431426cf6700. Security artifact 12828829229 identifies that same hash and reports no threats in the ZIP and extracted files. Both executables remain unsigned. Downloaded package identity, native dependencies and actual updater verify-only checks passed.
+
+Initial run 40716102610 failed twice before Windows compilation because Update-MpSignature returned RPC error 0x800706be. No threat detection occurred. The corrected commit retained the application code and exact scan gate, added bounded documented command-line signature initialization, and updated README/supporting docs. Do not suppress or remove the scan to work around future initialization faults.
+
+This follow-up records completed verification in documentation only. It does not change the tested binary/version. Preserve historical branches; recheck refs before any normal fast-forward to main. No release/tag was created.
 
 ## Next desktop test
 

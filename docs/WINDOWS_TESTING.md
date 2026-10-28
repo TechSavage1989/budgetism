@@ -1,6 +1,6 @@
 # Budgetism dev.8 Windows test
 
-Download only the verified successful dev.8 application artifact recorded in the handoff, not an updater-only or source ZIP. Export an encrypted backup from the working dev.7 app and retain its separate password. Close all Budgetism windows, extract the complete new portable package into its own folder, and run Budgetism.exe under the same Windows account. Keep all DLLs/data files together; do not replace or recreate the per-user workspace.
+Use [successful dev.8 run 40717507066](https://github.com/TechSavage1989/budgetism/actions/runs/40717507066), application commit 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b. Download Budgetism-Windows-x64-development, artifact 12827924651, not an updater-only or source ZIP. Extract the outer artifact ZIP and then its inner Budgetism-Windows-x64.zip. Export an encrypted backup from the working dev.7 app and retain its separate password. Close all Budgetism windows, extract the complete new portable package into its own folder, and run Budgetism.exe under the same Windows account. Keep all DLLs/data files together; do not replace or recreate the per-user workspace.
 
 ## Test matching, not previous milestones again
 

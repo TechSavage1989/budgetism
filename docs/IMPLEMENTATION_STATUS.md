@@ -1,6 +1,6 @@
 # Current implementation state
 
-Budgetism 0.1.0-dev.8 development iteration. Dev.7 import and duplicate protection are now user-confirmed alongside prior financial workflows. Hosted validation for the exact dev.8 commit is required before delivery.
+Budgetism 0.1.0-dev.8 development preview. Application commit 0e41cbf1a2127aedeaa1dae267f538b06ce19d1b passed all five jobs in [run 40717507066](https://github.com/TechSavage1989/budgetism/actions/runs/40717507066). Its downloaded Windows package was verified against the exact clean build-time Defender scan. Dev.7 is the user-confirmed working baseline; manual dev.8 testing is next.
 
 | Area | State |
 | --- | --- |
@@ -10,8 +10,8 @@ Budgetism 0.1.0-dev.8 development iteration. Dev.7 import and duplicate protecti
 | Integrity | Atomic reciprocal links, revision checks, idempotent retry, preserved postings and import receipts |
 | History | Matched label and existing linked-transaction drilldown |
 | Schema/security | No new financial/encryption/container schema or dependency |
-| Tests | Added engine/storage/widget and Windows separate-process matching tests; execution must be verified |
-| Scan/delivery | Existing Defender exact-package gate retained; new execution pending |
+| Tests | Full existing/new suite and Windows matching write/read process pair passed |
+| Scan/delivery | ZIP and extracted-file Defender scans reported no threats; downloaded package hashes verified |
 | Not included | Automatic matching, unlink/reopen, reconciliation, bank feeds, cross-device sync or updater installation |
 | Distribution | Development artifact only; unsigned, no release/tag or production approval |
 
