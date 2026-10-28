@@ -1,6 +1,6 @@
 # Budgetism dev.13 Windows test
 
-Use only the successful Windows run recorded in VALIDATION.md after validation. Export an encrypted backup from working dev.12, retain its password and close all Budgetism windows. Download Budgetism-Windows-x64-development, not source or updater-only artifacts. Extract the outer artifact and inner Budgetism-Windows-x64.zip into a separate folder. Keep Budgetism.exe, all DLLs and data together. Open the existing workspace under the same Windows account. Do not replace or recreate its database.
+Use [successful dev.13 run 40781260879](https://github.com/TechSavage1989/budgetism/actions/runs/40781260879), application commit 6f6e33c58c297fc55dde40ce74aae9a64f2acc7a. Download artifact 12856818776, Budgetism-Windows-x64-development; exact package hashes and scan evidence are in VALIDATION.md. Export an encrypted backup from working dev.12, retain its password and close all Budgetism windows. Do not select source or updater-only artifacts. Extract the outer artifact and inner Budgetism-Windows-x64.zip into a separate folder. Keep Budgetism.exe, all DLLs and data together. Open the existing workspace under the same Windows account. Do not replace or recreate its database.
 
 ## Test category history and undo only
 

@@ -16,7 +16,7 @@ Choose inclusive From/Through dates, then Generate preview. The preview reads on
 
 Changing a date resets the preview, selection and review. Changing or saving a rule clears previous suggestions. Stale workspace, transaction or rule revisions are refused; refresh and review again. A failed save retains entered selections and an unchanged retry uses the same operation identity. Inputs and closing controls are disabled during a save.
 
-Reconciled, split (including an explicit one-line split), voided and transfer transactions are always excluded. A forged selected entry cannot bypass these rules. Manual correction of a reconciled transaction still requires explicit statement reopening. There is no batch undo action; ordinary non-reconciled transaction editing remains available for corrections.
+Reconciled, split (including an explicit one-line split), voided and transfer transactions are always excluded. A forged selected entry cannot bypass these rules. Manual correction of a reconciled transaction still requires explicit statement reopening. Dev.13 History can undo a complete applied category batch when every affected transaction is still unchanged and unreconciled. It requires review and a reason, preserves the original audit and does not remove the rule. See [history and undo](CATEGORY_HISTORY.md). Ordinary non-reconciled transaction editing also remains available for corrections.
 
 ## Financial invariants
 
@@ -32,4 +32,4 @@ Rules contain potentially sensitive payee text and are stored inside the existin
 
 ## Limits and future scope
 
-Category action only; no payee rewriting, tags, split templates, hierarchical categories, bulk undo, auto-application during import, or synchronization. Desktop Windows is the validated distribution target. Actual validation status is recorded separately in VALIDATION.md.
+Category action only; no payee rewriting, tags, split templates, hierarchical categories, general financial undo, auto-application during import, or synchronization. Desktop Windows is the validated distribution target. Actual validation status is recorded separately in VALIDATION.md.
