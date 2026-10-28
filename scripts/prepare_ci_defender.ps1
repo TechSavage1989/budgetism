@@ -37,8 +37,45 @@ try {
         Start-Sleep -Seconds 5
     }
     if ($null -eq $status) { throw 'Defender did not become available. No scan is claimed and delivery remains blocked.' }
-    Update-MpSignature -ErrorAction Stop
-    $status = Get-MpComputerStatus -ErrorAction Stop
+    # The hosted service can restart while fetching its first engine/signatures.
+    # Use Microsoft's documented command-line update, then re-read service state.
+    # A failed or stale update still blocks the job; this does not relax scanning.
+    $report.signatureUpdateAttempts = @()
+    $updated = $false
+    for ($updateAttempt = 1; $updateAttempt -le 4; $updateAttempt++) {
+        $entry = [ordered]@{ attempt = $updateAttempt; status = 'incomplete' }
+        try {
+            $service = Get-Service -Name WinDefend -ErrorAction Stop
+            if ($service.Status -ne 'Running') {
+                Start-Service -Name WinDefend -ErrorAction Stop
+                $service.WaitForStatus('Running', [TimeSpan]::FromSeconds(20))
+            }
+            # A platform update may replace the prior scanner path.
+            $updateExe = Get-ChildItem -LiteralPath $platform -Directory -ErrorAction SilentlyContinue |
+                Sort-Object Name -Descending | ForEach-Object { Join-Path $_.FullName 'MpCmdRun.exe' } |
+                Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+            if (-not $updateExe) { $updateExe = $exe }
+            $entry.command = 'MpCmdRun -SignatureUpdate'
+            $entry.output = @(& $updateExe -SignatureUpdate 2>&1 | ForEach-Object { "$_" })
+            $entry.exitCode = $LASTEXITCODE
+            if ($entry.exitCode -ne 0) { throw "Signature update failed with exit code $($entry.exitCode)." }
+            $status = Get-MpComputerStatus -ErrorAction Stop
+            if (-not $status.AMServiceEnabled -or -not $status.AntivirusEnabled -or
+                -not $status.AntivirusSignatureLastUpdated -or
+                $status.AntivirusSignatureLastUpdated -lt (Get-Date).AddDays(-7)) {
+                throw 'Defender is not active with current security intelligence.'
+            }
+            $entry.status = 'updated-and-ready'
+            $updated = $true
+        } catch {
+            $entry.status = 'failed'
+            $entry.error = $_.Exception.Message
+        }
+        $report.signatureUpdateAttempts += $entry
+        if ($updated) { break }
+        if ($updateAttempt -lt 4) { Start-Sleep -Seconds (10 * $updateAttempt) }
+    }
+    if (-not $updated) { throw 'Defender signature initialization failed after bounded retries. Delivery remains blocked.' }
     $report.status = 'ready-for-custom-scan'
     $report.engine = $status.AMEngineVersion
     $report.signatures = $status.AntivirusSignatureVersion

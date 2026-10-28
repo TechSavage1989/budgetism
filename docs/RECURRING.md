@@ -20,6 +20,8 @@ Pause hides upcoming dates but preserves the schedule, overrides and history. Re
 
 ## Manual resolution
 
+Dev.8 adds **Match existing** for actual payments already entered or imported. It links one actual entry without reposting, keeps its financial fields and import receipts, and settles the original occurrence. See [matching rules](MATCHING.md). Matching is not automatic and no unlink action is included.
+
 - Record transaction: explicitly confirm an actual amount, recorded date and notes. The current schedule account/category is shown in Upcoming; the recorded date defaults to today. The schedule template remains unchanged. The created transaction may subsequently be edited or split in Transactions.
 - Postpone: choose a later date for this occurrence only. No amount moves and later anchors do not change.
 - Skip: settle only this occurrence without a transaction. History is retained; this preview does not offer undo-skip or reopening a settled occurrence.
@@ -36,6 +38,6 @@ Dev.4 and earlier cannot read schema 3. Do not run them against converted data. 
 
 ## Limits and validation
 
-At most 500 schedules. Existing 16 MiB plaintext/24 MiB encrypted-envelope limits remain. Schedule templates use one category or destination account; split the actual transaction after recording when necessary. No holiday/business-day adjustment, variable-amount prediction, automatic matching to manual/imported transactions, reminders, automatic posting, or schedule deletion. Existing actual transactions cannot yet be matched to an occurrence; do not record the same real payment manually and again through Scheduled.
+At most 500 schedules. Existing 16 MiB plaintext/24 MiB encrypted-envelope limits remain. Schedule templates use one category or destination account; split the actual transaction after recording when necessary. No holiday/business-day adjustment, variable-amount prediction, automatic matching to manual/imported transactions, reminders, automatic posting, or schedule deletion. Existing actual transactions can be linked explicitly through Match existing; never record the same real payment manually and again through Record transaction.
 
 Unit tests cover anchors, overdue ordering, end dates, transfers, budgets, duplicate resolution, retries, stale versions, pause/resume, schema migration and broken links. Storage tests cover failed saves, SQLite reopening, stale writers and backup restore. Widget tests cover form validation, upgrade consent and single-flight confirmation. Native Windows write/read process tests use actual SQLite and OS-protected keys. See the handoff and validation log for which checks have actually run.

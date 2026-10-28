@@ -16,7 +16,7 @@ A CSV row already handled under the same account, exact content digest and logic
 
 Matching an existing entry saves a receipt but does not create, change or clear that entry. A statement from the other side of a transfer can match the existing paired transfer instead of posting again. One selected existing transaction cannot satisfy two rows in the same account batch. Different bank accounts have separate source identities.
 
-An unrecorded schedule remains a plan. For its payment, record the occurrence through Scheduled before importing, then regenerate the preview and match that actual entry. Do not import a new actual and separately record the same scheduled payment. Schedule matching, pending-to-posted merging, bank reconciliation, OFX/QFX/QIF and rule-based categorization remain later work.
+An unrecorded schedule remains a plan. After importing a payment, use Scheduled > Upcoming > Match existing to explicitly settle its occurrence using the imported transaction without reposting. Alternatively, record the occurrence through Scheduled first, then match that actual during CSV review. Never import and separately record the same payment. See [schedule matching](MATCHING.md). Automatic matching, pending-to-posted merging, bank reconciliation, OFX/QFX/QIF and rule-based categorization remain later work.
 
 ## Atomic save and migration
 
