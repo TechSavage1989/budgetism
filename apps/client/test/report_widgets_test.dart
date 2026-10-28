@@ -75,7 +75,7 @@ void main() {
   });
   testWidgets('export is single-flight and no account data is changed', (tester) async {
     final ledger = reportFixture(), pending = Completer<bool>(); var calls = 0;
-    await tester.pumpWidget(screen(ledger, save: (_, __) { calls++; return pending.future; })); await tester.pumpAndSettle();
+    await tester.pumpWidget(screen(ledger, save: (_, _) { calls++; return pending.future; })); await tester.pumpAndSettle();
     final button = find.byKey(const ValueKey('export-report'));
     await tester.ensureVisible(button); await tester.tap(button); await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('confirm-report-export'))); await tester.pumpAndSettle();

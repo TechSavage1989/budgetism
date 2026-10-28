@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -162,7 +161,7 @@ class _ReportPanelState extends State<ReportPanel> {
             items: [for (final type in ReportExport.values) DropdownMenuItem(value: type,
               child: Text(ReportCsv.label(type), overflow: TextOverflow.ellipsis))],
             onChanged: _exporting ? null : (value) => setState(() => _export = value!))),
-          FilledButton.icon(key: const ValueKey('export-report'), onPressed: _exporting ? null : () => _exportCsv(report),
+          FilledButton.icon(key: const ValueKey('export-report'), onPressed: _exporting ? null : () => _exportCsv(report!),
             icon: const Icon(Icons.save_alt_outlined), label: Text(_exporting ? 'Exporting...' : 'Export CSV')),
         ]) else const Text('CSV saving is available in desktop builds.'),
         if (_message != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_message!)),
