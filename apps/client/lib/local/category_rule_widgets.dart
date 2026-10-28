@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
 import 'local_api.dart';
+import 'category_history_widgets.dart';
 
 Future<void> showCategoryRules(BuildContext context, LocalFinanceApi api) async {
   await api.snapshot();
@@ -11,16 +12,17 @@ Future<void> showCategoryRules(BuildContext context, LocalFinanceApi api) async 
     builder: (_) => Dialog.fullscreen(child: CategoryRulesPage(
       snapshot: () => api.vault.ledger.snapshot(includeVoided: true),
       onSave: api.saveCategoryRule, onApply: api.applyCategoryRules,
+      onHistory: () => showCategoryHistory(context, api),
       onRefresh: () async { await api.snapshot(); },
     )));
 }
 
 class CategoryRulesPage extends StatefulWidget {
   const CategoryRulesPage({super.key, required this.snapshot, required this.onSave,
-    required this.onApply, this.onRefresh});
+    required this.onApply, this.onRefresh, this.onHistory});
   final Json Function() snapshot;
   final Future<void> Function(Json) onSave, onApply;
-  final Future<void> Function()? onRefresh;
+  final Future<void> Function()? onRefresh, onHistory;
   @override
   State<CategoryRulesPage> createState() => _CategoryRulesPageState();
 }
@@ -54,6 +56,16 @@ class _CategoryRulesPageState extends State<CategoryRulesPage> {
     try {
       await widget.onRefresh?.call();
       if (mounted) setState(() { _data = widget.snapshot(); _invalidate(); });
+    } catch (e) { if (mounted) setState(() => _error = e.toString()); }
+    finally { if (mounted) setState(() => _busy = false); }
+  }
+  Future<void> _history() async {
+    if (_busy || widget.onHistory == null) return;
+    setState(() { _busy = true; _invalidate(); });
+    try {
+      await widget.onHistory!();
+      await widget.onRefresh?.call();
+      if (mounted) setState(() => _data = widget.snapshot());
     } catch (e) { if (mounted) setState(() => _error = e.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
   }
@@ -123,9 +135,12 @@ class _CategoryRulesPageState extends State<CategoryRulesPage> {
           child: Text(_error!, key: const Key('rules-error'), style: TextStyle(color: Theme.of(context).colorScheme.error))),
         if (_notice != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_notice!)),
         const SizedBox(height: 12),
-        Align(alignment: Alignment.centerLeft, child: FilledButton.icon(
-          onPressed: _busy || rules.length >= CategoryRules.maxRules ? null : () => _edit(),
-          icon: const Icon(Icons.add), label: const Text('Add rule'))),
+        Wrap(spacing: 12, runSpacing: 8, children: [
+          FilledButton.icon(onPressed: _busy || rules.length >= CategoryRules.maxRules ? null : () => _edit(),
+            icon: const Icon(Icons.add), label: const Text('Add rule')),
+          if (widget.onHistory != null) OutlinedButton.icon(onPressed: _busy ? null : _history,
+            icon: const Icon(Icons.history), label: const Text('History')),
+        ]),
         if (rules.isEmpty) const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('No saved rules yet.')),
         for (final rule in rules) Card(child: ListTile(
           title: Text('${rule['priority']}. ${rule['name']} (${rule['enabled'] == true ? 'Enabled' : 'Disabled'})'),

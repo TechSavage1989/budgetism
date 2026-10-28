@@ -8,6 +8,7 @@ part 'schedule_matching.dart';
 part 'import_rules.dart';
 part 'reconciliation.dart';
 part 'category_rules.dart';
+part 'category_history.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -228,6 +229,9 @@ class LocalLedger {
         if (changes.isEmpty) fail('All allocations already exist. Enable replacement to overwrite them.');
         next['budgets'] = budgets;
         after = {'sourceMonth': source, 'month': target, 'changes': changes};
+        break;
+      case 'category-undo':
+        after = CategoryHistory.undo(next, input, operation, accounts, categories, transactions);
         break;
       case 'category-rule':
         before = rows(next['categoryRules'] ?? <Json>[]).where((r) => r['id'] == id).firstOrNull;

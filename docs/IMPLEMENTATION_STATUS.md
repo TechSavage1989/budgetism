@@ -1,18 +1,17 @@
 # Current implementation state
 
-Dev.11 categorization rules are user-confirmed. Dev.12 application 605ffe4334f20a94197f923fff12562e9de8737d passed all five jobs in [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439). The downloaded Windows package matches the exact no-threats Defender report and passed independent identity/runtime/hash verification. Manual dev.12 desktop confirmation remains pending.
+Dev.12 transaction register and prior finance features are user-confirmed. Dev.13 adds categorization history and reviewed category-only batch undo. Hosted validation and exact-package scanning remain required before delivery.
 
 | Area | State |
 | --- | --- |
-| Existing finances | All dev.11 ledger, budgets, schedules, reports, rules, imports, matching, forecasting and reconciliation preserved |
-| Search | AND words, quoted phrases, exclusions across payee/notes/accounts/categories |
-| Filters | Combined date/account/category/type/amount/source/reconciliation or voided status |
-| Sorting and counts | Stable date/amount/payee order; all matches counted, display in batches of 100 |
-| Financial totals | Split category shares when filtered; transfers separate; voided rows excluded |
-| Details | Read-only splits, receipt references, schedule links and active statement locks |
-| Editing | Explicit handoff to existing editor; voided or globally reconciled entries blocked |
-| Persistence | No new financial schema or stored search data; session state retained across navigation |
-| Validation | Full unit/widget/native suites, Windows/web builds, exact-package scan and independent verification passed |
+| Existing features | Ledger, budgets, schedules, imports, matching, reconciliation, reports, rules and register retained |
+| History | Reads saved categorization batches, including dev.11/dev.12, with original rule version and before/after categories |
+| Undo | Explicit reason and full-batch review; atomic category-only inverse with append-only audit |
+| Protection | Missing, edited, voided, reconciled, inconsistent, stale and already-undone batches rejected |
+| Financial values | Amounts, dates, account postings/balances, transaction count, receipts and schedule links preserved |
+| Rules | Definitions remain unchanged; no automatic reapplication or deletion |
+| Persistence | No new schema, encryption or backup format; existing encrypted audit stores reasons and inverse events |
+| Validation | Unit/storage/widget and native two-process undo tests authored; inspect actual hosted results |
 | Distribution | Development artifacts only; unsigned; no release/tag, server setup or updater installation |
 
-Saved searches, tags, bank feeds, cross-device synchronization and global multi-entity search remain unfinished. See TRANSACTION_REGISTER.md.
+This is not general financial undo or database rollback. No partial undo, automatic redo, synchronization or bank feed is added. See CATEGORY_HISTORY.md and VALIDATION.md.
