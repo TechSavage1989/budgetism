@@ -2,10 +2,10 @@
 
 **Development version:** 0.1.0-dev.12, read-only transaction register improvements.
 **Application commit:** 605ffe4334f20a94197f923fff12562e9de8737d, tree 507235f9a15065c51b0251cbd0083ef90ecf4263.
-**Build:** [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439). Web analysis, all 179 unit/widget tests and web compilation passed; Windows unit/widget tests passed. Native tests, final packaging and scanning are still pending.
+**Successful build:** [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439), all five jobs passed, including native register preservation and exact-package Defender scans.
 **User-confirmed baseline:** dev.11 categorization rules worked. All earlier features were also confirmed; do not repeat their setup exercises.
 **Starting application:** 6296272ca9d6635379928fd783f17be57e5d4a83 on development/rules-dev11, tree 07731ab027b035b331f39f23117700e57018d479. Successful run 40746717030.
-**Starting main:** 17a5a04b3e8ca1688afce38f4d60859d9ac8c522, still dev.10. Start from the newer dev.11 branch, not main. The prior interrupted delivery did not merge dev.11 to main.
+**Starting main:** 17a5a04b3e8ca1688afce38f4d60859d9ac8c522 was still dev.10 at the start. Dev.12 retains the full newer dev.11 ancestry. Use the newest verified main/branch after live checks, not an older milestone branch.
 
 ## Read first and scope
 
@@ -29,9 +29,15 @@ No ledger schema, financial mutations, encryption, OS keys, database, dependenci
 
 Flutter remains pinned to 3.47.8. Run all existing/new analysis, unit/widget and native tests, then web/Windows builds, package verification and Defender scans of the exact ZIP and extracted contents. Native register test is same-process close/reopen, not a new two-process test. Existing OS-key/schedule/import/matching/reconciliation/rules pairs still run separately. Build APP_VERSION 0.1.0-dev.12; keep Budgetism.exe and Budgetism-Windows-x64.zip stable.
 
-Local layout/package-verifier negative controls, Go race tests/vet, source-tree verification and documentation checks passed. No local Flutter/Dart/.NET SDK or Windows GUI is available. The application commit above passed web/Windows analysis and unit/widget testing plus web compilation; native tests, Windows packaging and exact-package scanning remain pending. Do not suppress failures or scanners. Documentation-only commits do not change the application commit being tested.
+All five hosted jobs passed: analysis, full unit/widget suites, all native process/preservation tests, Windows/web builds, package verification and exact ZIP/extracted Defender scans. Local source-layout/package negative controls, Go race tests/vet, source-tree/documentation checks and downloaded-package updater verify-only passed. No local Flutter/Dart/.NET SDK or Windows GUI was available; hosted execution is distinct from manual desktop testing. Do not suppress failures or scanners. Documentation-only commits do not change the tested application.
 
 Keep data at %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 and use the same OS account/key store. No keys, databases, binaries or temporary output in tracked source. Root allowlist unchanged. On final publication, preserve the full dev.11 ancestry and recheck main/branches/open PRs before a normal fast-forward. Do not publish tags/releases.
+
+## Delivered package and continuity
+
+Use the successful application run above and Budgetism-Windows-x64-development, artifact 12855070182. Outer SHA-256 47851f9ebf0aaea4e1c6ddeab3bd41150a579c25a2c761376c189127f960faf5. Inner Budgetism-Windows-x64.zip is 16,253,564 bytes, SHA-256 50373bec6edd60017d1066199112277cd4d89d0695e9e99b00a1dba704fa1624. Security artifact 12853913856 reports no threats in that exact ZIP and extracted runtime. Both executables remain unsigned. Complete source provenance, identity, runtime dependencies, hashes and actual updater verify-only acceptance were checked; see docs/VALIDATION.md.
+
+The first dev.12 application run passed all gates without a code correction. The final follow-up changes only documentation and preserves the tested code/version. Keep the historical milestone branches and use an expected-head normal fast-forward for authorized publication, never a force push. No GitHub release/tag or updater installation was created. Manual dev.12 GUI confirmation is the next user gate.
 
 ## Next desktop check
 

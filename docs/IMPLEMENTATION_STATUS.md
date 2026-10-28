@@ -1,6 +1,6 @@
 # Current implementation state
 
-Dev.11 categorization rules are user-confirmed. Dev.12 application 605ffe4334f20a94197f923fff12562e9de8737d is being validated in run 40772902439. Web/Windows analysis and unit/widget tests passed, including 179 tests on the web runner, and web compilation passed. Native Windows tests, packaging and exact-package scanning must finish before delivery.
+Dev.11 categorization rules are user-confirmed. Dev.12 application 605ffe4334f20a94197f923fff12562e9de8737d passed all five jobs in [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439). The downloaded Windows package matches the exact no-threats Defender report and passed independent identity/runtime/hash verification. Manual dev.12 desktop confirmation remains pending.
 
 | Area | State |
 | --- | --- |
@@ -12,7 +12,7 @@ Dev.11 categorization rules are user-confirmed. Dev.12 application 605ffe4334f20
 | Details | Read-only splits, receipt references, schedule links and active statement locks |
 | Editing | Explicit handoff to existing editor; voided or globally reconciled entries blocked |
 | Persistence | No new financial schema or stored search data; session state retained across navigation |
-| Validation | Web/Windows analysis and unit/widget suites plus web build passed; native/package/scan still pending |
+| Validation | Full unit/widget/native suites, Windows/web builds, exact-package scan and independent verification passed |
 | Distribution | Development artifacts only; unsigned; no release/tag, server setup or updater installation |
 
 Saved searches, tags, bank feeds, cross-device synchronization and global multi-entity search remain unfinished. See TRANSACTION_REGISTER.md.

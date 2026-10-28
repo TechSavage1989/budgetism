@@ -1,6 +1,6 @@
 # Budgetism dev.12 Windows test
 
-Application commit 605ffe4334f20a94197f923fff12562e9de8737d is being validated in [run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439). Do not download until all jobs and the exact-package scan are confirmed successful in VALIDATION.md. Export an encrypted backup from working dev.11, retain its separate password and close all Budgetism windows. Download Budgetism-Windows-x64-development, not source/updater-only artifacts. Extract both the outer artifact ZIP and the inner Budgetism-Windows-x64.zip into a separate folder, keeping Budgetism.exe, DLLs and data together. Open the existing workspace under the same Windows account; do not replace its database.
+Use [successful dev.12 run 40772902439](https://github.com/TechSavage1989/budgetism/actions/runs/40772902439), application commit 605ffe4334f20a94197f923fff12562e9de8737d. Download Budgetism-Windows-x64-development, artifact 12855070182, whose exact package hash and scan evidence are recorded in VALIDATION.md. Export an encrypted backup from working dev.11, retain its separate password and close all Budgetism windows. Do not select source or updater-only artifacts. Extract both the outer artifact ZIP and the inner Budgetism-Windows-x64.zip into a separate folder, keeping Budgetism.exe, DLLs and data together. Open the existing workspace under the same Windows account; do not replace its database.
 
 ## Test the register, not earlier milestones again
 
