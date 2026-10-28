@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'money.dart';
 import 'local/local_api.dart';
+import 'local/budget_widgets.dart';
 import 'local/storage.dart';
 import 'local/workspace_dialogs.dart';
 import 'local/security_dialogs.dart';
@@ -386,6 +387,7 @@ class FinanceShell extends StatefulWidget {
 
 class _FinanceShellState extends State<FinanceShell> {
   int _page = 0;
+  String _budgetMonth = DateTime.now().toIso8601String().substring(0, 7);
   String _query = '';
   String _filterAccount = '';
   int _transactionLimit = 100;
@@ -565,10 +567,13 @@ class _FinanceShellState extends State<FinanceShell> {
                         if (_page == 0) _dashboard(),
                         if (_page == 1) _accountsView(),
                         if (_page == 2) _transactionsView(),
-                        if (_page == 3) _futureFeature('Budgets', Icons.pie_chart_outline,
-                            'Category budgets, rollover balances, and spending targets are next.'),
+                        if (_page == 3 && _local) BudgetPanel(api: widget.api as LocalFinanceApi,
+                          month: _budgetMonth, onMonthChanged: (value) => setState(() => _budgetMonth = value),
+                          onChanged: () => _refresh(silent: true), onOpenTransaction: _editLocalTransaction),
+                        if (_page == 3 && !_local) _futureFeature('Budgets', Icons.pie_chart_outline,
+                            'Monthly budgets are available in a saved local workspace. Demo and server budgets are not implemented.'),
                         if (_page == 4) _futureFeature('Forecasts', Icons.show_chart_outlined,
-                            'Daily cash flow forecasting and scheduled bills are planned after budgeting.'),
+                            'Daily cash flow forecasting and scheduled bills are planned next.'),
                       ])),
                   )),
                 ]),
@@ -635,6 +640,8 @@ class _FinanceShellState extends State<FinanceShell> {
         ],
       )),
       const SizedBox(height: 24),
+      if (_local) BudgetOverview(snapshot: (widget.api as LocalFinanceApi).vault.ledger.snapshot(),
+        onOpen: () => setState(() { _page = 3; _budgetMonth = DateTime.now().toIso8601String().substring(0, 7); })),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text('Recent transactions', style: Theme.of(context).textTheme.titleLarge),
         TextButton(onPressed: () => setState(() => _page = 2), child: const Text('View all')),

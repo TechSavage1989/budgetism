@@ -8,7 +8,8 @@ typedef Json = Map<String, dynamic>;
 class LocalLedger {
   LocalLedger(Json source) : data = clone(source) { validate(); }
   final Json data;
-  static const schema = 1;
+  static const schema = 2;
+  static const legacySchema = 1;
   static const maxMinor = 99999999999999;
   static const accountTypes = ['checking', 'savings', 'cash', 'credit_card', 'loan', 'asset', 'liability'];
   static Json clone(Json value) => Map<String, dynamic>.from(jsonDecode(jsonEncode(value)) as Map);
@@ -23,7 +24,7 @@ class LocalLedger {
       for (final name in ['Paycheck', 'Other income'])
         {'id': const Uuid().v4(), 'name': name, 'kind': 'Income', 'currency': 'USD'},
     ],
-    'operations': <String, dynamic>{}, 'audit': <Json>[],
+    'operations': <String, dynamic>{}, 'audit': <Json>[], 'budgets': <Json>[],
   });
 
   static Never fail(String message) => throw FormatException(message);
@@ -44,6 +45,26 @@ class LocalLedger {
     final d = DateTime.tryParse(value);
     if (d == null || d.toIso8601String().substring(0, 10) != value || d.year < 1900) fail('Invalid transaction date.');
   }
+  static String budgetMonth(Object? value) {
+    if (value is! String || !RegExp(r'^\d{4}-(0[1-9]|1[0-2])$').hasMatch(value) ||
+        int.parse(value.substring(0, 4)) < 1900) {
+      fail('Choose a month between January 1900 and December 9999.');
+    }
+    return value;
+  }
+  static String shiftMonth(String value, int delta) {
+    budgetMonth(value);
+    final index = int.parse(value.substring(0, 4)) * 12 + int.parse(value.substring(5)) - 1 + delta;
+    if (index < 1900 * 12 || index >= 10000 * 12) fail('Month is outside the supported range.');
+    return '${(index ~/ 12).toString().padLeft(4, '0')}-${(index % 12 + 1).toString().padLeft(2, '0')}';
+  }
+  static const rolloverModes = ['none', 'positive', 'all'];
+  static int budgetAmount(Object? value) {
+    final result = minor(value, signed: true);
+    if (result < 0) fail('A budget allocation cannot be negative.');
+    return result;
+  }
+
   static Object? _canonical(Object? value) {
     if (value is Map) {
       final keys = value.keys.cast<String>().toList()..sort();
@@ -66,9 +87,17 @@ class LocalLedger {
     final accounts = rows(next['accounts']);
     final categories = rows(next['categories']);
     final transactions = rows(next['transactions']);
-    final id = input['id'] as String? ?? const Uuid().v4();
+    var id = input['id'] as String? ?? const Uuid().v4();
     Json? before;
     Json after;
+    final budgets = rows(next['budgets'] ?? <Json>[]);
+    if (['budget', 'budget-remove', 'budget-copy'].contains(action) && next['schema'] == legacySchema) {
+      if (input['confirmSchemaUpgrade'] != true) {
+        fail('Export a backup and confirm the budgeting format upgrade before saving your first budget.');
+      }
+      next['schema'] = schema;
+      next['budgets'] = budgets;
+    }
     switch (action) {
       case 'account':
         final index = accounts.indexWhere((a) => a['id'] == id);
@@ -124,6 +153,53 @@ class LocalLedger {
         }
         if (index < 0) { transactions.add(after); } else { transactions[index] = after; }
         break;
+      case 'budget':
+      case 'budget-remove':
+        final month = budgetMonth(input['month']);
+        final categoryId = input['categoryId'];
+        if (!categories.any((c) => c['id'] == categoryId && c['kind'] == 'Expense')) {
+          fail('Choose an expense category for this budget.');
+        }
+        final index = budgets.indexWhere((b) => b['month'] == month && b['categoryId'] == categoryId);
+        before = index < 0 ? null : budgets[index];
+        if (input['expectedVersion'] != (before?['version'] ?? 0)) {
+          fail('Budget changed. Refresh before editing.');
+        }
+        if (before != null) id = before['id'] as String;
+        if (action == 'budget-remove') {
+          if (before == null || before['removed'] == true) fail('There is no allocation to remove.');
+          after = {...before, 'amountMinor': 0, 'rollover': 'none', 'removed': true,
+            'version': (before['version'] as int) + 1};
+        } else {
+          if (!rolloverModes.contains(input['rollover'])) fail('Choose a supported rollover rule.');
+          after = {'id': id, 'categoryId': categoryId, 'month': month,
+            'amountMinor': budgetAmount(input['amountMinor']), 'rollover': input['rollover'],
+            'removed': false, 'version': (before?['version'] as int? ?? 0) + 1};
+        }
+        if (index < 0) { budgets.add(after); } else { budgets[index] = after; }
+        next['budgets'] = budgets;
+        break;
+      case 'budget-copy':
+        final target = budgetMonth(input['month']);
+        final source = shiftMonth(target, -1);
+        if (input['expectedRevision'] != revision) fail('Workspace changed. Refresh before copying budgets.');
+        if (input['replaceExisting'] is! bool) fail('Choose whether existing allocations can be replaced.');
+        final previous = budgets.where((b) => b['month'] == source && b['removed'] != true).toList();
+        if (previous.isEmpty) fail('The previous month has no allocations to copy.');
+        final changes = <Json>[];
+        for (final plan in previous) {
+          final index = budgets.indexWhere((b) => b['month'] == target && b['categoryId'] == plan['categoryId']);
+          if (index >= 0 && input['replaceExisting'] != true) continue;
+          final old = index < 0 ? null : budgets[index];
+          final copied = {...plan, 'id': old?['id'] ?? const Uuid().v4(), 'month': target,
+            'version': (old?['version'] as int? ?? 0) + 1, 'removed': false};
+          if (index < 0) { budgets.add(copied); } else { budgets[index] = copied; }
+          changes.add({'before': old, 'after': clone(copied)});
+        }
+        if (changes.isEmpty) fail('All allocations already exist. Enable replacement to overwrite them.');
+        next['budgets'] = budgets;
+        after = {'sourceMonth': source, 'month': target, 'changes': changes};
+        break;
       default:
         fail('Unsupported local operation.');
     }
@@ -165,13 +241,16 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] != schema) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] is! int || ![legacySchema, schema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] == schema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
+    if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
     final accounts = rows(data['accounts']);
     final categories = rows(data['categories']);
     final transactions = rows(data['transactions']);
     final ids = <String>{};
-    for (final item in [...accounts, ...categories, ...transactions]) {
+    final budgets = rows(data['budgets'] ?? <Json>[]);
+    for (final item in [...accounts, ...categories, ...transactions, ...budgets]) {
       final id = text(item['id'], 'Record identifier', 100);
       if (!ids.add(id)) fail('Duplicate record identifier.');
     }
@@ -188,6 +267,18 @@ class LocalLedger {
       if (t['version'] is! int || t['version'] < 1 || t['voided'] is! bool) fail('Invalid transaction revision.');
       final expected = postingsFor(t, accounts, categories);
       if (jsonEncode(_canonical(expected)) != jsonEncode(_canonical(t['postings']))) fail('Transaction postings do not match its details.');
+    }
+    final budgetKeys = <String>{};
+    for (final b in budgets) {
+      final month = budgetMonth(b['month']);
+      budgetAmount(b['amountMinor']);
+      if (!categories.any((c) => c['id'] == b['categoryId'] && c['kind'] == 'Expense') ||
+          !rolloverModes.contains(b['rollover']) || b['removed'] is! bool ||
+          b['version'] is! int || (b['version'] as int) < 1 ||
+          (b['removed'] == true && (b['amountMinor'] != 0 || b['rollover'] != 'none'))) {
+        fail('Invalid category budget record.');
+      }
+      if (!budgetKeys.add('$month|${b['categoryId']}')) fail('Duplicate category budget for the same month.');
     }
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
@@ -209,7 +300,8 @@ class LocalLedger {
         if (balances.containsKey(p['ledgerId'])) balances[p['ledgerId']] = balances[p['ledgerId']]! + (p['amountMinor'] as int);
       }
     }
-    return {'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],
+    return {'schema': data['schema'], 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+      'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],
       'categories': rows(clone(data)['categories']),
       'transactions': transactions.where((t) => includeVoided || t['voided'] != true).toList()};
   }
