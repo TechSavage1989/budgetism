@@ -43,7 +43,7 @@ void main() {
           final content = ReportCsv.encode(report, type);
           final target = '${dir.path}${Platform.pathSeparator}${type.name}.csv';
           await XFile.fromData(Uint8List.fromList(utf8.encode(content)), mimeType: 'text/csv').saveTo(target);
-          expect(await File(target).readAsString(), content);
+          expect(await File(target).readAsBytes(), utf8.encode(content));
         }
         expect(await v.storage.read(), encoded); expect(jsonEncode(v.ledger.data), original);
         expect(v.ledger.revision, revision);
