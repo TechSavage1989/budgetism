@@ -1,6 +1,8 @@
 # Budgetism development handoff
 
 **Development version:** 0.1.0-dev.7, reviewed local CSV importing.
+**Verified application commit:** 0dec77e3372a7ceb5745e29a54301a6622de414b, tree d97461e0c2945f39ba2d9f20fa97ef163a9b419b.
+**Successful build:** [run 40708091217](https://github.com/TechSavage1989/budgetism/actions/runs/40708091217), all five jobs passed, including the native import process pair and Defender package scan.
 **Starting tested application:** 37917d27a40d68cb6fbb83b61b192c9984a2b7ea, development/planning-dev6, run 40699293089.
 **User-confirmed baseline:** dev.6 works. Accounts/persistence, optional password, monthly budgets, recurring activity and calendar/forecast tests were already reported working. Do not repeatedly ask the user to repeat budgeting tests.
 
@@ -34,7 +36,11 @@ Preserve every other working module. No new library dependencies. Root allowlist
 
 ## Validation, build and delivery
 
-Local root/package checks pass; source-provenance evidence is in docs/VALIDATION.md. Local Flutter/Dart/.NET SDKs and Windows GUI are unavailable. Hosted tests/builds/scans must be inspected for the exact commit before delivery; no passing result is implied by this source handoff.
+The complete existing/new Flutter suite passed on Ubuntu and Windows. All retained native security/schedule/planning tests and the new separate-process import test pair passed. Windows/web compilation, backend contracts, updater tests, source/package checks and the exact-package Defender scan passed. Downloaded artifacts, hashes, native libraries and actual updater verify-only acceptance were independently checked. Exact evidence is in docs/VALIDATION.md. Local Flutter/Dart/.NET SDKs and Windows GUI are unavailable; those passes are hosted evidence, not a local GUI run.
+
+Use the successful run above, artifact Budgetism-Windows-x64-development, ID 12825108489. Its outer digest is 3464286de7e7442f3fab52eb5c1c426e7c50bead41fd45305cf2ee02cb0183ef. Inner Budgetism-Windows-x64.zip is 16,092,508 bytes with SHA-256 da89f1bb0d3a1cfa4a884ca47eccbc1579072d7bd9e039328601f63a28faef3b. Security evidence artifact 12824553649 reports no threats in that exact archive and extracted files. Both executables remain unsigned. No new manual dev.7 GUI/file-picker check or production approval is claimed.
+
+This documentation-only follow-up records completed checks without changing the tested application/version. A normal fast-forward can bring main through dev.6/dev.7 while preserving historical branches; recheck expected branch heads first. Do not identify a documentation-only HEAD as a different application build.
 
 Flutter remains 3.47.8. Generate Windows/web runners, resolve packages, analyze and test, then run existing native security/schedule process pairs and read-only planning test. The new integration test uses IMPORT_TEST_PHASE=write/read with the same isolated IMPORT_TEST_DIRECTORY in two processes. Build with APP_VERSION=0.1.0-dev.7, package with scripts/package_windows.ps1 -Version '0.1.0-dev.7', verify the package and scan exact ZIP and extracted contents. No release or installer is authorized.
 

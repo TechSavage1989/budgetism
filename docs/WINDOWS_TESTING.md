@@ -1,6 +1,6 @@
 # Budgetism dev.7 Windows test
 
-Download only the verified Windows artifact from the exact successful run recorded in the handoff. Export an encrypted backup from dev.6, retain its independent password, close every Budgetism window, and extract the entire new portable package in a separate testing folder. Keep Budgetism.exe, its DLLs and data directory together under the same Windows user account. Do not replace or recreate the per-user workspace.
+Use [successful dev.7 run 40708091217](https://github.com/TechSavage1989/budgetism/actions/runs/40708091217), tested application commit 0dec77e3372a7ceb5745e29a54301a6622de414b. Download Budgetism-Windows-x64-development, extract its outer ZIP and inner Budgetism-Windows-x64.zip. Do not select the source or updater-only artifact. Export an encrypted backup from dev.6, retain its independent password, close every Budgetism window, and extract the entire new portable package in a separate testing folder. Keep Budgetism.exe, its DLLs and data directory together under the same Windows user account. Do not replace or recreate the per-user workspace.
 
 ## Test only the new import workflow
 
