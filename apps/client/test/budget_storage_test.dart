@@ -24,12 +24,19 @@ void main() {
     LocalVault? destination;
     try {
       vault = await LocalVault.open(SqliteVaultStorage(path), password, create: false);
+      // The independent v1 fixture deliberately has no categories. Add one
+      // through the legacy finance path before exercising the budget upgrade.
+      expect(vault.ledger.data['categories'], isEmpty);
+      await vault.apply('category', {'operationId': 'fixture-expense-category',
+        'name': 'Fictional legacy groceries', 'kind': 'Expense'});
+      expect(vault.ledger.data['schema'], LocalLedger.legacySchema);
+      final legacyWithCategory = await vault.storage.read();
       stale = await LocalVault.open(SqliteVaultStorage(path), password, create: false);
       final categories = LocalLedger.rows(vault.ledger.data['categories']);
       final id = categories.firstWhere((c) => c['kind'] == 'Expense')['id'] as String;
       final original = vault.ledger.snapshot();
       await expectLater(vault.apply('budget', plan('upgrade', id, '2026-10', 10000)), throwsFormatException);
-      expect(await vault.storage.read(), legacy);
+      expect(await vault.storage.read(), legacyWithCategory);
       await vault.apply('budget', plan('upgrade', id, '2026-10', 10000, rollover: 'all', upgrade: true));
       expect(vault.passwordRequired, true);
       expect(vault.ledger.snapshot()['accounts'], original['accounts']);
