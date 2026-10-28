@@ -69,7 +69,7 @@ class _ReconciliationWorkspaceState extends State<ReconciliationWorkspace> {
               child: Text(a['name'] as String, overflow: TextOverflow.ellipsis))],
             onChanged: (v) => setState(() { _accountId = v; _error = null; })),
           const SizedBox(height: 12),
-          FilledButton.icon(onPressed: _start, icon: const Icon(Icons.fact_check_outlined), child: const Text('Start reconciliation')),
+          FilledButton.icon(onPressed: _start, icon: const Icon(Icons.fact_check_outlined), label: const Text('Start reconciliation')),
           const SizedBox(height: 12),
           Text('Starting balance for the next statement: ${money(Reconciliation.opening(data, _accountId!))}'),
           const Text('Only the latest completed statement for this account can be reopened.'),
