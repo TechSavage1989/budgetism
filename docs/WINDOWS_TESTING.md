@@ -1,6 +1,6 @@
 # Budgetism dev.5 Windows test
 
-Use only the exact successful dev.5 Actions run identified in the handoff, not a source ZIP or an older run. Download Budgetism-Windows-x64-development, extract the artifact and its inner Budgetism-Windows-x64.zip, keep all supporting files, and launch Budgetism.exe under the same Windows account.
+Use [successful dev.5 build 40616768105](https://github.com/TechSavage1989/budgetism/actions/runs/40616768105), tested application commit 39353fd46314aa22866ff85dcf0aad352fa39601, not a source ZIP or an older run. Download Budgetism-Windows-x64-development, extract the artifact and its inner Budgetism-Windows-x64.zip, keep all supporting files, and launch Budgetism.exe under the same Windows account.
 
 ## Before opening the next build
 
