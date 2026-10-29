@@ -195,7 +195,10 @@ class _FinanceShellState extends State<FinanceShell> {
                     child: Padding(padding: const EdgeInsets.all(14), child: Text(_local ? 'Local workspace issue: $_error' :
                       'Connection issue: $_error\nData shown may be out of date. Offline edits are not supported in this build.'))),
                   if (_page == 0 && _local) DailyHomePanel(snapshot: (widget.api as LocalFinanceApi).vault.ledger.snapshot(),
-                    onNavigate: (index) => setState(() => _page = index), onAdd: _createTransaction,
+                    onNavigate: (index) => setState(() {
+                      _page = index;
+                      if (index == 3) _budgetMonth = DateTime.now().toIso8601String().substring(0, 7);
+                    }), onAdd: _createTransaction,
                     onAddAccount: _createAccount, onInspect: _inspectHome),
                   if (_page == 0 && !_local) _dashboard(),
                   if (_page == 8) WorkspaceToolsPanel(local: _local, busy: _toolBusy,
