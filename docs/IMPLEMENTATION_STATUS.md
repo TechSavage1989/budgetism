@@ -14,7 +14,7 @@ Dev.18 adds fictional bank synchronization and a unified Needs Review inbox on u
 | Compatibility | Read schemas 1–8; first fictional mapping requires format-8 consent; preserve prior collections |
 | Security | Optional password, encrypted payloads, OS keys and independent backups unchanged |
 | Retained features | Home, date pickers, quick entry, imports, rules/history, budgets, schedules, matching and reports |
-| Distribution | Windows development artifact only; verify exact run, archive and Defender evidence before delivery |
+| Distribution | Verified Windows dev.18 artifact; five build jobs, 306 tests, 26 native commands and exact ZIP/extracted Defender scans passed; see validation evidence |
 | Live bank/device sync | Not enabled; no provider credentials, enrollment, server setup or background workers |
 
 See [BANK_SYNC.md](BANK_SYNC.md) for current behavior and [BANK_CONNECTION_PLAN.md](BANK_CONNECTION_PLAN.md) for later provider work.
