@@ -1,6 +1,6 @@
 # Budgetism dev.17 Windows check
 
-Use only the final successful and independently verified dev.17 build recorded in VALIDATION.md. Export an encrypted backup, retain its password and close Budgetism. Extract the new Windows program into a separate folder, keep all supporting files together, confirm 0.1.0-dev.17 and open the existing workspace using the same Windows account. Do not recreate or replace the database. No new format upgrade is expected.
+Use [successful dev.17 run 40822480327](https://github.com/TechSavage1989/budgetism/actions/runs/40822480327), application dd70d39df255a6484179e6df20ee0a63997915ef, Windows artifact 12875328581. Exact hashes and scan evidence are in VALIDATION.md. Export an encrypted backup, retain its password and close Budgetism. Extract the new Windows program into a separate folder, keep all supporting files together, confirm 0.1.0-dev.17 and open the existing workspace using the same Windows account. Do not recreate or replace the database. No new format upgrade is expected.
 
 First inspect Home and Settings. Open Categorization rules or Saved import profiles directly, then close without saving. In a new transaction, search an existing account/category and type part of a known expense payee. Choose a suggestion, then Cancel. Only the form should have changed; balances, transaction count and saved rules/profiles remain unchanged.
 
