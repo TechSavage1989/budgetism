@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
+import 'server_sandbox_widgets.dart';
 import 'money.dart';
 import 'local/local_api.dart';
 import 'local/bank_widgets.dart';
@@ -253,6 +254,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     setState(() { _busy = true; _error = null; });
     final api = FinanceApi(_server.text);
     try {
+      api.requireHttpsServer();
       final initialized = await api.isInitialized();
       if (mounted) setState(() { _api = api; _initialized = initialized; });
     } catch (error) {
@@ -326,7 +328,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                   TextField(controller: _server, decoration: const InputDecoration(
                     labelText: 'Private server URL', hintText: 'https://finance.private.example',
                     prefixIcon: Icon(Icons.dns_outlined), border: OutlineInputBorder(),
-                    helperText: 'Use VPN and HTTPS for access outside your device.',
+                    helperText: 'Use your trusted private HTTPS address.',
                   ), onChanged: (_) { if (_initialized != null) setState(() { _initialized = null; _api = null; }); }),
                   const SizedBox(height: 14),
                   if (_initialized == null)

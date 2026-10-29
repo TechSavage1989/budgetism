@@ -2,13 +2,14 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.18 development preview.** Building on user-confirmed dev.17, this iteration adds a provider-independent fictional bank feed, explicit account mapping and a unified Needs Review inbox. Pending records, reported balances and refresh checkpoints stay separate from recorded transactions. First mapping requires backup and format-8 consent; simply opening the app does not upgrade data. Check [validation](docs/VALIDATION.md) for exact test and package evidence. Keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.19 client candidate.** Adds an explicit, read-only private-server Sandbox preview to Connections while retaining the user-confirmed dev.18 local fictional feed, account mapping and Needs Review. The server preview never imports or records transactions and stays separate from saved local workspaces. Local first mapping still requires backup and format-8 consent; opening the app never upgrades data. Check [the handoff](DEVELOPMENT_HANDOFF.md) for current candidate verification and [validation](docs/VALIDATION.md) for the earlier verified desktop baseline. Keep independent encrypted backups. This is not a production release.
 
 ## Features
 
 | Area | Implemented behavior |
 | --- | --- |
 | Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
+| Private server Sandbox preview | Authenticated HTTPS, explicit fictional retrieval, exact cents, pending/posted/removed status and memory-only preview; no ledger writes |
 | Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |
 | Needs Review | Categories, duplicates, pending ambiguity, transfers/card payments, schedule matches, corrections/removals and reconciliation conflicts |
 | Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
@@ -27,7 +28,7 @@
 | Date controls | Calendar selection for schedule/occurrence/statement/rule/register dates, Today/Yesterday, quick ranges and visual budget month/year |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
-No local cross-device synchronization, live bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
+No cross-device synchronization, real bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. Saved local workspaces require no server. The optional [Sandbox client preview](docs/SERVER_SANDBOX_CLIENT.md) requires a separately configured private HTTPS server. The web build retains the sample/server interface; it does not provide browser-local financial storage.
 
 ## Download
 

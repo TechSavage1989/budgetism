@@ -2,6 +2,16 @@
 
 Development: 0.1.0-dev.18, provider-independent fictional bank synchronization and unified Needs Review.
 
+Next client candidate: 0.1.0-dev.19 adds the read-only authenticated private-server
+Sandbox preview in Connections; see [docs/SERVER_SANDBOX_CLIENT.md](docs/SERVER_SANDBOX_CLIENT.md).
+Retrieval is explicit, HTTPS-only and bounded, redirects are refused, stale session
+responses are discarded and failures clear earlier previews. Exact signed cents,
+calendar dates, pending identities and removal tombstones are validated. No local
+workspace, financial schema or ledger writes are introduced. Client tests and one
+additional Windows native isolation/screenshot check supplement the retained suite.
+This candidate still needs full CI/package/security verification before delivery.
+No source or secrets change is needed in the already verified installed API.
+
 Private server follow-up: the user completed permanent services, owner setup and
 certificate-validated loopback HTTPS. A protected database backup was restored to
 a separate disposable database; all seven tables matched by count/content digest.

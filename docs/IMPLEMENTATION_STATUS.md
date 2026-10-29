@@ -1,5 +1,13 @@
 # Current implementation state
 
+Client candidate 0.1.0-dev.19 now wires the [private-server Sandbox panel](SERVER_SANDBOX_CLIENT.md)
+into Connections for an authenticated server session. It is explicit and read-only,
+keeps all preview rows in memory, and never imports a local workspace or writes a
+ledger entry. HTTPS validation, refused redirects, response limits, strict amounts,
+sanitized failures and stale-session guards are covered by new tests. Full client
+CI/native/package scans remain pending; dev.18 remains the previously verified
+desktop baseline. No real bank enrollment or automatic retrieval is enabled.
+
 Private-server follow-up: permanent services, loopback HTTPS, owner setup and a
 protected database backup/isolated restore were verified in the private session.
 LAN access remains disabled at the user's request. A separate Sandbox API smoke
