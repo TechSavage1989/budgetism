@@ -81,6 +81,40 @@ await RejectAsync(async () => await Preview((_, _) => Task.FromResult(Json(new s
 using (var http = new HttpClient(new FakeHandler((_, _) => throw new Exception("Network must not run"))))
     await RejectAsync(async () => await new PlaidSandbox(http).PreviewAsync("id", "secret", "access-production-fictional", CancellationToken.None),
         "sandbox_credentials_required", "Production token rejected before network access");
+using (var http = new HttpClient(new FakeHandler(async (request, call) =>
+{
+    var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+    cursors.Add(body.RootElement.GetProperty("cursor").GetString()!);
+    return call switch { 0 => Json(Page("partial", true)),
+        1 => Json("""{"error_code":"TRANSACTIONS_SYNC_MUTATION_DURING_PAGINATION"}""", HttpStatusCode.BadRequest),
+        _ => Json(Page("committed", false)) };
+})))
+{
+    cursors.Clear();
+    var delta = await new PlaidSandbox(http).GetDeltaAsync(new("id", "secret", "access-sandbox-fictional"), "stored-checkpoint", default);
+    Check(delta.Cursor == "committed" && cursors.SequenceEqual(new[] { "stored-checkpoint", "partial", "stored-checkpoint" }),
+        "Durable refresh restarts the last committed cursor on pagination mutation");
+}
+string Account(string id, string type, string subtype, string current, string available = "null", string currency = "USD") =>
+    """{"account_id":"ID","name":"Fictional account","mask":"0000","type":"TYPE","subtype":"SUBTYPE","balances":{"current":CURRENT,"available":AVAILABLE,"iso_currency_code":"CURRENCY"}}"""
+        .Replace("ID", id).Replace("SUBTYPE", subtype).Replace("TYPE", type).Replace("CURRENT", current).Replace("AVAILABLE", available).Replace("CURRENCY", currency);
+async Task<IReadOnlyList<PlaidBankAccount>> Accounts(string rows)
+{
+    using var http = new HttpClient(new FakeHandler((request, _) => {
+        Check(request.RequestUri!.AbsoluteUri == "https://sandbox.plaid.com/accounts/get", "Discovery uses cached Sandbox accounts endpoint only");
+        return Task.FromResult(Json("{\"accounts\":[" + rows + "]}"));
+    }));
+    return await new PlaidSandbox(http).GetAccountsAsync(new("id", "secret", "access-sandbox-fictional"), default);
+}
+var discovered = await Accounts(string.Join(',', Account("checking", "depository", "checking", "100.29", "90.01"),
+    Account("card", "credit", "credit card", "12.34", "987.66"), Account("fraction", "depository", "savings", "1.001"),
+    Account("eur", "depository", "checking", "20", currency: "EUR")));
+Check(discovered[0].ReportedBalanceMinor == 10029 && discovered[0].AvailableBalanceMinor == 9001, "Discovery preserves exact cached asset balances");
+Check(discovered[1].ReportedBalanceMinor == -1234 && discovered[1].AvailableBalanceMinor is null, "Card debt has negative account effect; available credit is not spendable asset cash");
+Check(discovered[2].BalanceIssue && discovered[2].ReportedBalanceMinor is null && !discovered[3].Supported && discovered[3].Currency == "EUR",
+    "Fractional balances are unavailable; unsupported currency is never relabeled USD");
+await RejectAsync(async () => await Accounts(Account("duplicate", "depository", "checking", "1") + "," + Account("duplicate", "depository", "checking", "1")),
+    "invalid_accounts", "Duplicate discovery identities rejected");
 Console.WriteLine("All fictional Plaid backend contract tests passed.");
 
 sealed class FakeHandler(Func<HttpRequestMessage, int, Task<HttpResponseMessage>> respond) : HttpMessageHandler

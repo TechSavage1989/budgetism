@@ -10,6 +10,7 @@ import 'package:budgetism/server_sandbox.dart';
 import 'package:budgetism/local/device_keys.dart';
 import 'package:budgetism/local/storage_native.dart';
 import 'package:budgetism/local/vault.dart';
+import '../test/server_bank_test.dart' show bankState;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +101,36 @@ void main() {
         expect(api.previews, 2);
         expect(find.text('Fictional cafe'), findsNothing);
         expect(api.writes, 0);
+        await tester.tap(nav('Needs Review'));
+        await tester.pumpAndSettle();
+        expect(find.text('Server Sandbox · durable review'), findsOneWidget);
+        expect(api.bankWrites, isEmpty);
+        expect(find.text('Fictional cafe'), findsOneWidget);
+        final reviewImage = await boundary.toImage();
+        final reviewBytes = await reviewImage.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        reviewImage.dispose();
+        await tester.runAsync(
+          () => File(
+            'build/sandbox-native-review.png',
+          ).writeAsBytes(reviewBytes!.buffer.asUint8List()),
+        );
+        api.bankFail = true;
+        await tester.tap(find.text('Refresh fictional sources'));
+        await tester.pumpAndSettle();
+        final original = Map<String, dynamic>.from(api.bankWrites.single);
+        api.bankFail = false;
+        await tester.tap(find.text('Retry unchanged action'));
+        await tester.pumpAndSettle();
+        expect(api.bankWrites.last, original);
+        expect(api.bankWrites.length, 2);
+        await tester.tap(nav('Home'));
+        await tester.pumpAndSettle();
+        await tester.tap(nav('Needs Review'));
+        await tester.pumpAndSettle();
+        expect(find.text('Fictional cafe'), findsOneWidget);
+        expect(api.bankWrites.length, 2);
         expect(await tester.runAsync(() => vault!.storage.read()), before);
         expect(tester.takeException(), isNull);
       } finally {
@@ -126,6 +157,21 @@ class FictionalServerApi extends FinanceApi {
   }
   int previews = 0, writes = 0;
   bool fail = false;
+  bool bankFail = false;
+  final bankWrites = <Map<String, dynamic>>[];
+  @override
+  Future<Map<String, dynamic>> bankRequest(
+    String route, [
+    Map<String, dynamic>? body,
+    int? offset,
+    int? version,
+  ]) async {
+    if (body == null) return bankState();
+    bankWrites.add({'route': route, ...body});
+    if (bankFail) throw FinanceApiException('Fictional lost response', 0);
+    return {'connectionVersion': 5, 'ready': true};
+  }
+
   @override
   Future<Map<String, dynamic>> snapshot() async => {
     'accounts': [],

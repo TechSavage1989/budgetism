@@ -33,6 +33,7 @@ jobs:
           Expand-Archive build/postgresql.zip build/postgresql
       - name: Build and exercise isolated server package
         run: |
+          ./scripts/test_server_bank.ps1 -DotnetPath (Get-Command dotnet).Source -PostgresDirectory "$PWD/build/postgresql/pgsql"
           ./scripts/package_server_test.ps1 -DotnetPath (Get-Command dotnet).Source -PostgresDirectory "$PWD/build/postgresql/pgsql" -OutputDirectory "$PWD/build/server-kit"
           powershell.exe -NoProfile -File ./build/server-kit/Test-BudgetismServer.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -128,7 +129,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.19
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.20
 
   windows-portable:
     runs-on: windows-latest
@@ -274,17 +275,19 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Budgetism-Sandbox-preview-UI
-          path: ${{ env.BUDGETISM_SOURCE }}/apps/client/build/sandbox-native-preview.png
+          path: |
+            ${{ env.BUDGETISM_SOURCE }}/apps/client/build/sandbox-native-preview.png
+            ${{ env.BUDGETISM_SOURCE }}/apps/client/build/sandbox-native-review.png
           if-no-files-found: error
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.19
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.20
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.19'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.20'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.19 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.20 --checksums build/packages/checksums.sha256 --self-test
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}

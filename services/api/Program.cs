@@ -13,6 +13,11 @@ using Budgetism.Api;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddWindowsService(options => options.ServiceName = "BudgetismApi");
 builder.Services.AddSingleton(_ => new PlaidSandbox(PlaidSandbox.CreateClient()));
+builder.Services.AddSingleton<IPlaidSandboxFeed>(sp => sp.GetRequiredService<PlaidSandbox>());
+builder.Services.AddScoped(sp => new ServerBank(sp.GetRequiredService<FinanceDb>(),
+    sp.GetRequiredService<IPlaidSandboxFeed>(), () => new SandboxCredentials(
+        ReadSecret("PLAID_SANDBOX_CLIENT_ID_FILE"), ReadSecret("PLAID_SANDBOX_SECRET_FILE"),
+        ReadSecret("PLAID_SANDBOX_ACCESS_TOKEN_FILE"))));
 var databasePassword = ReadSecret("DB_PASSWORD_FILE");
 var bootstrapToken = ReadSecret("BOOTSTRAP_TOKEN_FILE");
 var connection = builder.Configuration.GetConnectionString("Finance");
@@ -42,6 +47,13 @@ builder.Services.AddScoped<IPasswordHasher<Owner>, PasswordHasher<Owner>>();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("bank", rule =>
+    {
+        rule.PermitLimit = 12;
+        rule.Window = TimeSpan.FromMinutes(1);
+        rule.QueueLimit = 0;
+        rule.AutoReplenishment = true;
+    });
     options.AddFixedWindowLimiter("auth", rule =>
     {
         rule.PermitLimit = 8;
@@ -52,6 +64,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+app.MapServerBank();
 app.UseRouting();
 app.UseRateLimiter();
 
@@ -359,7 +372,11 @@ app.MapGet("/api/sync/changes", async Task<IResult> (HttpContext http, FinanceDb
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FinanceDb>();
-    await db.Database.EnsureCreatedAsync();
+    if (await db.Database.EnsureCreatedAsync())
+    {
+        db.BankSchemaVersions.Add(new BankSchemaVersion());
+        await db.SaveChangesAsync();
+    }
 }
 await app.RunAsync();
 

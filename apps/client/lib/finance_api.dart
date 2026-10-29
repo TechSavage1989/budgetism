@@ -136,6 +136,55 @@ class FinanceApi {
   Future<Map<String, dynamic>> snapshot() async =>
       Map<String, dynamic>.from(await request('GET', '/api/sync/snapshot') as Map);
 
+  Future<Map<String, dynamic>> bankRequest(String route, [Map<String, dynamic>? body, int? offset, int? version]) async {
+    if (!{'state', 'connect', 'map', 'refresh', 'active', 'review'}.contains(route)) {
+      throw ArgumentError('Unknown bank operation.');
+    }
+    requireHttpsServer();
+    final session = token;
+    if (session == null || session.isEmpty) throw FinanceApiException('Sign in again.', 401);
+    final client = _previewClientFactory();
+    try {
+      Future<Map<String, dynamic>> fetch() async {
+        final uri = _uri('/api/bank/sandbox/$route').replace(queryParameters: offset == null ? null : {
+          'offset': '$offset', 'version': '$version',
+        });
+        final request = http.Request(body == null ? 'GET' : 'POST', uri)
+          ..followRedirects = false
+          ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $session'});
+        if (body != null) {
+          request.headers['Content-Type'] = 'application/json';
+          request.body = jsonEncode(body);
+        }
+        final response = await client.send(request);
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw FinanceApiException(switch (response.statusCode) {
+            401 || 403 => 'Your session expired. Sign in again.',
+            404 || 503 => 'Durable Sandbox review is not enabled on this server.',
+            409 => 'The source or connection changed. Reload before reviewing again.',
+            429 => 'Too many requests. Wait before retrying the same action.',
+            >= 300 && < 400 => 'Server redirects are blocked.',
+            _ => 'The Sandbox operation failed. No completion was confirmed. Retry the unchanged action before starting another.',
+          }, response.statusCode);
+        }
+        final bytes = BytesBuilder(copy: false);
+        await for (final chunk in response.stream) {
+          if (bytes.length + chunk.length > 4 * 1024 * 1024) throw const FormatException();
+          bytes.add(chunk);
+        }
+        if (session != token) throw FinanceApiException('Your session changed. Sign in again.', 401);
+        return Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes.takeBytes())) as Map);
+      }
+      return await fetch().timeout(const Duration(seconds: 95));
+    } on FinanceApiException {
+      rethrow;
+    } catch (_) {
+      throw FinanceApiException('The Sandbox operation did not finish. Retry the unchanged action to confirm its result.', 0);
+    } finally {
+      client.close();
+    }
+  }
+
   Future<void> createAccount(Map<String, dynamic> data) async =>
       request('POST', '/api/accounts', data);
 

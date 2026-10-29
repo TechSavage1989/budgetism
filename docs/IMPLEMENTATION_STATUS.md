@@ -1,5 +1,14 @@
 # Current implementation state
 
+Dev.20 candidate adds [durable server Sandbox source review](SERVER_SANDBOX_REVIEW.md),
+with explicit zero-baseline mapping, atomic checkpoints/history, record/match/pair/
+ignore/keep decisions and a disabled-by-default switch. Existing databases require
+an explicit additive versioned upgrade. Disposable PostgreSQL upgrade/retry/
+rollback/concurrency and 14-table independent restore tests passed locally.
+Client/native/package CI and private installation remain pending. Dev.19 owner
+sign-in and visible fictional changes were confirmed by the user. No real banks,
+automatic provider refresh or public/LAN listener is enabled.
+
 Client candidate 0.1.0-dev.19 now wires the [private-server Sandbox panel](SERVER_SANDBOX_CLIENT.md)
 into Connections for an authenticated server session. It is explicit and read-only,
 keeps all preview rows in memory, and never imports a local workspace or writes a
@@ -19,8 +28,8 @@ passed all six build/security jobs at source bd101dee3871d691e2065b6c98c9ff24981
 and its scanned API package was installed privately with rollback retained.
 Protected Sandbox credentials are configured and an owner-authenticated preview
 passed with four controlled fictional changes and zero ledger entries.
-The endpoint is not wired into the client; durable bank-source
-integration and real bank linkage remain unavailable. Older
+The detached endpoint is wired into the verified dev.19 client. Durable review
+is a separate dev.20 candidate; real bank linkage remains unavailable. Older
 milestone descriptions below describe the prior checkpoint.
 
 Dev.18 adds fictional bank synchronization and a unified Needs Review inbox on user-confirmed dev.17 (main b222b62a2293c6092fba3ab92e327b46a7802356). Exact validation and delivery evidence belongs in [VALIDATION.md](VALIDATION.md).

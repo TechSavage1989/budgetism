@@ -1,5 +1,11 @@
 # Windows Server preparation
 
+Dev.20 candidate adds a separately disabled
+[durable fictional source review](SERVER_SANDBOX_REVIEW.md). Existing databases
+require its explicit additive SQL after protected backup/restore; startup does
+not migrate them. Recovery must retain all 14 tables after upgrade. Verified
+artifact installation is pending; do not rerun the installer over an existing DB.
+
 Status: server smoke-test preparation. The user has authorized a private Windows Server 2025 deployment. The existing API is not yet a completed Plaid service, and dev.18 remains the verified desktop build.
 
 Private-session follow-up: the existing permanent services, loopback HTTPS,

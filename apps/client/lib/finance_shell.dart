@@ -213,10 +213,14 @@ class _FinanceShellState extends State<FinanceShell> {
                     onChanged: () => _refresh(silent: true), onConnections: () => setState(() => _page = 9)),
                   if (_page == 9 && !_local && !widget.api.isDemo) ServerSandboxPanel(api: widget.api,
                     key: const ValueKey('server-sandbox-panel')),
+                  if (_page == 9 && !_local && !widget.api.isDemo) ServerBankLauncher(api: widget.api,
+                    onChanged: () => _refresh(silent: true)),
                   if (_page == 9 && widget.api.isDemo) _futureFeature('Fictional bank simulation', Icons.science_outlined,
                     'Open a saved local workspace to set up fictional accounts and review simulated activity.'),
-                  if (_page == 10 && !_local) _futureFeature('Bank review', Icons.inbox_outlined,
-                    'Server Sandbox previews are read-only. Open Connections to inspect fictional activity. Account mapping and recording are not enabled.'),
+                  if (_page == 10 && !_local && !widget.api.isDemo) ServerBankPanel(api: widget.api,
+                    onChanged: () => _refresh(silent: true)),
+                  if (_page == 10 && widget.api.isDemo) _futureFeature('Bank review', Icons.inbox_outlined,
+                    'Open a saved local workspace or sign in to your private Sandbox server to review fictional activity.'),
                   if (_page == 8) WorkspaceToolsPanel(local: _local, busy: _toolBusy,
                     passwordRequired: _local && (widget.api as LocalFinanceApi).vault.passwordRequired, onAction: _localOptions),
                   if (_page == 1) _accountsView(),
@@ -360,7 +364,7 @@ class _FinanceShellState extends State<FinanceShell> {
           title: Text((shown[i]['payee'] as String).isEmpty ? shown[i]['kind'] as String : shown[i]['payee'] as String),
           subtitle: Text('${shown[i]['effectiveDate']} | ${accountNames[shown[i]['accountId']] ?? 'Account'}'
             ' | ${(shown[i]['splits'] as List? ?? []).isNotEmpty ? 'Split categories' : categoryNames[shown[i]['counterpartyAccountId']] ?? accountNames[shown[i]['counterpartyAccountId']] ?? shown[i]['kind']}'),
-          trailing: Text('${shown[i]['kind'] == 'income' ? '+' : shown[i]['kind'] == 'expense' ? '-' : ''}${money(shown[i]['amountMinor'])}', style: const TextStyle(fontWeight: FontWeight.w700))),
+          trailing: Text('${shown[i]['kind'] == 'income' || shown[i]['kind'] == 'expense' && (shown[i]['amountMinor'] as int) < 0 ? '+' : shown[i]['kind'] == 'expense' ? '-' : ''}${money((shown[i]['amountMinor'] as int).abs())}', style: const TextStyle(fontWeight: FontWeight.w700))),
       ],
     ]));
   }

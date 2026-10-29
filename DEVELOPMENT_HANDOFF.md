@@ -1,5 +1,18 @@
 # Budgetism development handoff
 
+Current work: dev.20 [durable private-server fictional review](docs/SERVER_SANDBOX_REVIEW.md).
+The user confirmed the delivered dev.19 preview is visible after local sign-in.
+The new candidate adds explicit fixture discovery, dedicated zero-baseline
+account mapping, atomic source/checkpoint history and reviewed record/match/pair/
+ignore/keep choices. Existing server databases require an explicit additive,
+versioned upgrade after protected backup/restore; no automatic migration occurs.
+The feature is separately disabled by default. Local PostgreSQL contracts passed
+upgrade preservation, rollback/idempotency/concurrency and a complete 14-table
+independent restore across restart. Full client/native/package validation and
+private upgrade are pending; do not install unverified artifacts or imply this
+candidate is delivered. No real bank linkage or LAN listener is enabled.
+Older milestone sections below describe earlier verified checkpoints.
+
 Development: 0.1.0-dev.18, provider-independent fictional bank synchronization and unified Needs Review.
 
 Next client candidate: 0.1.0-dev.19 adds the read-only authenticated private-server
@@ -13,7 +26,7 @@ All six jobs in run 40946563501 passed for application 69b360fe99eef39f94976fa3c
 including 328 tests, 27 native Windows commands, package verification and exact
 ZIP/extracted Defender scans. See [docs/DEV19_CLIENT_VALIDATION.md](docs/DEV19_CLIENT_VALIDATION.md).
 The verified package was extracted to a fresh private workspace delivery folder;
-local owner sign-in with the new GUI remains the user step. Automatic approval
+local owner sign-in and visibility were subsequently confirmed by the user. Automatic approval
 review blocked the separate system-drive staging/updater-execution command;
 no executable was automatically launched. The safer workspace delivery completed.
 No source or secrets change was needed in the already verified installed API.

@@ -57,6 +57,21 @@ public static class LedgerRules
         if (total != 0) throw new InvalidOperationException("Unbalanced journal entry.");
     }
 
+    // A refund is a contra-expense: it increases the account and reduces the
+    // original expense category. It must never be classified as new income.
+    public static JournalEntry CreateRefund(Guid ownerId, Guid operationId, DateOnly date,
+        Guid accountId, Guid expenseCategoryId, long amountMinor, string payee, string notes)
+    {
+        if (accountId == expenseCategoryId || amountMinor <= 0 || amountMinor > 100_000_000_000_000L)
+            throw new ArgumentOutOfRangeException(nameof(amountMinor));
+        var entry = NewEntry(ownerId, operationId, date, "expense", accountId,
+            expenseCategoryId, -amountMinor, "USD", payee, notes);
+        entry.Postings.Add(Posting(entry, accountId, amountMinor));
+        entry.Postings.Add(Posting(entry, expenseCategoryId, -amountMinor));
+        AssertBalanced(entry);
+        return entry;
+    }
+
     private static JournalEntry NewEntry(Guid ownerId, Guid operationId, DateOnly date,
         string kind, Guid primaryId, Guid counterpartyId, long amount, string currency,
         string payee, string notes)

@@ -93,9 +93,17 @@ public sealed class FinanceDb(DbContextOptions<FinanceDb> options) : DbContext(o
     public DbSet<LedgerPosting> LedgerPostings => Set<LedgerPosting>();
     public DbSet<OperationRecord> OperationRecords => Set<OperationRecord>();
     public DbSet<ChangeRecord> ChangeRecords => Set<ChangeRecord>();
+    public DbSet<BankSchemaVersion> BankSchemaVersions => Set<BankSchemaVersion>();
+    public DbSet<BankConnection> BankConnections => Set<BankConnection>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<BankSource> BankSources => Set<BankSource>();
+    public DbSet<BankSourceRevision> BankSourceRevisions => Set<BankSourceRevision>();
+    public DbSet<BankBatch> BankBatches => Set<BankBatch>();
+    public DbSet<BankEvent> BankEvents => Set<BankEvent>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
+        BankModel.Configure(m);
         m.Entity<Owner>().HasIndex(x => x.Username).IsUnique();
         m.Entity<Session>().HasIndex(x => x.TokenHash).IsUnique();
         m.Entity<LedgerAccount>().HasIndex(x => new { x.OwnerId, x.LedgerKind });

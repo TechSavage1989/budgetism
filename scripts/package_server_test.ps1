@@ -23,6 +23,7 @@ foreach ($license in @('server_license.txt','commandlinetools_3rd_party_licenses
 }
 Copy-Item -LiteralPath (Join-Path $repo 'scripts\test_private_server.ps1') -Destination (Join-Path $output 'Test-BudgetismServer.ps1')
 Copy-Item -LiteralPath (Join-Path $repo 'scripts\install_private_server.ps1') -Destination (Join-Path $output 'Install-BudgetismServer.ps1')
+Copy-Item -LiteralPath (Join-Path $repo 'scripts\upgrade_bank_sources_v1.sql') -Destination (Join-Path $output 'Upgrade-BudgetismBankSources.sql')
 Copy-Item -LiteralPath (Join-Path $repo 'docs\WINDOWS_SERVER_SETUP.md') -Destination (Join-Path $output 'README.md')
 $files = @(Get-ChildItem -LiteralPath $output -Recurse -File | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path=$_.FullName.Substring($output.Length+1).Replace('\','/'); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
