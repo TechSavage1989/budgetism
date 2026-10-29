@@ -10,6 +10,7 @@ part 'import_profiles.dart';
 part 'reconciliation.dart';
 part 'category_rules.dart';
 part 'category_history.dart';
+part 'bank_sync.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -20,6 +21,7 @@ class LocalLedger {
   static const schema = 3;
   static const importSchema = 4;
   static const importProfileSchema = 7;
+  static const bankSchema = 8;
   static const reconciliationSchema = 5;
   static const categoryRuleSchema = 6;
   static const budgetSchema = 2;
@@ -98,6 +100,8 @@ class LocalLedger {
       if (operations[operation] != fingerprint) fail('This operation identifier was already used for different data.');
       return this;
     }
+    if (action == 'bank-refresh' && BankSync.isReplay(data, input) &&
+        BankSync.connection(data, input['connectionId'])['refreshStatus'] != 'error') return this;
     final next = clone(data);
     final accounts = rows(next['accounts']);
     final categories = rows(next['categories']);
@@ -121,6 +125,13 @@ class LocalLedger {
         'schedules': <Json>[], 'occurrences': <Json>[]});
     }
     switch (action) {
+      case 'bank-connect':
+      case 'bank-refresh':
+      case 'bank-failure':
+      case 'bank-state':
+      case 'bank-review':
+        after = BankSync.apply(next, action, input, operation, accounts, categories, transactions);
+        break;
       case 'account':
         final index = accounts.indexWhere((a) => a['id'] == id);
         if (input['id'] != null && index < 0) fail('Account was not found.');
@@ -309,7 +320,7 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema, reconciliationSchema, categoryRuleSchema, importProfileSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema, reconciliationSchema, categoryRuleSchema, importProfileSchema, bankSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
     if (data['schema'] != legacySchema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
     if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
@@ -353,6 +364,7 @@ class LocalLedger {
     Reconciliation.validate(data, accounts, transactions, ids);
     CategoryRules.validate(data, accounts, categories, ids);
     ImportProfiles.validate(data, categories, ids);
+    BankSync.validate(data, accounts, transactions, ids);
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     for (final t in transactions.where((t) => t['voided'] != true)) {
@@ -373,7 +385,9 @@ class LocalLedger {
         if (balances.containsKey(p['ledgerId'])) balances[p['ledgerId']] = balances[p['ledgerId']]! + (p['amountMinor'] as int);
       }
     }
-    return {'schema': data['schema'], 'importProfiles': rows(clone(data)['importProfiles'] ?? <Json>[]), 'categoryRules': rows(clone(data)['categoryRules'] ?? <Json>[]), 'reconciliations': rows(clone(data)['reconciliations'] ?? <Json>[]), 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+    return {'schema': data['schema'],
+      for (final key in BankSync.collections) key: rows(clone(data)[key] ?? <Json>[]),
+      'importProfiles': rows(clone(data)['importProfiles'] ?? <Json>[]), 'categoryRules': rows(clone(data)['categoryRules'] ?? <Json>[]), 'reconciliations': rows(clone(data)['reconciliations'] ?? <Json>[]), 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
       'schedules': rows(clone(data)['schedules'] ?? <Json>[]),
       'occurrences': rows(clone(data)['occurrences'] ?? <Json>[]),
       'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],

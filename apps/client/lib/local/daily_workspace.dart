@@ -82,6 +82,12 @@ class DailyHomePanel extends StatelessWidget {
       const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4), child: Text(
         'Budget totals cover the whole selected month, including any future-dated recorded expenses.')),
       ScheduleOverview(snapshot: snapshot, onOpen: () => onNavigate(4)),
+      Card(child: ListTile(key: const Key('home-needs-review'), leading: const Icon(Icons.inbox_outlined),
+        title: Text('Needs Review (${BankSync.inbox(snapshot).length})'),
+        subtitle: const Text('Fictional bank activity, corrections, matches and connection issues.'),
+        onTap: () => onNavigate(10))),
+      TextButton.icon(onPressed: () => onNavigate(9), icon: const Icon(Icons.account_balance_outlined),
+        label: const Text('Open Connections')),
       const SizedBox(height: 12),
       Wrap(spacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
         Text('Recent recorded activity', style: Theme.of(context).textTheme.titleLarge),
@@ -147,6 +153,8 @@ class WorkspaceToolsPanel extends StatelessWidget {
     _action('categories', 'Categories', 'Add or rename spending and income categories.', Icons.category_outlined),
     _action('rules', 'Categorization rules', 'Manage rules, preview changes and open category history.', Icons.rule_outlined),
     _action('profiles', 'Saved import profiles', 'Review, rename, archive or restore your saved CSV mappings.', Icons.table_view_outlined),
+    _action('connections', 'Connections', 'Map fictional accounts and refresh the local simulated feed.', Icons.account_balance_outlined),
+    _action('review', 'Needs Review', 'Review posted activity, duplicates, corrections and scheduled matches.', Icons.inbox_outlined),
     const SizedBox(height: 12), Text('Statements', style: Theme.of(context).textTheme.titleLarge),
     _action('import', 'Import CSV statement', 'Preview your statement before importing or matching transactions.', Icons.file_upload_outlined),
     _action('reconcile', 'Reconcile statements', 'Compare recorded activity with a statement and review history.', Icons.fact_check_outlined),
@@ -160,8 +168,8 @@ class WorkspaceToolsPanel extends StatelessWidget {
     const SizedBox(height: 12), Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(
       crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Bank connections and device sync', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 6), const Text('Not connected. This build does not retrieve bank data or synchronize local records between devices. '
-          'The next bank milestone is a simulated read-only feed, before any real-account authorization.'),
+        const SizedBox(height: 6), const Text('Fictional bank simulation is available in Connections. No real bank is connected, '
+          'and local records are not synchronized between devices.'),
       ]))), const SizedBox(height: 24),
   ]);
 }

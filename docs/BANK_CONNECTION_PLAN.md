@@ -1,6 +1,6 @@
 # Bank-connected personal finance plan
 
-Status: design and acceptance criteria, not an enabled feature. Updated October 29, 2026 after the user explicitly identified real bank connectivity and an intuitive application as the end goal. The current delivered client remains local-only. This document adds a priority clarification to the historical v0.2 specification; it does not retroactively claim implementation.
+Status: live-bank roadmap and acceptance criteria. Dev.18 implements the local fictional source pipeline, account mapping and unified review inbox described in [BANK_SYNC.md](BANK_SYNC.md). No live bank/provider enrollment or device synchronization is enabled. Updated October 29, 2026 following the user-confirmed dev.17 baseline and explicit authorization to implement the fictional milestone. The client remains local-only.
 
 ## Product outcome
 

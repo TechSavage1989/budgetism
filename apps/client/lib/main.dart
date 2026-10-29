@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'money.dart';
 import 'local/local_api.dart';
+import 'local/bank_widgets.dart';
 import 'local/ledger.dart';
 import 'local/daily_workspace.dart';
 import 'local/category_rule_widgets.dart';

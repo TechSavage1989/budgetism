@@ -99,6 +99,10 @@ class _FinanceShellState extends State<FinanceShell> {
     finally { _inspecting = false; }
   }
   Future<void> _localOptions(String value) async {
+    if (value == 'connections' || value == 'review') {
+      if (_local) setState(() => _page = value == 'connections' ? 9 : 10);
+      return;
+    }
     if (value == 'theme') { widget.onToggleTheme(); return; }
     if (value == 'updates') { widget.onCheckUpdates(); return; }
     if (!_local || _toolBusy) return;
@@ -135,6 +139,8 @@ class _FinanceShellState extends State<FinanceShell> {
     (label: 'Forecasts', icon: Icons.show_chart_outlined),
     (label: 'Reports', icon: Icons.assessment_outlined),
     (label: 'Settings', icon: Icons.settings_outlined),
+    (label: 'Connections', icon: Icons.account_balance_outlined),
+    (label: 'Needs Review', icon: Icons.inbox_outlined),
   ];
   @override
   Widget build(BuildContext context) {
@@ -201,6 +207,12 @@ class _FinanceShellState extends State<FinanceShell> {
                     }), onAdd: _createTransaction,
                     onAddAccount: _createAccount, onInspect: _inspectHome),
                   if (_page == 0 && !_local) _dashboard(),
+                  if (_page == 9 && _local) BankConnectionsPanel(api: widget.api as LocalFinanceApi,
+                    onChanged: () => _refresh(silent: true), onReview: () => setState(() => _page = 10)),
+                  if (_page == 10 && _local) NeedsReviewPanel(api: widget.api as LocalFinanceApi,
+                    onChanged: () => _refresh(silent: true), onConnections: () => setState(() => _page = 9)),
+                  if ((_page == 9 || _page == 10) && !_local) _futureFeature('Fictional bank simulation', Icons.science_outlined,
+                    'Open a saved local workspace to set up fictional accounts and review simulated activity.'),
                   if (_page == 8) WorkspaceToolsPanel(local: _local, busy: _toolBusy,
                     passwordRequired: _local && (widget.api as LocalFinanceApi).vault.passwordRequired, onAction: _localOptions),
                   if (_page == 1) _accountsView(),
@@ -230,7 +242,7 @@ class _FinanceShellState extends State<FinanceShell> {
             ]))),
         ])),
       ]),
-      floatingActionButton: (_page <= 2 || (_local && _page != 8)) ? FloatingActionButton.extended(
+      floatingActionButton: (_page <= 2 || (_local && _page < 8)) ? FloatingActionButton.extended(
         onPressed: _page == 1 ? _createAccount : _createTransaction, icon: const Icon(Icons.add),
         label: Text(_page == 1 ? 'Add account' : 'Add transaction')) : null,
       bottomNavigationBar: isWide ? null : Builder(builder: (scaffoldContext) => NavigationBar(

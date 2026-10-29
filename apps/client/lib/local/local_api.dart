@@ -1,10 +1,15 @@
 import '../finance_api.dart';
 import 'ledger.dart';
 import 'vault.dart';
+import 'bank_provider.dart';
 
 class LocalFinanceApi extends FinanceApi {
   LocalFinanceApi(this.vault) : super('local://encrypted-workspace');
   final LocalVault vault;
+  late final BankRefreshService bankRefresh = BankRefreshService(vault);
+  Future<void> connectSimulation(Json data) => vault.apply('bank-connect', data);
+  Future<void> setBankConnected(Json data) => vault.apply('bank-state', data);
+  Future<void> reviewBankSource(Json data) => vault.apply('bank-review', data);
   @override
   Future<Map<String, dynamic>> snapshot() async {
     await vault.refresh();

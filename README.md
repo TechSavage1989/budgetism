@@ -2,13 +2,15 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.17 development preview.** The user confirmed dev.15 CSV suggestions and all earlier finance workflows. Building on the validated dev.16 calendars, this iteration adds a clearer Home page, direct Settings tools, searchable entry selectors, local payee completion and Save and add another. No new financial-data migration is required. Check [validation](docs/VALIDATION.md) for the exact tested commit and package evidence. Keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.18 development preview.** Building on user-confirmed dev.17, this iteration adds a provider-independent fictional bank feed, explicit account mapping and a unified Needs Review inbox. Pending records, reported balances and refresh checkpoints stay separate from recorded transactions. First mapping requires backup and format-8 consent; simply opening the app does not upgrade data. Check [validation](docs/VALIDATION.md) for exact test and package evidence. Keep independent encrypted backups. This is not a production release.
 
 ## Features
 
 | Area | Implemented behavior |
 | --- | --- |
 | Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
+| Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |
+| Needs Review | Categories, duplicates, pending ambiguity, transfers/card payments, schedule matches, corrections/removals and reconciliation conflicts |
 | Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
 | Accounts and transactions | USD checking/savings/cash/debt, exact cents, balanced postings, transfers, splits, edits, voids, audit and search |
 | Budgets | Monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
@@ -25,7 +27,7 @@
 | Date controls | Calendar selection for schedule/occurrence/statement/rule/register dates, Today/Yesterday, quick ranges and visual budget month/year |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
-No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
+No local cross-device synchronization, live bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
 
 ## Download
 
@@ -46,6 +48,8 @@ Settings provides direct access to categories, categorization rules/history, sav
 ## How to use
 
 Home separates recorded balances through today from future-dated actuals, scheduled plans and forecasts. Its budget shortcut opens the current month. Accounts and Transactions continue to include all recorded dates. See [everyday use](docs/DAILY_USE.md).
+
+Connections stages a fictional feed locally. Use separate fictional accounts, review the opening baseline, and explicitly approve the format upgrade before mapping. Needs Review controls recording, linking, paired transfers and corrections. Refresh never alters recorded spending or user categories/notes. Reconciled corrections require reopening statements or keeping the recorded entry unchanged. See [bank synchronization](docs/BANK_SYNC.md) and [desktop test steps](docs/WINDOWS_TESTING.md). No live bank enrollment, credentials, remote service or background retrieval is enabled.
 
 Record actual income/expenses/transfers in Transactions. Budget allocations and schedules do not move money. Record a scheduled occurrence only when appropriate, or use Match existing when its actual transaction is already present. CSV preview is read-only until explicit import; review signs, dates, categories, transfer direction and duplicate decisions.
 
@@ -83,6 +87,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules/quick-entry write/read process pairs and planning/report/register preservation tests plus native calendar UI/save/reopen checks. Build Windows/web with APP_VERSION=0.1.0-dev.17. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules/quick-entry/bank-sync write/read process pairs and planning/report/register preservation tests plus native calendar UI/save/reopen checks. Build Windows/web with APP_VERSION=0.1.0-dev.18. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
 Supporting details: [everyday use](docs/DAILY_USE.md), [bank connection plan](docs/BANK_CONNECTION_PLAN.md), [date controls](docs/DATE_CONTROLS.md), [next usability priorities](docs/USABILITY_ROADMAP.md), [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md), [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.17.md).

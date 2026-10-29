@@ -1,5 +1,9 @@
 # Local storage and optional password protection
 
+## Financial schema 8: fictional bank sources
+
+Dev.18 adds encrypted connection/account links, source records and committed batch checkpoints after explicit first-mapping backup/upgrade consent. Opening schemas 1–7 or viewing Connections/Needs Review never upgrades. All prior collections, optional local password, OS keys, SQLite/encryption envelopes and independently password-protected backups are preserved. Older builds cannot read schema 8. Pending records stay outside ledger transactions; source/balance/checkpoint writes and each later review decision are atomic. See [bank synchronization](BANK_SYNC.md).
+
 ## Financial schema 7: saved CSV import profiles
 
 Dev.14 stores mapping profiles inside the encrypted payload. The first profile save requires backup/upgrade consent; loading and previewing never write or upgrade data. Schemas 1 through 6 remain readable. Preserve all prior collections, category history and security settings; older apps cannot read schema 7. Encryption, SQLite, OS keys and portable backup envelopes are unchanged. See [import profiles](IMPORT_PROFILES.md).

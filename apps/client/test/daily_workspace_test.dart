@@ -83,8 +83,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: WorkspaceToolsPanel(
       local: false, passwordRequired: false, onAction: actions.add)))));
     expect(tester.widget<ListTile>(find.byKey(const ValueKey('tool-rules'))).onTap, isNull);
+    expect(tester.widget<ListTile>(find.byKey(const ValueKey('tool-connections'))).onTap, isNull);
+    expect(tester.widget<ListTile>(find.byKey(const ValueKey('tool-review'))).onTap, isNull);
     await tester.ensureVisible(find.byKey(const ValueKey('tool-updates'))); await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tool-updates'))); await tester.pumpAndSettle();
-    expect(actions, ['updates']); expect(find.textContaining('Not connected.'), findsOneWidget);
+    expect(actions, ['updates']); expect(find.textContaining('No real bank is connected'), findsOneWidget);
   });
 }
