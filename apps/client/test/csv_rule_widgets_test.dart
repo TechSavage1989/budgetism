@@ -33,11 +33,43 @@ Future<LocalVault> widgetVault(WidgetTester tester, TestStorage storage) async {
   });
   return v;
 }
-Future<void> openCsv(WidgetTester tester, LocalVault v) async {
-  await tester.pumpWidget(MaterialApp(home: CsvImportScreen(api: LocalFinanceApi(v), chooseFile: () async =>
-    XFile.fromData(Uint8List.fromList(utf8.encode(sample)), name: 'fictional-rules.csv'))));
+Future<void> openCsv(WidgetTester tester, LocalVault v, {LocalFinanceApi? api}) async {
+  // cross_file's native fromData ignores name and derives it from path.
+  // Retain in-memory bytes while providing the metadata a real picker supplies.
+  final file = XFile.fromData(Uint8List.fromList(utf8.encode(sample)),
+    name: 'fictional-rules.csv', path: 'fictional-rules.csv');
+  expect(file.name, 'fictional-rules.csv');
+  await tester.pumpWidget(MaterialApp(home: CsvImportScreen(api: api ?? LocalFinanceApi(v), chooseFile: () async => file)));
   await tapVisible(tester, find.text('Choose CSV file'), io: true);
   await tapVisible(tester, find.text('Preview transactions'), io: true);
+}
+// Observe the real import operation without mocking storage or ledger behavior.
+// Awaiting this future keeps encryption and the injected disk failure in the
+// real async zone, rather than inferring completion from rendered animations.
+class ObservedImportApi extends LocalFinanceApi {
+  ObservedImportApi(super.vault);
+  final requests = <Json>[];
+  Future<void>? pendingImport;
+  @override
+  Future<void> importCsv(Json data) {
+    requests.add(LocalLedger.clone(data));
+    return pendingImport = super.importCsv(data);
+  }
+}
+Future<Object?> commitCsv(WidgetTester tester, ObservedImportApi api) async {
+  final button = find.byKey(const Key('commit-import'));
+  await tester.ensureVisible(button); await tester.pumpAndSettle();
+  expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+  final previous = api.requests.length;
+  Object? failure;
+  await tester.runAsync(() async {
+    await tester.tap(button);
+    expect(api.requests.length, previous + 1,
+      reason: tester.widgetList<Text>(find.byType(Text)).map((w) => w.data ?? '').join(' | '));
+    try { await api.pendingImport!; } catch (error) { failure = error; }
+  });
+  await tester.pumpAndSettle();
+  return failure;
 }
 Future<void> reviewCsv(WidgetTester tester) => tapVisible(tester, find.byKey(const Key('review-csv-rules')), io: true);
 Future<void> acceptFirst(WidgetTester tester) async {
@@ -86,19 +118,24 @@ void main() {
     } finally { await tester.pumpWidget(const SizedBox.shrink()); await tester.runAsync(v.close); }
   });
   testWidgets('only final import persists the accepted category; failed write retains choices for a single retry', (tester) async {
-    final storage = TestStorage(); final v = await widgetVault(tester, storage); final saved = storage.saved;
+    final storage = TestStorage(); final v = await widgetVault(tester, storage); final saved = storage.saved; final api = ObservedImportApi(v);
     try {
-      await openCsv(tester, v); await reviewCsv(tester); await acceptFirst(tester);
+      await openCsv(tester, v, api: api); await reviewCsv(tester); await acceptFirst(tester);
       expect(find.byType(CsvRuleSuggestionsDialog), findsNothing);
       expect(tester.widget<CheckboxListTile>(find.byKey(const Key('import-reviewed'))).onChanged, isNotNull);
       storage.failWrite = true;
       await tapVisible(tester, find.byKey(const Key('import-reviewed')));
-      await tapVisible(tester, find.byKey(const Key('commit-import')), io: true);
+      expect(tester.widget<CheckboxListTile>(find.byKey(const Key('import-reviewed'))).value, true);
+      final failed = await commitCsv(tester, api);
+      expect(api.requests.single['fileName'], 'fictional-rules.csv');
+      expect(failed, isA<StateError>());
+      expect(failed.toString(), contains('Disk unavailable'));
       expect(v.ledger.data['transactions'], isEmpty); expect(storage.saved, saved);
       expect(find.textContaining('Disk unavailable'), findsOneWidget);
       expect(find.byKey(ValueKey('Category for row 2:${namedCategory(v.ledger, 'Groceries')}')), findsOneWidget);
       storage.failWrite = false;
-      await tapVisible(tester, find.byKey(const Key('commit-import')), io: true);
+      expect(await commitCsv(tester, api), isNull);
+      expect(api.requests.length, 2); expect(api.requests.last, api.requests.first);
       expect(v.ledger.data['transactions'].length, 1); expect(v.ledger.data['imports'].length, 1);
       final t = LocalLedger.rows(v.ledger.data['transactions']).single;
       expect(t['counterpartyAccountId'], namedCategory(v.ledger, 'Groceries')); expect(t['amountMinor'], 1234);
