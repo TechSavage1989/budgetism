@@ -1,29 +1,31 @@
 # Usability priorities
 
-The user confirmed dev.15, requested calendar date selection and clarified that the end goal is a real-bank-connected, intuitive personal finance app. This updates the delivery priorities, not the implemented feature list. Only the date-control milestone is implemented in the dev.16 application.
+The user confirmed dev.15, requested calendar selection and clarified that the end goal is a real-bank-connected, intuitive personal finance app. Dev.16 implements calendars; dev.17 implements the everyday navigation and entry milestone. Check VALIDATION.md for the exact tested application; an implemented feature is not a claim of manual confirmation on the user's PC.
 
-## Current milestone: dates
+## Implemented: dates and everyday use
 
-Calendar selection for remaining typed date fields, inclusive date ranges, Today/Yesterday for transactions and visual budget month/year selection. Preserve manual entry, cancellation, financial protections and all saved data. No financial migration. See DATE_CONTROLS.md and the exact validation results before installing.
+Calendar selection, inclusive date ranges, Today/Yesterday and visual budget month/year controls are retained. Home adds direct actions, recorded balances through today, monthly budget and scheduled-activity summaries, and protected recent-record details. Settings exposes categories, rules/history, profiles, statements, security and backups without the old nested route. Narrow screens have four primary destinations plus the complete More drawer; the desktop rail scrolls.
 
-## Next: everyday use and clear navigation
+Local entry now has searchable account/category/split selectors, history-only payee text completion and explicit Save and add another. Each successful entry uses a fresh operation identity. Amount, payee, notes, splits and transfer destination clear, while ordinary category/account/type/date remain only in that open dialog. No new financial schema, migration, personal plaintext defaults or automatic posting. See DAILY_USE.md.
 
-Bring Add transaction, Accounts, Budgets, Scheduled, Reports and Settings into predictable locations. Surface rules, import profiles, reconciliation and backups without unnecessary nested dialogs. Design a simple Home view around balances, bills due soon, remaining budgets and items needing attention, with plain labels that distinguish recorded, bank-reported and projected values.
+## Next: bank-data foundation and one review inbox
 
-Add local payee autocomplete from existing history, searchable account/category selectors, a focused quick-add workflow and explicit Save and add another. Make last-used defaults predictable and optional; never reuse transfer directions or splits silently. Personal finance defaults belong in an approved encrypted model, not plaintext preferences. Search stays session-only. Test keyboard focus and shortcuts so a calendar or confirmation dialog cannot accidentally submit the underlying form.
+Do not continue adding isolated CSV subfeatures indefinitely. Build provider-independent source records and account links, a simulated read-only feed, and an intuitive review inbox using fictional data. Keep bank-reported, available, recorded and projected balances distinct, with visible timestamps and connection status.
 
-Prefer one meaningful review for routine actions and undo where safe. Keep confirmations for destructive actions, migrations, connection authorization, reconciliation changes and genuine ambiguity. Error messages should say what happened, what was preserved and what the user can do next. Add remembered desktop window size/position as nonfinancial per-device preferences with sensible off-screen recovery.
+Cover pending-to-posted replacement, corrections, removed-source events, duplicate-safe retries, interrupted/partial retrieval, existing/manual transaction matching, transfer direction and preserved user categories/notes. A failed batch must not consume the sync checkpoint or delete existing records. Reconciled corrections become visible conflicts, not silent rewrites. Design Connect bank, initial account mapping, Refresh, Reconnect and Disconnect around the same verified flow. See BANK_CONNECTION_PLAN.md.
 
-## Bank connectivity is a primary goal
+Only after those tests pass, verify the user's institution/country/account types and select a suitable provider with current coverage, costs, privacy terms and access requirements. Read-only is the initial scope; no bank payments or transfers. Provider enrollment, paid plans and live-bank authorization remain separate approval steps.
 
-Do not continue adding isolated import subfeatures indefinitely. Use the established exact ledger, duplicate receipts, category rules and schedule matching as a foundation for a provider-independent bank-data pipeline. Design Connect bank, account mapping, sync status and one Needs review inbox while improving the daily interface.
+## Further quality of life
 
-Implement and test a simulated feed before real connections, including pending-to-posted replacement, provider corrections, transfer matching, interrupted refreshes and user-edit preservation. Select a provider only after verifying the user's institution, country, account types, costs, privacy terms and access requirements. Read-only access is the initial scope; no payments or transfers initiated through the bank. See BANK_CONNECTION_PLAN.md for acceptance criteria and researched provider candidates.
+Add remembered desktop window size/position with sensible off-screen recovery, more consistent focus/keyboard support, and a clearer first-run experience. Remember personal account/category defaults only through an approved encrypted model. Search stays session-only. Preserve dialogs so keyboard selection cannot submit the underlying financial form.
+
+Prefer one meaningful review for routine actions and undo where safe. Keep confirmations for destructive actions, migrations, connection authorization, reconciliation changes and real ambiguity. Error messages should identify what happened, what was preserved and the next useful action. Do not claim an amount is Safe to spend until its account scope, pending activity, commitments and exclusions are fully defined.
 
 ## Cross-device ownership and delivery
 
-Keep the self-hosted Flutter/.NET/PostgreSQL direction, encrypted native data, optional local password and independent backups. Bank synchronization and device synchronization are separate systems and must not be advertised as interchangeable. Private-server setup, external API enrollment, paid subscriptions and real-bank authorization are separate future actions, not side effects of QoL work.
+Keep the self-hosted Flutter/.NET/PostgreSQL direction, encrypted native data, optional local password and independent backups. Bank synchronization and device synchronization are separate systems. Private-server setup, external API enrollment, subscriptions and real-bank authorization are not side effects of QoL work.
 
 A tested in-app update workflow should remove repeated ZIP handling, but still requires native install/relaunch/rollback tests and authorization for release/tag publication. Do not enable untested installation or delete rollback safeguards. Non-Windows native distributions and synchronization remain unfinished.
 
-Do not ask the user to repeat setup exercises for features already confirmed. Each delivery should provide a small end-to-end check of the new experience, not another round of historical feature tests.
+Do not repeat setup exercises for confirmed features. Each delivery should offer a small end-to-end check of the new experience. No bank provider, credential, server deployment or new background task is configured by dev.17.

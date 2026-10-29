@@ -175,16 +175,16 @@ jobs:
         run: flutter test integration_test/register_native_test.dart -d windows
       - name: Test native category undo - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/category_history_restart_test.dart -d windows --dart-define=HISTORY_TEST_PHASE=write --dart-define="HISTORY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-history-restart"
+        run: flutter test integration_test/category_undo_restart_test.dart -d windows --dart-define=UNDO_TEST_PHASE=write --dart-define="UNDO_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-undo-restart"
       - name: Test native category undo - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/category_history_restart_test.dart -d windows --dart-define=HISTORY_TEST_PHASE=read --dart-define="HISTORY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-history-restart"
+        run: flutter test integration_test/category_undo_restart_test.dart -d windows --dart-define=UNDO_TEST_PHASE=read --dart-define="UNDO_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-undo-restart"
       - name: Test native import profiles - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=write --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profile-restart"
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=write --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
       - name: Test native import profiles - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=read --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profile-restart"
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=read --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
       - name: Test native CSV rule suggestions - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/csv_rules_restart_test.dart -d windows --dart-define=CSV_RULE_TEST_PHASE=write --dart-define="CSV_RULE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-csv-rules-restart"
