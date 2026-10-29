@@ -1,6 +1,6 @@
 # Budgetism dev.15 Windows test
 
-Use only the completed verified Windows run recorded in VALIDATION.md. Export an encrypted backup from working dev.14, keep its password and close Budgetism. Download Budgetism-Windows-x64-development, not the source/updater-only artifact. Extract both ZIP layers into a separate folder, keep all files together, confirm 0.1.0-dev.15 and open the existing workspace under the same Windows account. Do not replace or recreate its database.
+Use [successful dev.15 run 40809471115](https://github.com/TechSavage1989/budgetism/actions/runs/40809471115), application commit b32e53e1a37a08ca4dd0a4dcb2830ce1b096d153, Windows artifact 12870570526. Exact hashes and scan evidence are recorded in VALIDATION.md. Export an encrypted backup from working dev.14, keep its password and close Budgetism. Download Budgetism-Windows-x64-development, not the source/updater-only artifact. Extract both ZIP layers into a separate folder, keep all files together, confirm 0.1.0-dev.15 and open the existing workspace under the same Windows account. Do not replace or recreate its database.
 
 ## Test rule-assisted import review
 

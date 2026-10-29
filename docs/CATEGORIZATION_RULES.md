@@ -1,6 +1,6 @@
 # Reviewed local categorization rules
 
-Dev.11 adds reusable rules under **User options > Manage categories > Categorization rules**. This implements a bounded portion of FR-04: saved conditions, ordering, enable/disable, preview and explicit historical application. No rule runs on import, startup, refresh, synchronization or a timer.
+Dev.11 adds reusable rules under **User options > Manage categories > Categorization rules**. This implements a bounded portion of FR-04: saved conditions, ordering, enable/disable, preview and explicit historical application. No rule runs automatically on import, startup, refresh, synchronization or a timer.
 
 ## Definition and precedence
 
@@ -18,6 +18,10 @@ Changing a date resets the preview, selection and review. Changing or saving a r
 
 Reconciled, split (including an explicit one-line split), voided and transfer transactions are always excluded. A forged selected entry cannot bypass these rules. Manual correction of a reconciled transaction still requires explicit statement reopening. Dev.13 History can undo a complete applied category batch when every affected transaction is still unchanged and unreconciled. It requires review and a reason, preserves the original audit and does not remove the rule. See [history and undo](CATEGORY_HISTORY.md). Ordinary non-reconciled transaction editing also remains available for corrections.
 
+## Suggestions before CSV import
+
+Dev.15 also offers Review category suggestions for unsaved new CSV rows. It uses the same first-match rules after an explicit request, protects manual choices, and changes only selected preview categories. The final CSV import remains a separate confirmation. Existing transactions and category-undo history are untouched. See [CSV rule suggestions](CSV_RULE_SUGGESTIONS.md).
+
 ## Financial invariants
 
 Application is one atomic ledger mutation. It changes category, category postings and transaction version, retains before/after audit, and preserves every account posting, monetary amount, date, payee, note, identifier, import receipt and reciprocal schedule link. The number of transactions and every account balance remain unchanged. Budgets and category reports recalculate from the new category, including dependent rollover. No money is transferred or spent again.
@@ -26,7 +30,7 @@ Selected rows are re-derived from the saved rules on commit. Duplicates, stale v
 
 ## Migration, privacy and preservation
 
-The first rule save, not opening or previewing, upgrades financial schema to 6 after explicit backup/upgrade consent. All schema 1 through 5 collections are retained. Existing budgets, imports, matching, reconciliation and subsequent operations continue without downgrading or reinitializing rules. Older apps cannot open the upgraded payload. Keep an encrypted pre-upgrade backup.
+For financial schemas 1 through 5, the first rule save, not opening or previewing, upgrades to schema 6 after explicit backup/upgrade consent. Higher schemas are retained unchanged. All schema 1 through 5 collections are retained. Existing budgets, imports, matching, reconciliation and subsequent operations continue without downgrading or reinitializing rules. Older apps cannot open the upgraded payload. Keep an encrypted pre-upgrade backup.
 
 Rules contain potentially sensitive payee text and are stored inside the existing encrypted payload, not unencrypted preferences. OS keys, optional password, storage path, SQLite container and independently encrypted backups remain unchanged. Backups include rules. No network, bank connection or server setup is used. All automated fixtures are fictional.
 

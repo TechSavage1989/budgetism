@@ -2,7 +2,7 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.14 development preview.** Dev.13 and prior milestones are user-confirmed. This iteration adds saved, encrypted CSV import profiles with explicit application and header-name matching. Check [validation](docs/VALIDATION.md) for tested build evidence before downloading. Keep independent encrypted backups; this is not a production release.
+**0.1.0-dev.15 development preview.** The user confirmed dev.14 saved import profiles and all earlier finance workflows. This iteration adds explicitly reviewed category suggestions during CSV import using existing saved rules. Check [validation](docs/VALIDATION.md) for exact tested code and package evidence. Use fictional records and retain independent encrypted backups. This is not a production release.
 
 ## Features
 
@@ -20,6 +20,7 @@
 | Reports | Historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
 | Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
 | Transaction register | Search words/phrases/exclusions, combined dates/accounts/categories/types/amount/source/status filters, sorting, whole and split totals, protected details |
+| CSV category suggestions | Explicit preview and selected rule suggestions for new import rows; manual choices, transfers and duplicate decisions protected |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
 No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
@@ -58,6 +59,8 @@ CSV import profiles save only mapping settings and defaults inside the encrypted
 
 Categorization rules > History shows prior batches and supports reviewed, reasoned, category-only undo when every affected transaction remains unchanged and unprotected. See [category history](docs/CATEGORY_HISTORY.md).
 
+During CSV review, **Review category suggestions** uses saved enabled rules for eligible new rows. Nothing is selected automatically. Acceptance only changes the unsaved preview; the final CSV review/import remains separate. Manual categories, matches, transfers, handled and skipped rows are protected. No new format upgrade. See [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md).
+
 ## Updates and settings
 
 The public release checker uses caching, rate limits and verified downloads. No release feed exists yet and installation remains disabled pending native end-to-end update validation. Stable filenames are Budgetism.exe and Budgetism-Windows-x64.zip. Settings and data are per-user, not beside the executable.
@@ -72,6 +75,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules write/read process pairs and planning/report/register preservation tests, category-undo and import-profile process pairs. Build Windows/web with APP_VERSION=0.1.0-dev.14. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules write/read process pairs and planning/report/register preservation tests. Build Windows/web with APP_VERSION=0.1.0-dev.15. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
-Supporting details: [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.14.md).
+Supporting details: [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md), [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.15.md).
