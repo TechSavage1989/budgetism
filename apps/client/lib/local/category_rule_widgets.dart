@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
@@ -152,12 +153,16 @@ class _CategoryRulesPageState extends State<CategoryRulesPage> {
         const Divider(height: 32),
         Text('Preview changes', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
-        TextField(key: const Key('rules-from'), controller: _from, enabled: !_busy,
-          decoration: const InputDecoration(labelText: 'From (YYYY-MM-DD)', border: OutlineInputBorder()),
-          onChanged: (_) => setState(_invalidate)),
+        FinanceDateRangeBar(from: _from.text, through: _through.text, enabled: !_busy,
+          onChanged: (from, through) => setState(() {
+            _from.text = from; _through.text = through; _invalidate();
+          })),
         const SizedBox(height: 12),
-        TextField(key: const Key('rules-through'), controller: _through, enabled: !_busy,
-          decoration: const InputDecoration(labelText: 'Through (YYYY-MM-DD)', border: OutlineInputBorder()),
+        FinanceDateField(fieldKey: const Key('rules-from'), controller: _from, enabled: !_busy,
+          label: 'From (YYYY-MM-DD)', onChanged: (_) => setState(_invalidate)),
+        const SizedBox(height: 12),
+        FinanceDateField(fieldKey: const Key('rules-through'), controller: _through, enabled: !_busy,
+          label: 'Through (YYYY-MM-DD)', firstDate: FinanceDates.parse(_from.text),
           onChanged: (_) => setState(_invalidate)),
         const SizedBox(height: 12),
         Align(alignment: Alignment.centerLeft, child: OutlinedButton.icon(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
@@ -146,10 +147,16 @@ class _LocalTransactionEditorState extends State<LocalTransactionEditor> {
         ],
         TextField(controller: _payee, maxLength: 150, decoration: InputDecoration(
           labelText: _kind == 'transfer' ? 'Description' : 'Payee', border: const OutlineInputBorder())),
-        OutlinedButton.icon(onPressed: () async {
-          final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(1900), lastDate: DateTime(2100));
-          if (d != null && mounted) setState(() => _date = d);
-        }, icon: const Icon(Icons.calendar_today_outlined), label: Text(_day)),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          OutlinedButton.icon(onPressed: _busy ? null : () async {
+            final d = await chooseFinanceDate(context, value: _day, label: 'Transaction date');
+            if (d != null && mounted) setState(() => _date = d);
+          }, icon: const Icon(Icons.calendar_month_outlined), label: Text(_day)),
+          TextButton(onPressed: _busy ? null : () => setState(() => _date = FinanceDates.day(DateTime.now())),
+            child: const Text('Today')),
+          TextButton(onPressed: _busy ? null : () => setState(() => _date = FinanceDates.shift(DateTime.now(), -1)),
+            child: const Text('Yesterday')),
+        ]),
         const SizedBox(height: 12),
         TextField(controller: _notes, maxLength: 500, maxLines: 2, decoration: const InputDecoration(labelText: 'Notes', border: OutlineInputBorder())),
         if (_busy) const LinearProgressIndicator(),

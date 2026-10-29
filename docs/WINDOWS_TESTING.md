@@ -1,15 +1,12 @@
-# Budgetism dev.15 Windows test
+# Budgetism dev.16 Windows test
 
-Use [successful dev.15 run 40809471115](https://github.com/TechSavage1989/budgetism/actions/runs/40809471115), application commit b32e53e1a37a08ca4dd0a4dcb2830ce1b096d153, Windows artifact 12870570526. Exact hashes and scan evidence are recorded in VALIDATION.md. Export an encrypted backup from working dev.14, keep its password and close Budgetism. Download Budgetism-Windows-x64-development, not the source/updater-only artifact. Extract both ZIP layers into a separate folder, keep all files together, confirm 0.1.0-dev.15 and open the existing workspace under the same Windows account. Do not replace or recreate its database.
+Use only the successful dev.16 run and exact package recorded after validation. Export an encrypted backup from dev.15, retain its password and close Budgetism. Extract the development artifact and its inner Budgetism-Windows-x64.zip into a separate folder, keep all supporting files together, confirm 0.1.0-dev.16 and open the existing workspace under the same Windows account. No new workspace-format upgrade is expected.
 
-## Test rule-assisted import review
+## Test usability without adding financial records
 
-Use fictional data only. The existing Rule test rule can be reused if enabled, with payee Contains Rule test, current category Other spending and proposed category Groceries.
+1. Open Scheduled > Add schedule. Beside First due date, select the calendar-month icon, choose a day and Use date. The date field should fill automatically. Try Last scheduled date and Clear, then cancel the schedule without saving.
+2. In Accounts > Reconcile statements > Start reconciliation, try the statement ending date calendar. Cancel without completing a statement. This must not change balances, transaction count or statement history.
+3. In Transactions > Filters, choose Last 7 days, then All dates. Dates should change together; search/account/category filters should be retained. Open Choose date range and cancel. No saved transaction changes.
+4. In Budgets, select the displayed month, click the year to choose a year visually, select a month and Go to month. No year typing is required. This month returns the selector to the current month.
 
-1. Open Transactions > Import CSV and select an existing fictional account. Load a fictional CSV with Date,Description,Amount headers and one row such as 2026-10-28,Rule test store import preview,-23.45. Keep Default expense category as Other spending.
-2. Preview transactions. The row initially stays Other spending. It must be marked Import a new transaction to be eligible; do not override a genuine duplicate warning just to test this feature.
-3. Choose Review category suggestions. Check the row, Other spending to Groceries and the matching rule. Select the suggestion and review confirmation, then choose Use selected suggestions.
-4. The main preview should now show Groceries with the rule label. Account balances and stored transaction counts remain unchanged. The final CSV review checkbox must be unchecked again.
-5. Close without importing. Reopening and previewing the CSV begins from the chosen defaults again; suggestions are not auto-applied. Saved rules/profiles/security and existing records remain intact. No schema-upgrade prompt is expected.
-
-No earlier setup tests or new bank connection are required. The optional final import uses the existing confirmation and duplicate protections and creates one transaction with the reviewed category. Accepted suggestions do not create a historical category-undo batch. Manual category choices and existing matched transactions are not changed by rule suggestions. This remains a development preview.
+The Today icon is a shortcut; the calendar-month icon opens the calendar. Typing YYYY-MM-DD remains available. Existing saved schedules keep their recurrence dates locked. The transaction editor also provides Today and Yesterday; those remain unsaved until Save transaction. No earlier import, budget-calculation or rule exercises need repetition.

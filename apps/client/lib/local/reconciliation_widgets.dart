@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
@@ -150,8 +151,10 @@ class _StatementReviewState extends State<StatementReview> {
         Text('Starting cleared balance: ${money(_start)}'),
         const Text('First statement starts at the account opening balance. Later statements start at the prior completed balance. Select only transactions cleared on this statement, including older outstanding items.'),
         const SizedBox(height: 12),
-        TextField(key: const ValueKey('statement-date'), controller: _date, enabled: !_busy && _rows == null,
-          decoration: const InputDecoration(labelText: 'Statement ending date (YYYY-MM-DD)', border: OutlineInputBorder())),
+        FinanceDateField(fieldKey: const ValueKey('statement-date'), controller: _date,
+          label: 'Statement ending date (YYYY-MM-DD)', enabled: !_busy && _rows == null,
+          firstDate: Reconciliation.active(widget.snapshot, widget.accountId).isEmpty ? null : FinanceDates.shift(
+            FinanceDates.parse(Reconciliation.active(widget.snapshot, widget.accountId).last['endDate'] as String)!, 1)),
         const SizedBox(height: 12),
         TextField(key: const ValueKey('statement-closing'), controller: _closing, enabled: !_busy && _rows == null,
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),

@@ -67,7 +67,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.15
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.16
 
   windows-portable:
     runs-on: windows-latest
@@ -193,15 +193,18 @@ jobs:
       - name: Test native CSV rule suggestions - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/csv_rules_restart_test.dart -d windows --dart-define=CSV_RULE_TEST_PHASE=read --dart-define="CSV_RULE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-csv-rules-restart"
+      - name: Test native calendar selection and explicit save preservation
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/date_picker_native_test.dart -d windows
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.15
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.16
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.15'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.16'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.15 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.16 --checksums build/packages/checksums.sha256 --self-test
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}

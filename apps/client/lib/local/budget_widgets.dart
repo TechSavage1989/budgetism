@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'budgets.dart';
@@ -78,7 +79,7 @@ class _BudgetPanelState extends State<BudgetPanel> {
     if (changed == true && mounted) await widget.onChanged();
   }
   Future<void> _pickMonth() async {
-    final month = await showDialog<String>(context: context, builder: (_) => _MonthDialog(widget.month));
+    final month = await showDialog<String>(context: context, builder: (_) => FinanceMonthDialog(month: widget.month));
     if (month != null && mounted) widget.onMonthChanged(month);
   }
   Future<void> _details(CategoryBudget row) async {
@@ -320,35 +321,4 @@ class _UpgradeNotice extends StatelessWidget {
     CheckboxListTile(value: value, onChanged: onChanged, controlAffinity: ListTileControlAffinity.leading,
       title: const Text('I understand this workspace will require dev.4 or newer')),
   ]);
-}
-
-class _MonthDialog extends StatefulWidget {
-  const _MonthDialog(this.month);
-  final String month;
-  @override
-  State<_MonthDialog> createState() => _MonthDialogState();
-}
-class _MonthDialogState extends State<_MonthDialog> {
-  late final _year = TextEditingController(text: widget.month.substring(0, 4));
-  late int _month = int.parse(widget.month.substring(5));
-  String? _error;
-  @override
-  void dispose() { _year.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) => AlertDialog(title: const Text('Choose budget month'),
-    content: SizedBox(width: 300, child: Column(mainAxisSize: MainAxisSize.min, children: [
-      TextField(controller: _year, keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Year (1900-9999)')),
-      DropdownButtonFormField<int>(initialValue: _month,
-        decoration: const InputDecoration(labelText: 'Month'),
-        items: [for (var m = 1; m <= 12; m++) DropdownMenuItem(value: m,
-          child: Text(BudgetEngine.label('2026-${m.toString().padLeft(2, '0')}').split(' ').first))],
-        onChanged: (v) => setState(() => _month = v!)),
-      if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-    ])),
-    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-      FilledButton(onPressed: () {
-        try { Navigator.pop(context, LocalLedger.budgetMonth('${_year.text.trim()}-${_month.toString().padLeft(2, '0')}')); }
-        catch (error) { setState(() => _error = error.toString()); }
-      }, child: const Text('Go to month'))]);
 }

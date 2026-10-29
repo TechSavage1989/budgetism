@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
@@ -298,11 +299,14 @@ class _ScheduleEditorState extends State<ScheduleEditor> {
           items: [for (final frequency in Recurrence.frequencies) DropdownMenuItem(value: frequency, child: Text(Recurrence.label(frequency)))],
           onChanged: widget.existing != null ? null : (value) => setState(() => _frequency = value!)),
         const SizedBox(height: 12),
-        TextField(key: const ValueKey('schedule-start'), controller: _start, readOnly: widget.existing != null,
-          decoration: const InputDecoration(labelText: 'First due date (YYYY-MM-DD)', border: OutlineInputBorder())),
+        FinanceDateField(fieldKey: const ValueKey('schedule-start'), controller: _start,
+          label: 'First due date (YYYY-MM-DD)', enabled: !_busy, readOnly: widget.existing != null,
+          onChanged: (_) => setState(() {})),
         const SizedBox(height: 12),
-        TextField(controller: _end, readOnly: widget.existing != null,
-          decoration: const InputDecoration(labelText: 'Last scheduled date (optional, YYYY-MM-DD)', border: OutlineInputBorder())),
+        FinanceDateField(fieldKey: const ValueKey('schedule-end'), controller: _end,
+          label: 'Last scheduled date (optional, YYYY-MM-DD)', enabled: !_busy,
+          readOnly: widget.existing != null, allowEmpty: true, showToday: false,
+          firstDate: FinanceDates.parse(_start.text), helperText: 'Leave empty for no end date.'),
         const SizedBox(height: 8),
         const Text('Short months use their last day, then return to the original day. February 29 uses February 28 in non-leap years.'),
         if (widget.existing != null) const Text('Recurrence dates stay fixed. Pause and create a new schedule to change them. Edits affect unconfirmed occurrences, not recorded transactions.'),
@@ -380,8 +384,9 @@ class _OccurrenceDialogState extends State<OccurrenceDialog> {
           ],
           if (confirm || postpone) ...[
             const SizedBox(height: 12),
-            TextField(key: const ValueKey('occurrence-date'), controller: _date, enabled: !_busy,
-              decoration: InputDecoration(labelText: confirm ? 'Recorded date (YYYY-MM-DD)' : 'New due date (YYYY-MM-DD)', border: const OutlineInputBorder())),
+            FinanceDateField(fieldKey: const ValueKey('occurrence-date'), controller: _date, enabled: !_busy,
+              label: confirm ? 'Recorded date (YYYY-MM-DD)' : 'New due date (YYYY-MM-DD)',
+              firstDate: postpone ? FinanceDates.shift(FinanceDates.parse(widget.occurrence.dueDate)!, 1) : null),
           ],
           if (confirm) ...[
             const SizedBox(height: 12), TextField(controller: _notes, enabled: !_busy, maxLength: 500, maxLines: 2,

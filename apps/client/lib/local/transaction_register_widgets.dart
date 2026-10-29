@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../date_controls.dart';
 import '../money.dart';
 import 'ledger.dart';
 import 'transaction_register.dart';
@@ -66,17 +67,6 @@ class _TransactionRegisterPanelState extends State<TransactionRegisterPanel> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally { if (mounted) setState(() => _opening = false); }
   }
-  Future<void> _pickDate(bool from) async {
-    final value = from ? _from.text : _through.text;
-    final parsed = DateTime.tryParse(value);
-    final initial = parsed != null && parsed.year >= 1900 && parsed.year <= 9999 ? parsed : DateTime.now();
-    final selected = await showDatePicker(context: context, initialDate: initial,
-      firstDate: DateTime(1900), lastDate: DateTime(9999, 12, 31));
-    if (selected == null || !mounted) return;
-    final text = selected.toIso8601String().substring(0, 10);
-    (from ? _from : _through).text = text;
-    _change(from ? _filter.copyWith(from: text) : _filter.copyWith(through: text));
-  }
   Widget _choice(String key, String label, String value, Map<String, String> options, ValueChanged<String> change) {
     final items = {...options, if (!options.containsKey(value)) value: 'Unavailable selection (reset filters)'};
     return DropdownButtonFormField<String>(key: ValueKey('$key:$value'), initialValue: value,
@@ -85,10 +75,10 @@ class _TransactionRegisterPanelState extends State<TransactionRegisterPanel> {
         child: Text(item.value, overflow: TextOverflow.ellipsis))], onChanged: (v) { if (v != null) change(v); });
   }
   Widget _text(String key, String label, TextEditingController controller, ValueChanged<String> change, {bool? date}) =>
-    TextField(key: Key(key), controller: controller, onChanged: change, maxLength: 40,
-      decoration: InputDecoration(labelText: label, counterText: '', border: const OutlineInputBorder(),
-        suffixIcon: date == null ? null : IconButton(tooltip: 'Choose $label',
-          onPressed: () => _pickDate(date), icon: const Icon(Icons.calendar_today_outlined))));
+    date == null ? TextField(key: Key(key), controller: controller, onChanged: change, maxLength: 40,
+      decoration: InputDecoration(labelText: label, counterText: '', border: const OutlineInputBorder())) :
+    FinanceDateField(fieldKey: Key(key), controller: controller, label: label, onChanged: change,
+      allowEmpty: true, showToday: false, firstDate: date ? null : FinanceDates.parse(_from.text));
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +110,12 @@ class _TransactionRegisterPanelState extends State<TransactionRegisterPanel> {
         initiallyExpanded: _filter.advancedCount > 0,
         title: Text('Filters (${_filter.advancedCount} active)'),
         childrenPadding: const EdgeInsets.all(12), children: [
+          FinanceDateRangeBar(from: _from.text, through: _through.text, allowAll: true,
+            onChanged: (from, through) {
+              _from.text = from; _through.text = through;
+              _change(_filter.copyWith(from: from, through: through));
+            }),
+          const SizedBox(height: 12),
           LayoutBuilder(builder: (context, constraints) {
             final width = constraints.maxWidth >= 620 ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
             return Wrap(spacing: 16, runSpacing: 14, children: [
