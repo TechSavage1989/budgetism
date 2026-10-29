@@ -1,17 +1,18 @@
 # Current implementation state
 
-Dev.12 transaction register and prior finance features are user-confirmed. Dev.13 adds categorization history and reviewed category-only batch undo. Application 6f6e33c58c297fc55dde40ce74aae9a64f2acc7a passed all five jobs in [run 40781260879](https://github.com/TechSavage1989/budgetism/actions/runs/40781260879). The downloaded Windows package matches the no-threats Defender report and passed identity/runtime/hash verification. Manual dev.13 desktop confirmation remains pending.
+Dev.13 category history/undo and all earlier milestones are user-confirmed. Dev.14 adds saved CSV import profiles. Hosted validation and exact-package scanning are required before Windows delivery.
 
 | Area | State |
 | --- | --- |
-| Existing features | Ledger, budgets, schedules, imports, matching, reconciliation, reports, rules and register retained |
-| History | Reads saved categorization batches, including dev.11/dev.12, with original rule version and before/after categories |
-| Undo | Explicit reason and full-batch review; atomic category-only inverse with append-only audit |
-| Protection | Missing, edited, voided, reconciled, inconsistent, stale and already-undone batches rejected |
-| Financial values | Amounts, dates, account postings/balances, transaction count, receipts and schedule links preserved |
-| Rules | Definitions remain unchanged; no automatic reapplication or deletion |
-| Persistence | No new schema, encryption or backup format; existing encrypted audit stores reasons and inverse events |
-| Validation | All retained/new tests, the native undo pair, Windows/web builds, exact-package scan and independent verification passed |
-| Distribution | Development artifacts only; unsigned; no release/tag, server setup or updater installation |
+| Existing finances | All prior accounts, transactions, budgets, schedules, rules, history, reports, statements and register retained |
+| Import profiles | Named separator/date/amount/header settings and optional default categories |
+| Reuse | Explicit apply to selected file, header-name resolution, reordered/extra columns supported |
+| Safety | Missing or ambiguous mapped headers block application; destination account never switched |
+| Management | Save new, update selected, rename, archive and restore with version/revision protection |
+| Privacy | Encrypted definitions and audit, no statement rows/paths/duplicate decisions saved in profiles |
+| Migration | Schema 7 only on first explicit profile save after backup/consent |
+| Import review | Existing preview, duplicate review and confirmed transaction mutation remain unchanged |
+| Validation | New unit/storage/widget/native tests authored; hosted gate pending |
+| Distribution | Development artifacts only, unsigned, no server setup, tags/releases or automatic installation |
 
-This is not general financial undo or database rollback. No partial undo, automatic redo, synchronization or bank feed is added. See CATEGORY_HISTORY.md and VALIDATION.md.
+USD decimal-point UTF-8 CSV limits remain. No automatic import, locale guessing, bank feeds, cross-device synchronization or new external service. See IMPORT_PROFILES.md and VALIDATION.md.

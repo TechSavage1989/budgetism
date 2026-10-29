@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'csv_import.dart';
+import 'csv_profiles.dart';
+import 'import_profile_widgets.dart';
 import 'ledger.dart';
 import 'local_api.dart';
 
@@ -15,8 +17,9 @@ Future<void> showCsvImport(BuildContext context, LocalFinanceApi api) async {
 }
 
 class CsvImportScreen extends StatefulWidget {
-  const CsvImportScreen({required this.api, super.key});
+  const CsvImportScreen({required this.api, this.chooseFile, super.key});
   final LocalFinanceApi api;
+  final Future<XFile?> Function()? chooseFile;
   @override
   State<CsvImportScreen> createState() => _CsvImportScreenState();
 }
@@ -31,7 +34,12 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
   final _choices = <int, Json>{};
   int _date = 0, _payee = 1, _amount = 2, _debit = 2, _credit = 3, _reference = -1, _notes = -1, _page = 0;
   bool _splitColumns = false, _reverse = false, _busy = false, _upgrade = false, _reviewed = false;
-  String? _error, _success;
+  String? _error, _success, _profileId, _profileApplied;
+  bool _profilePending = false;
+  List<Json> get _profiles => ImportProfiles.list(_snapshot);
+  CsvMapping get _mapping => CsvMapping(dateColumn: _date, payeeColumn: _payee,
+    amountColumn: _splitColumns ? -1 : _amount, debitColumn: _debit, creditColumn: _credit,
+    referenceColumn: _reference, notesColumn: _notes, dateFormat: _dateFormat, reverseSign: _reverse);
   List<Json> get _accounts => LocalLedger.rows(_snapshot['accounts']);
   List<Json> get _categories => LocalLedger.rows(_snapshot['categories']);
   @override
@@ -43,7 +51,95 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       if (c['kind'] == 'Income' && c['name'] == 'Other income') _income = c['id'] as String;
     }
   }
+  void _mappingChanged() {
+    _entries = null; _choices.clear(); _reviewed = false; _profileApplied = null;
+    _operation = const Uuid().v4(); _error = null; _success = null;
+  }
+  Future<void> _loadProfile() async {
+    if (_busy || _text.isEmpty || _profileId == null) return;
+    setState(() { _busy = true; _error = null; _success = null; });
+    try {
+      final snapshot = await widget.api.snapshot();
+      final profile = ImportProfiles.list(snapshot).where((p) => p['id'] == _profileId).firstOrNull;
+      if (profile == null) throw const FormatException('This profile is no longer active. Refresh profiles or choose manual mapping.');
+      final settings = profile['settings'] as Json;
+      final table = CsvTable.parse(_text, delimiter: settings['delimiter'] as String);
+      final mapping = CsvProfiles.resolve(profile, table, LocalLedger.rows(snapshot['categories']));
+      if (!mounted) return;
+      setState(() {
+        _snapshot = snapshot; _mappingChanged(); _table = table;
+        _delimiter = settings['delimiter'] as String; _dateFormat = mapping.dateFormat;
+        _date = mapping.dateColumn; _payee = mapping.payeeColumn;
+        _splitColumns = mapping.amountColumn < 0; _reverse = mapping.reverseSign;
+        _amount = mapping.amountColumn < 0 ? 2 : mapping.amountColumn;
+        _debit = mapping.debitColumn < 0 ? 2 : mapping.debitColumn;
+        _credit = mapping.creditColumn < 0 ? (table.headers.length > 3 ? 3 : 0) : mapping.creditColumn;
+        _reference = mapping.referenceColumn; _notes = mapping.notesColumn;
+        _expense = settings['expenseCategoryId'] as String?; _income = settings['incomeCategoryId'] as String?;
+        _profileApplied = profile['name'] as String; _profilePending = false;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _mappingChanged(); _table = null; _profilePending = true;
+          _error = 'Unable to apply profile: $error';
+        });
+      }
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+  void _manualMapping() {
+    if (_busy) return;
+    setState(() {
+      _profileId = null; _profilePending = false; _profileApplied = null;
+      _dateFormat = 'ymd'; _splitColumns = false; _reverse = false;
+      try { if (_text.isNotEmpty) _parse(); }
+      catch (error) { _table = null; _error = error.toString(); }
+    });
+  }
+  Future<void> _saveProfile({bool update = false}) async {
+    if (_busy || _table == null || _profilePending) return;
+    try {
+      final settings = CsvProfiles.capture(_table!, _mapping, delimiter: _delimiter,
+        expenseCategoryId: _expense, incomeCategoryId: _income, categories: _categories);
+      final existing = update ? _profiles.where((p) => p['id'] == _profileId).firstOrNull : null;
+      if (update && existing == null) throw const FormatException('Choose an active profile to update.');
+      final ids = _profiles.map((p) => p['id']).toSet();
+      setState(() { _busy = true; _error = null; });
+      final saved = await showDialog<bool>(context: context, barrierDismissible: false,
+        builder: (_) => ImportProfileEditor(data: _snapshot, settings: settings,
+          existing: existing, onSave: widget.api.saveImportProfile));
+      if (mounted && saved == true) {
+        setState(() {
+          _snapshot = widget.api.vault.ledger.snapshot(); _mappingChanged();
+          _profileId = existing?['id'] as String? ?? _profiles.firstWhere((p) => !ids.contains(p['id']))['id'] as String;
+          _success = 'Import profile saved. No transactions or import receipts changed.';
+        });
+      }
+    } catch (error) { if (mounted) setState(() => _error = error.toString()); }
+    finally { if (mounted) setState(() => _busy = false); }
+  }
+  Future<void> _manageProfiles() async {
+    if (_busy) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      await widget.api.snapshot();
+      if (!mounted) return;
+      await showDialog<void>(context: context, barrierDismissible: false,
+        builder: (_) => ImportProfilesManager(snapshot: () => widget.api.vault.ledger.snapshot(),
+          onSave: widget.api.saveImportProfile, onState: widget.api.archiveImportProfile,
+          onRefresh: () async { await widget.api.snapshot(); }));
+      if (mounted) {
+        setState(() {
+          _snapshot = widget.api.vault.ledger.snapshot(); _mappingChanged();
+          if (!_profiles.any((p) => p['id'] == _profileId)) _profileId = null;
+          _profilePending = _profileId != null;
+        });
+      }
+    } catch (error) { if (mounted) setState(() => _error = error.toString()); }
+    finally { if (mounted) setState(() => _busy = false); }
+  }
   void _parse() {
+    _mappingChanged(); _profilePending = _profileId != null;
     _table = CsvTable.parse(_text, delimiter: _delimiter);
     final names = _table!.headers.map((h) => h.toLowerCase()).toList();
     int guess(List<String> options, int fallback) {
@@ -62,9 +158,11 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     if (_busy) return;
     setState(() { _busy = true; _error = null; });
     try {
-      final file = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'UTF-8 CSV',
-        extensions: ['csv'], uniformTypeIdentifiers: ['public.comma-separated-values-text'])]);
+      final file = await (widget.chooseFile?.call() ?? openFile(acceptedTypeGroups: const [XTypeGroup(label: 'UTF-8 CSV',
+        extensions: ['csv'], uniformTypeIdentifiers: ['public.comma-separated-values-text'])]));
       if (file == null) return;
+      if (!mounted) return;
+      setState(() { _text = ''; _filename = ''; _table = null; _mappingChanged(); });
       if (await file.length() > CsvTable.maxBytes) throw const FormatException('Choose a CSV no larger than 2 MB.');
       final bytes = await file.readAsBytes();
       if (bytes.length > CsvTable.maxBytes) throw const FormatException('CSV exceeds the 2 MB limit.');
@@ -72,7 +170,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       if (!mounted) return;
       setState(() { _text = text; _filename = file.name; _table = null; _entries = null; _parse(); });
     } catch (error) {
-      if (mounted) setState(() { _table = null; _entries = null; _error = 'Unable to read CSV: $error'; });
+      if (mounted) setState(() { _table = null; _mappingChanged(); _error = 'Unable to read CSV: $error'; });
     } finally { if (mounted) setState(() => _busy = false); }
   }
   void _example() {
@@ -91,13 +189,11 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     LocalLedger.rows(_snapshot['imports']).any((r) => r['accountId'] == _account && r['date'] == row['date'] &&
       r['signedMinor'] == row['signedMinor'] && (r['payee'] as String).toLowerCase() == (row['payee'] as String).toLowerCase());
   Future<void> _preview() async {
-    if (_busy || _table == null) return;
+    if (_busy || _table == null || _profilePending) return;
     setState(() { _busy = true; _error = null; });
     try {
       if (_account == null) throw const FormatException('Create or choose an account first.');
-      final rows = CsvImport.preview(_table!, CsvMapping(dateColumn: _date, payeeColumn: _payee,
-        amountColumn: _splitColumns ? -1 : _amount, debitColumn: _debit, creditColumn: _credit,
-        referenceColumn: _reference, notesColumn: _notes, dateFormat: _dateFormat, reverseSign: _reverse));
+      final rows = CsvImport.preview(_table!, _mapping);
       final snapshot = await widget.api.snapshot();
       if (!mounted) return;
       setState(() {
@@ -161,8 +257,28 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
   Widget _column(String label, int current, ValueChanged<int> change, {bool optional = false}) =>
     _select<int>(label, current, [if (optional) _option(-1, 'Not mapped'),
       for (var i = 0; i < _table!.headers.length; i++) _option(i, '${i + 1}: ${_table!.headers[i]}')],
-      (v) => setState(() => change(v!)));
+      (v) => setState(() { _mappingChanged(); change(v!); }));
+  Widget _profileControls() => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    Text('Saved import profiles', style: Theme.of(context).textTheme.titleMedium),
+    const SizedBox(height: 8),
+    _select<String>('Saved profile', _profileId ?? '', [_option('', 'Choose a saved profile'),
+      for (final p in _profiles) _option(p['id'] as String, p['name'] as String),
+      if (_profileId != null && !_profiles.any((p) => p['id'] == _profileId)) _option(_profileId!, 'Unavailable profile'),
+    ], (v) => setState(() {
+      _mappingChanged(); _profileId = v == '' ? null : v; _profilePending = _profileId != null;
+    })),
+    Wrap(spacing: 10, runSpacing: 8, children: [
+      OutlinedButton(key: const Key('apply-profile'), onPressed: _busy || _profileId == null || _text.isEmpty ? null : _loadProfile,
+        child: const Text('Apply selected profile')),
+      TextButton(onPressed: _busy || _text.isEmpty ? null : _manualMapping, child: const Text('Use manual mapping')),
+      TextButton(onPressed: _busy ? null : _manageProfiles, child: const Text('Manage profiles')),
+    ]),
+    if (_profilePending) const Text('The selected profile has not been applied. Apply it or choose manual mapping before previewing.'),
+    if (_profileApplied != null) Text('Applied profile: $_profileApplied. Destination account was not changed. Review the mapping below.'),
+    const SizedBox(height: 12),
+  ]);
   Widget _configuration() => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    _profileControls(),
     _select<String>('Destination account', _account, [for (final a in _accounts) _option(a['id'] as String, '${a['name']} (${a['type']})')],
       (v) => setState(() => _account = v)),
     Wrap(spacing: 12, runSpacing: 10, children: [
@@ -181,10 +297,10 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       Text('${_table!.records.length} data records. Headers are required. UTF-8 and USD decimal-point amounts only.'),
       const SizedBox(height: 12),
       _column('Date column', _date, (v) => _date = v),
-      _select<String>('Date format', _dateFormat, [_option('ymd', 'YYYY-MM-DD'), _option('mdy', 'MM/DD/YYYY'), _option('dmy', 'DD/MM/YYYY')], (v) => setState(() => _dateFormat = v!)),
+      _select<String>('Date format', _dateFormat, [_option('ymd', 'YYYY-MM-DD'), _option('mdy', 'MM/DD/YYYY'), _option('dmy', 'DD/MM/YYYY')], (v) => setState(() { _mappingChanged(); _dateFormat = v!; })),
       _column('Description column', _payee, (v) => _payee = v),
       SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Separate debit and credit columns'),
-        value: _splitColumns, onChanged: _busy ? null : (v) => setState(() => _splitColumns = v)),
+        value: _splitColumns, onChanged: _busy ? null : (v) => setState(() { _mappingChanged(); _splitColumns = v; })),
       if (_splitColumns) ...[
         _column('Debit / money out column', _debit, (v) => _debit = v),
         _column('Credit / money in column', _credit, (v) => _credit = v),
@@ -192,14 +308,19 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         _column('Signed amount column', _amount, (v) => _amount = v),
         CheckboxListTile(contentPadding: EdgeInsets.zero, value: _reverse,
           title: const Text('Reverse signs: this file uses positive amounts for money out'),
-          onChanged: _busy ? null : (v) => setState(() => _reverse = v ?? false)),
+          onChanged: _busy ? null : (v) => setState(() { _mappingChanged(); _reverse = v ?? false; })),
       ],
       _column('Unique bank transaction ID (optional)', _reference, (v) => _reference = v, optional: true),
       const Text('Map an ID only when the bank guarantees it is unique per account. Do not map a check number, merchant or category.'),
       const SizedBox(height: 12), _column('Notes column (optional)', _notes, (v) => _notes = v, optional: true),
-      _select<String>('Default expense category', _expense, [for (final c in _categories.where((c) => c['kind'] == 'Expense')) _option(c['id'] as String, c['name'] as String)], (v) => setState(() => _expense = v)),
-      _select<String>('Default income category', _income, [for (final c in _categories.where((c) => c['kind'] == 'Income')) _option(c['id'] as String, c['name'] as String)], (v) => setState(() => _income = v)),
-      FilledButton(onPressed: _busy ? null : _preview, child: const Text('Preview transactions')),
+      _select<String>('Default expense category', _expense, [for (final c in _categories.where((c) => c['kind'] == 'Expense')) _option(c['id'] as String, c['name'] as String)], (v) => setState(() { _mappingChanged(); _expense = v; })),
+      _select<String>('Default income category', _income, [for (final c in _categories.where((c) => c['kind'] == 'Income')) _option(c['id'] as String, c['name'] as String)], (v) => setState(() { _mappingChanged(); _income = v; })),
+      Wrap(spacing: 10, runSpacing: 8, children: [
+        OutlinedButton(onPressed: _busy || _profilePending ? null : () => _saveProfile(), child: const Text('Save as new profile')),
+        OutlinedButton(onPressed: _busy || _profilePending || _profileId == null ? null : () => _saveProfile(update: true), child: const Text('Update selected profile')),
+      ]),
+      const SizedBox(height: 12),
+      FilledButton(onPressed: _busy || _profilePending ? null : _preview, child: const Text('Preview transactions')),
     ],
   ]);
   Widget _row(CsvEntry entry) {
@@ -283,7 +404,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     appBar: AppBar(title: const Text('Import CSV statement')),
     body: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 900), child: SingleChildScrollView(
       padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Local preview: nothing is saved until you confirm the import. Files are not uploaded. Use fictional data while testing.'),
+        const Text('Files stay local. Only importing selected rows saves transactions. Saving a profile stores mapping settings, not statement rows. Use fictional data while testing.'),
         const SizedBox(height: 16),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),

@@ -6,6 +6,7 @@ import 'recurrence.dart';
 part 'schedule_rules.dart';
 part 'schedule_matching.dart';
 part 'import_rules.dart';
+part 'import_profiles.dart';
 part 'reconciliation.dart';
 part 'category_rules.dart';
 part 'category_history.dart';
@@ -18,6 +19,7 @@ class LocalLedger {
   final Json data;
   static const schema = 3;
   static const importSchema = 4;
+  static const importProfileSchema = 7;
   static const reconciliationSchema = 5;
   static const categoryRuleSchema = 6;
   static const budgetSchema = 2;
@@ -247,6 +249,13 @@ class LocalLedger {
         before = rows(next['reconciliations'] ?? <Json>[]).where((s) => s['id'] == id).firstOrNull;
         after = Reconciliation.reopen(next, input, operation);
         break;
+      case 'import-profile':
+      case 'import-profile-state':
+        before = rows(next['importProfiles'] ?? <Json>[]).where((p) => p['id'] == id).firstOrNull;
+        after = action == 'import-profile'
+            ? ImportProfiles.save(next, input, id, operation)
+            : ImportProfiles.setArchived(next, input, id, operation);
+        break;
       case 'import-csv':
         after = _ImportRules.apply(next, input, operation, accounts, categories, transactions);
         break;
@@ -300,7 +309,7 @@ class LocalLedger {
   }
 
   void validate() {
-    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema, reconciliationSchema, categoryRuleSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
+    if (data['schema'] is! int || ![legacySchema, budgetSchema, schema, importSchema, reconciliationSchema, categoryRuleSchema, importProfileSchema].contains(data['schema'])) fail('This workspace schema is not supported. Do not replace or reset it.');
     if (data['schema'] != legacySchema && data['budgets'] is! List) fail('Budget records are missing from this workspace.');
     if (data['schema'] == legacySchema && data.containsKey('budgets') && (data['budgets'] is! List || (data['budgets'] as List).isNotEmpty)) fail('Budget records require the upgraded workspace schema.');
     if (data['revision'] is! int || revision < 0 || data['operations'] is! Map || data['audit'] is! List) fail('Invalid workspace structure.');
@@ -343,6 +352,7 @@ class LocalLedger {
     _ImportRules.validate(data, accounts, transactions, ids);
     Reconciliation.validate(data, accounts, transactions, ids);
     CategoryRules.validate(data, accounts, categories, ids);
+    ImportProfiles.validate(data, categories, ids);
     // Opening balances have an equal-and-opposite equity posting.
     final balances = <String, int>{for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     for (final t in transactions.where((t) => t['voided'] != true)) {
@@ -363,7 +373,7 @@ class LocalLedger {
         if (balances.containsKey(p['ledgerId'])) balances[p['ledgerId']] = balances[p['ledgerId']]! + (p['amountMinor'] as int);
       }
     }
-    return {'schema': data['schema'], 'categoryRules': rows(clone(data)['categoryRules'] ?? <Json>[]), 'reconciliations': rows(clone(data)['reconciliations'] ?? <Json>[]), 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
+    return {'schema': data['schema'], 'importProfiles': rows(clone(data)['importProfiles'] ?? <Json>[]), 'categoryRules': rows(clone(data)['categoryRules'] ?? <Json>[]), 'reconciliations': rows(clone(data)['reconciliations'] ?? <Json>[]), 'imports': rows(clone(data)['imports'] ?? <Json>[]), 'budgets': rows(clone(data)['budgets'] ?? <Json>[]),
       'schedules': rows(clone(data)['schedules'] ?? <Json>[]),
       'occurrences': rows(clone(data)['occurrences'] ?? <Json>[]),
       'cursor': revision, 'accounts': [for (final a in accounts) {...a, 'balanceMinor': balances[a['id']]}],

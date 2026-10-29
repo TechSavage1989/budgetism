@@ -67,7 +67,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.13
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.14
 
   windows-portable:
     runs-on: windows-latest
@@ -181,15 +181,21 @@ jobs:
       - name: Test native category undo - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/category_undo_restart_test.dart -d windows --dart-define=UNDO_TEST_PHASE=read --dart-define="UNDO_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-undo-restart"
+      - name: Test native import profiles - write in first app process
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=write --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
+      - name: Test native import profiles - reopen in second app process
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=read --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.13
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.14
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.13'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.14'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.13 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.14 --checksums build/packages/checksums.sha256 --self-test
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}
