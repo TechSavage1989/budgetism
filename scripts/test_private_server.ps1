@@ -115,7 +115,9 @@ try {
     Assert-Check $healthy 'API starts with bundled .NET and isolated PostgreSQL'
     Assert-Status 'GET' '/api/accounts' $null '' 401
     $null = Invoke-Api 'POST' '/api/setup/owner' @{username='fictional_test_owner';password=$ownerPassword;bootstrapToken=$bootstrap}
+    Assert-Status 'POST' '/api/bank/sandbox/preview' @{} '' 401
     $auth = Invoke-Api 'POST' '/api/auth/login' @{username='fictional_test_owner';password=$ownerPassword}
+    Assert-Status 'POST' '/api/bank/sandbox/preview' @{} $auth.token 503
     $request = @{operationId=[Guid]::NewGuid().ToString();name='Fictional Checking';type='checking';currency='USD';openingBalanceMinor=100000}
     $account = Invoke-Api 'POST' '/api/accounts' $request $auth.token
     $repeat = Invoke-Api 'POST' '/api/accounts' $request $auth.token

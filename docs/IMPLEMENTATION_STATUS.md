@@ -1,5 +1,14 @@
 # Current implementation state
 
+Private-server follow-up: permanent services, loopback HTTPS, owner setup and a
+protected database backup/isolated restore were verified in the private session.
+LAN access remains disabled at the user's request. A separate Sandbox API smoke
+test retrieved 316 fictional changes and removed its Item, without ledger writes.
+An authenticated, disabled-by-default [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md)
+is now under development in source. It is not installed or wired into the client;
+durable bank-source integration and real bank linkage remain unavailable. Older
+milestone descriptions below describe the prior checkpoint.
+
 Dev.18 adds fictional bank synchronization and a unified Needs Review inbox on user-confirmed dev.17 (main b222b62a2293c6092fba3ab92e327b46a7802356). Exact validation and delivery evidence belongs in [VALIDATION.md](VALIDATION.md).
 
 Dev.19 work in progress: detached fictional Plaid pagination tests and an isolated Windows server test kit. The user authorized private Windows Server setup. The backend can run under Windows Service hosting and accepts a separate database port; the test kit exercises temporary loopback processes only. See [WINDOWS_SERVER_SETUP.md](WINDOWS_SERVER_SETUP.md). No permanent service, LAN endpoint, live bank adapter or dev.19 desktop package is delivered yet.

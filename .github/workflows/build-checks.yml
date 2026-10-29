@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python tests/server_package_guards.py
+      - run: dotnet run --project tests/plaid-contract/plaid-contract.csproj --configuration Release
       - name: Retrieve pinned official PostgreSQL binaries
         run: |
           New-Item -ItemType Directory build | Out-Null
@@ -92,6 +93,7 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet build services/api/Budgetism.Api.csproj --configuration Release
       - run: dotnet run --project tests/ledger-contract/ledger-contract.csproj --configuration Release
+      - run: dotnet run --project tests/plaid-contract/plaid-contract.csproj --configuration Release
 
   updater-security:
     runs-on: ubuntu-latest

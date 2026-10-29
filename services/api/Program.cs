@@ -12,6 +12,7 @@ using Budgetism.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddWindowsService(options => options.ServiceName = "BudgetismApi");
+builder.Services.AddSingleton(_ => new PlaidSandbox(PlaidSandbox.CreateClient()));
 var databasePassword = ReadSecret("DB_PASSWORD_FILE");
 var bootstrapToken = ReadSecret("BOOTSTRAP_TOKEN_FILE");
 var connection = builder.Configuration.GetConnectionString("Finance");
@@ -97,6 +98,30 @@ app.Use(async (ctx, next) =>
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", version = "0.1.0-dev.1" }));
 app.MapGet("/api/version", () => Results.Ok(new { version = "0.1.0-dev.1", apiMajor = 1 }));
+// Existing bearer middleware protects this endpoint. Never accept provider tokens from clients.
+app.MapPost("/api/bank/sandbox/preview", async Task<IResult> (HttpContext context, PlaidSandbox sandbox) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    if (Environment.GetEnvironmentVariable("PLAID_SANDBOX_PREVIEW_ENABLED") != "true")
+        return Results.Problem("Sandbox preview is not configured.", statusCode: 503);
+    using var timeout = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+    timeout.CancelAfter(TimeSpan.FromSeconds(90));
+    try
+    {
+        var preview = await sandbox.PreviewAsync(ReadSecret("PLAID_SANDBOX_CLIENT_ID_FILE"),
+            ReadSecret("PLAID_SANDBOX_SECRET_FILE"), ReadSecret("PLAID_SANDBOX_ACCESS_TOKEN_FILE"), timeout.Token);
+        return Results.Ok(preview);
+    }
+    catch (PlaidPreviewException error)
+    {
+        return Results.Problem("Sandbox preview did not finish (" + error.Code + ").", statusCode: 502);
+    }
+    catch (Exception)
+    {
+        // Never include provider responses, secret paths, payloads or exception messages.
+        return Results.Problem("Sandbox preview did not finish.", statusCode: 502);
+    }
+}).RequireRateLimiting("auth");
 app.MapGet("/api/setup/status", async (FinanceDb db) =>
     Results.Ok(new { initialized = await db.Owners.AnyAsync() }));
 

@@ -2,6 +2,19 @@
 
 Status: server smoke-test preparation. The user has authorized a private Windows Server 2025 deployment. The existing API is not yet a completed Plaid service, and dev.18 remains the verified desktop build.
 
+Private-session follow-up: the existing permanent services, loopback HTTPS,
+owner setup and protected database backup/isolated restore were verified. The
+user requested leaving the existing firewall unchanged; LAN access remains
+disabled. A separate Plaid Sandbox smoke test retrieved 316 fictional changes
+and removed its temporary Item without writing ledger records. Keep host-specific
+addresses, certificate trust, credentials and backup paths in private operations
+notes. Never rerun the installer over that installation.
+
+The next [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md) is an authenticated,
+disabled-by-default source candidate. It requires a verified API upgrade and
+separate protected Sandbox credential provisioning before use. It does not
+change the database schema or enable real bank linkage.
+
 ## Packaged server test
 
 ## Permanent development services

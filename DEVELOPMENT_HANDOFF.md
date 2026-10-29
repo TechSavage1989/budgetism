@@ -2,6 +2,22 @@
 
 Development: 0.1.0-dev.18, provider-independent fictional bank synchronization and unified Needs Review.
 
+Private server follow-up: the user completed permanent services, owner setup and
+certificate-validated loopback HTTPS. A protected database backup was restored to
+a separate disposable database; all seven tables matched by count/content digest.
+The user chose to leave the disabled Private firewall profile unchanged, so no LAN
+listener is enabled. Hostnames, addresses, credentials and backup locations remain
+in the private operational notes, not source. The standalone Sandbox smoke test
+then retrieved 316 fictional changes and removed its temporary Item; sanitized
+result evidence was verified locally. No records were written to the ledger.
+
+Next development step adds an authenticated, disabled-by-default Sandbox preview
+API and fictional backend contract tests; see [docs/PLAID_SANDBOX_PREVIEW.md](docs/PLAID_SANDBOX_PREVIEW.md).
+It uses only Sandbox, has bounded complete pagination, exact decimal cents and
+sanitized errors, and performs no database/schema/local-workspace writes. This
+source change is not yet a verified installed upgrade or completed client adapter.
+Keep the installed API unchanged until candidate checks/package scanning pass.
+
 The user ran the scanned smoke-test kit on Windows Server 2025 and supplied all PASS results. Permanent loopback-only development installation is now being prepared in scripts/install_private_server.ps1. It uses separate virtual service identities, protected directories, a non-superuser application database role, disabled owner enrollment, restart/health verification and refusal to overwrite existing folders/services. Its dedicated CI step must pass, followed by the exact package Defender scan, before delivery. LAN HTTPS, owner enrollment, backup/restore and Plaid remain unfinished. This does not enable real bank linkage or move local financial records.
 
 Server-test delivery evidence: development/plaid-dev19 commit 089ff37663e96eb613404631d2aa9b78565de39f, workflow 40912026656, server job 123582247369 passed package guards, isolated PostgreSQL/API checks and exact ZIP/extracted Defender scans. Server artifact 12913859724 and scan artifact 12915475758 were downloaded and matched by SHA-256 62404b2b529593d7d89fb38395f0ce9eccf36f59eb423072b966499e09888a74. Every delivered manifest hash and ZIP CRC passed. Local delivery: build/delivery/Budgetism-Windows-Server-Test-Scanned.zip. Defender engine 1.1.26100.4/signatures 1.463.24.0 reported no threats. This evidence covers the server test kit, not a completed dev.19 release. At this checkpoint the retained Windows desktop native CI job is still running; the other five jobs passed. User must run Test-BudgetismServer.ps1 through their server session; no permanent service is installed. Source main is unchanged.
