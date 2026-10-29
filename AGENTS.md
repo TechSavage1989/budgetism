@@ -2,7 +2,7 @@
 
 1. Before any changes, read this file, DEVELOPMENT_HANDOFF.md, and docs/IMPLEMENTATION_STATUS.md. Inspect current GitHub default branch, active branches, PRs, latest releases and workflows. Prefer newer verified repository work over this source ZIP.
 2. Repository: https://github.com/TechSavage1989/budgetism. Public source and development-workflow publication were explicitly authorized October 27, 2026. No releases exist. Do not infer permission to publish releases, tags, credentials, or change visibility.
-3. Working user-confirmed baseline: 0.1.0-dev.14 saved CSV import profiles and all earlier finance features. Current development: 0.1.0-dev.15 reviewed CSV category suggestions. Neither is a production release; inspect exact run evidence.
+3. Working user-confirmed baseline: 0.1.0-dev.15 reviewed CSV category suggestions and all earlier finance features. Current development: 0.1.0-dev.16 calendar date controls and usability shortcuts. Neither is a production release; inspect exact run evidence.
 4. Product: private personal finance; Windows first, Flutter client for multiple platforms, .NET 10 API, PostgreSQL, and eventual encrypted native offline database. Do not change architecture or financial data ownership without approval.
 5. Current explicit exclusion: **No server setup, Codex CLI automation, unattended workers, payment setup or API-account setup.** API source exists from prior work, but its deployment and configuration must not be added in this scope.
 6. Never put real financial records or credentials in demo fixtures, screenshots, logs, test output, source, or generated release files. Demo is ephemeral, labelled, and uses invented entries only.
@@ -41,3 +41,5 @@
 27. Saved CSV profiles are encrypted workspace records, never plain preferences. Schema 7 is opt-in on first save. Persist settings and unique header names only, not rows/paths/duplicate choices or destination account. Missing/ambiguous headers block application without positional fallback. Applying profiles/previews must not write finances or bypass duplicate review. Preserve profile versions/archive history and all earlier collections; read docs/IMPORT_PROFILES.md.
 
 28. CSV category suggestions require explicit review and change detached choices only. Preserve manual/accepted choices, matches, transfers and duplicate approvals. First matching rule wins; recheck workspace/file/choice fingerprint. Only the existing final import commits finances. No new schema or automatic rule execution; see docs/CSV_RULE_SUGGESTIONS.md.
+
+29. Date controls are presentation-only. Preserve YYYY-MM-DD calendar values without timezone conversions, explicit save/review gates, schedule-anchor locks and statement protections. Picker cancellation and previews never write or migrate. Validate exact typed dates; changing rule ranges invalidates review. Date range presets are inclusive and session-only. Read docs/DATE_CONTROLS.md.

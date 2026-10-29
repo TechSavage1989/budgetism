@@ -36,7 +36,8 @@ void main() {
     await tester.ensureVisible(end); await tester.enterText(end, '2026-10-20'); await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Choose date: Last scheduled date (optional, YYYY-MM-DD)')); await tester.pumpAndSettle();
     expect(tester.widget<DatePickerDialog>(find.byType(DatePickerDialog)).firstDate, DateTime(2026, 10, 15));
-    await tester.tap(find.text('Cancel')); await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(DatePickerDialog), matching: find.text('Cancel')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Clear: Last scheduled date (optional, YYYY-MM-DD)')); await tester.pumpAndSettle();
     expect(tester.widget<TextField>(end).controller!.text, ''); expect(writes, 0);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -120,7 +121,8 @@ void main() {
     await tester.ensureVisible(find.text('2150-10-10'));
     await tester.tap(find.text('2150-10-10')); await tester.pumpAndSettle();
     expect(tester.widget<DatePickerDialog>(find.byType(DatePickerDialog)).initialDate, DateTime(2150, 10, 10));
-    await tester.tap(find.text('Cancel')); await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(DatePickerDialog), matching: find.text('Cancel')));
+    await tester.pumpAndSettle();
     expect(find.text('2150-10-10'), findsOneWidget); expect(writes, 0); expect(tester.takeException(), isNull);
   });
 }
