@@ -143,7 +143,7 @@ void main() {
       await tester.tap(find.text('Transactions').first); await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('register-query')), 'corner'); await tester.pumpAndSettle();
       expect(find.text('1 matching transactions'), findsOneWidget);
-      await tester.tap(find.text('Dashboard').first); await tester.pumpAndSettle();
+      await tester.tap(find.text('Home').first); await tester.pumpAndSettle();
       await tester.tap(find.text('Transactions').first); await tester.pumpAndSettle();
       expect(tester.widget<TextField>(find.byKey(const Key('register-query'))).controller!.text, 'corner');
       expect(jsonEncode(vault.ledger.data), before); expect(tester.takeException(), isNull);

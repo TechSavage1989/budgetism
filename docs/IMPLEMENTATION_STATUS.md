@@ -1,17 +1,17 @@
 # Current implementation state
 
-Dev.15 CSV suggestions and all earlier milestones are user-confirmed. Dev.16 application ef07b3438605a3de215c4cf1f75bccf015f519fc passed all five jobs in [run 40816063799](https://github.com/TechSavage1989/budgetism/actions/runs/40816063799). The downloaded Windows package passed independent hash/identity/runtime verification and matches the no-threats Defender report. Manual dev.16 confirmation is pending.
+Dev.17 source adds a cohesive everyday-use update on the tested dev.16 calendar build. Hosted validation is required before a Windows download is offered. Dev.15 remains explicitly user-confirmed; do not treat continued development as a manual dev.16 test report.
 
-| Area | State |
+| Area | Current source behavior |
 | --- | --- |
-| Calendar entry | Schedule, occurrence, statement, rule and register dates use shared calendar controls |
-| Shortcuts | Today, transaction Yesterday, optional Clear, inclusive range presets |
-| Budget navigation | Visual month grid, year selector and This month |
-| Protection | Existing schedule anchors and reviewed statement dates stay locked |
-| Financial data | No new schema or migration; all calculations and storage code retained |
-| Existing calendars | Reports, planning and sample/server date pickers retained |
-| Validation | Analysis, 255 Ubuntu unit/widget tests, complete Windows suite, all native gates, builds and exact scan passed |
-| Distribution | Development artifacts only, unsigned; no releases or updater installation |
-| Product direction | Everyday usability and real bank connection are primary upcoming goals; design recorded, not enabled |
+| Home | Historical through-today totals, future-actual disclosure and direct actions |
+| Settings | Direct local tools, security, backups, theme and update checks |
+| Navigation | Scrollable wide rail; four primary narrow destinations plus full More drawer |
+| Entry | Searchable account/category/split selectors and local-only payee suggestions |
+| Multiple entries | Explicit Save and add another with safe resets and separate operation identities |
+| Data | No new schema; existing finance/storage/key/backup logic retained |
+| Tests | New unit/interface and two-process Windows quick-entry coverage authored |
+| Bank/device sync | Not enabled; next stage is a fictional provider-independent feed |
+| Distribution | Pending hosted validation; development artifacts only; no releases/tags |
 
-Manual date entry remains optional. Date selection is presentation-only until the existing explicit save. The usability roadmap and bank-connection plan distinguish planned work from implemented functionality. No bank provider has been selected or connected, no paid account/server has been configured, and no real financial data has been transmitted. Cross-device synchronization and non-Windows native distribution remain unfinished.
+See DAILY_USE.md, DATE_CONTROLS.md, BANK_CONNECTION_PLAN.md and VALIDATION.md. No credentials, paid plan or external provider has been configured.

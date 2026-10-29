@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const budgetismRepository = 'TechSavage1989/budgetism';
-const budgetismVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0-dev.16');
+const budgetismVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0-dev.17');
 const _releasesApi = 'https://api.github.com/repos/$budgetismRepository/releases?per_page=10';
 const _windowsArchive = 'Budgetism-Windows-x64.zip';
 
@@ -193,7 +193,6 @@ int compareVersions(String a, String b) {
   if (aPre.isEmpty && bPre.isNotEmpty) return 1;
   if (bPre.isEmpty && aPre.isNotEmpty) return -1;
   if (aPre == bPre) return 0;
-  // Semver: numeric identifiers are compared numerically and rank below text.
   final aParts = aPre.split('.'), bParts = bPre.split('.');
   for (var i = 0; i < aParts.length && i < bParts.length; i++) {
     final an = int.tryParse(aParts[i]), bn = int.tryParse(bParts[i]);

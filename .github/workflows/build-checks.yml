@@ -67,7 +67,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.16
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.17
 
   windows-portable:
     runs-on: windows-latest
@@ -116,8 +116,6 @@ jobs:
           New-Item ../../build/tools -ItemType Directory -Force | Out-Null
           go build -ldflags='-H windowsgui' -o ../../build/tools/Budgetism-Updater.exe .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      # One native command per step: a failed analyzer/test cannot be masked by
-      # a later successful command in PowerShell. No continue-on-error flags.
       - name: Generate Windows project
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter create --platforms=windows --project-name budgetism --no-pub .
@@ -177,16 +175,16 @@ jobs:
         run: flutter test integration_test/register_native_test.dart -d windows
       - name: Test native category undo - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/category_undo_restart_test.dart -d windows --dart-define=UNDO_TEST_PHASE=write --dart-define="UNDO_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-undo-restart"
+        run: flutter test integration_test/category_history_restart_test.dart -d windows --dart-define=HISTORY_TEST_PHASE=write --dart-define="HISTORY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-history-restart"
       - name: Test native category undo - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/category_undo_restart_test.dart -d windows --dart-define=UNDO_TEST_PHASE=read --dart-define="UNDO_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-undo-restart"
+        run: flutter test integration_test/category_history_restart_test.dart -d windows --dart-define=HISTORY_TEST_PHASE=read --dart-define="HISTORY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-history-restart"
       - name: Test native import profiles - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=write --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=write --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profile-restart"
       - name: Test native import profiles - reopen in second app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=read --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profiles-restart"
+        run: flutter test integration_test/import_profiles_restart_test.dart -d windows --dart-define=PROFILE_TEST_PHASE=read --dart-define="PROFILE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-profile-restart"
       - name: Test native CSV rule suggestions - write in first app process
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/csv_rules_restart_test.dart -d windows --dart-define=CSV_RULE_TEST_PHASE=write --dart-define="CSV_RULE_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-csv-rules-restart"
@@ -196,15 +194,21 @@ jobs:
       - name: Test native calendar selection and explicit save preservation
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/date_picker_native_test.dart -d windows
+      - name: Test native quick entry - write in first app process
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/entry_qol_restart_test.dart -d windows --dart-define=ENTRY_TEST_PHASE=write --dart-define="ENTRY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-entry-restart"
+      - name: Test native quick entry - reopen in second app process
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/entry_qol_restart_test.dart -d windows --dart-define=ENTRY_TEST_PHASE=read --dart-define="ENTRY_TEST_DIRECTORY=${{ runner.temp }}/Budgetism-entry-restart"
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.16
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.17
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.16'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.17'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.16 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.17 --checksums build/packages/checksums.sha256 --self-test
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}
@@ -226,5 +230,4 @@ jobs:
             ${{ env.BUDGETISM_SOURCE }}/build/packages/checksums.sha256
           if-no-files-found: error
 
-# CI generates temporary workflow artifacts for build validation. It does not
-# push source, create tags, or publish GitHub Releases.
+# CI retains development artifacts only. No source push, release or deployment.
