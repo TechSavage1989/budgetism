@@ -1,5 +1,9 @@
 # Local storage and optional password protection
 
+## Financial schema 7: saved CSV import profiles
+
+Dev.14 stores mapping profiles inside the encrypted payload. The first profile save requires backup/upgrade consent; loading and previewing never write or upgrade data. Schemas 1 through 6 remain readable. Preserve all prior collections, category history and security settings; older apps cannot read schema 7. Encryption, SQLite, OS keys and portable backup envelopes are unchanged. See [import profiles](IMPORT_PROFILES.md).
+
 ## Financial schema 6: saved categorization rules
 
 Dev.11 stores rule definitions inside the encrypted financial payload. Viewing or previewing does not upgrade schemas 1 through 5. The first rule save requires explicit backup/upgrade consent and preserves all prior collections. Rule application uses the existing atomic ledger commit and audit with no new postings to accounts. Older builds refuse schema 6. Encryption envelopes, SQLite container, OS keys, optional-password setting and independent backup format are unchanged. See [categorization rules](CATEGORIZATION_RULES.md).

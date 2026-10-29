@@ -114,6 +114,8 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: CsvImportScreen(api: LocalFinanceApi(v))));
       await tapVisible(tester, find.text('Use fictional example CSV'));
       await tapVisible(tester, find.text('Save as new profile'));
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Save as new profile')).onPressed, isNull);
       await tester.enterText(find.byKey(const Key('profile-name')), 'Example profile');
       await tapVisible(tester, find.byKey(const Key('profile-upgrade')));
       await tapVisible(tester, find.byKey(const Key('profile-save')), io: true);

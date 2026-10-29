@@ -2,7 +2,7 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.13 development preview.** The user confirmed dev.12 transaction-register behavior and all earlier finance workflows. This iteration adds categorization batch history and explicit category-only undo, including batches from earlier builds. No new workspace-format upgrade is required. Check [validation](docs/VALIDATION.md) for the exact tested commit and build before downloading. Use fictional records and keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.14 development preview.** Dev.13 and prior milestones are user-confirmed. This iteration adds saved, encrypted CSV import profiles with explicit application and header-name matching. Check [validation](docs/VALIDATION.md) for tested build evidence before downloading. Keep independent encrypted backups; this is not a production release.
 
 ## Features
 
@@ -14,11 +14,12 @@
 | Scheduled | Bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
 | Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
 | Calendar and forecasts | Read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
+| Import profiles | Saved header/date/sign settings, default categories, explicit application, rename/archive/restore |
+| Category history | Inspect prior rule-applied batches and explicitly undo eligible complete batches without moving money |
 | CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
 | Reports | Historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
 | Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
 | Transaction register | Search words/phrases/exclusions, combined dates/accounts/categories/types/amount/source/status filters, sorting, whole and split totals, protected details |
-| Category history and undo | Review original/applied categories and rule versions; explicitly undo a complete unchanged, unreconciled batch with a reason |
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
 No local cross-device synchronization, bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
@@ -51,9 +52,11 @@ The first reconciliation completion still requires backup/consent for financial 
 
 Categorization rules are opened from **User options > Manage categories > Categorization rules**. Add a rule, then generate a dated preview and select the entries to change. Saving a rule does not change transactions, and no rule runs automatically. Category changes can move spending between budgets, but account balances and transaction counts stay unchanged. Reconciled, split, transfer and voided entries are excluded. The first rule save needs backup/consent for financial schema 6; older builds cannot open it. See [categorization rules](docs/CATEGORIZATION_RULES.md).
 
-The local Transactions screen provides combined search and filters. Search words are ANDed; use quoted phrases or a minus-prefixed exclusion. Amount filters/sorting use the full unsigned transaction amount. A category filter uses that category's exact contribution in income/expense summaries. Transfers are listed separately, never as spending. Voided entries are hidden by default and excluded from totals when shown. Filters stay in this workspace session only. Select a row to inspect it, then explicitly choose Edit transaction when allowed. No format upgrade. See [register behavior](docs/TRANSACTION_REGISTER.md).
+The local Transactions screen now provides combined search and filters. Search words are ANDed; use quoted phrases or a minus-prefixed exclusion. Amount filters/sorting use the full unsigned transaction amount. A category filter uses that category's exact contribution in income/expense summaries. Transfers are listed separately, never as spending. Voided entries are hidden by default and excluded from totals when shown. Filters stay in this workspace session only. Select a row to inspect it, then explicitly choose Edit transaction when allowed. No format upgrade. See [register behavior](docs/TRANSACTION_REGISTER.md).
 
-Open **Categorization rules > History** to inspect applied batches. Undo requires a reason and review of the complete batch. It restores only original categories, preserves account balances/transaction count and appends audit history. Edited, voided, missing, reconciled or already-undone batches cannot be forced. Saved rules remain unchanged, and no rule is automatically reapplied. No new migration. See [category history](docs/CATEGORY_HISTORY.md).
+CSV import profiles save only mapping settings and defaults inside the encrypted workspace. Select a file and profile, choose Apply selected profile, review its mapping and destination account, then preview before importing. Missing or ambiguous mapped headers are rejected. First profile save requires backup/consent for schema 7, which older apps cannot open. See [saved import profiles](docs/IMPORT_PROFILES.md).
+
+Categorization rules > History shows prior batches and supports reviewed, reasoned, category-only undo when every affected transaction remains unchanged and unprotected. See [category history](docs/CATEGORY_HISTORY.md).
 
 ## Updates and settings
 
@@ -69,6 +72,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo write/read process pairs and planning/report/register preservation tests. Build Windows/web with APP_VERSION=0.1.0-dev.13. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules write/read process pairs and planning/report/register preservation tests, category-undo and import-profile process pairs. Build Windows/web with APP_VERSION=0.1.0-dev.14. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
-Supporting details: [history and undo](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.13.md).
+Supporting details: [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.14.md).

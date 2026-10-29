@@ -35,7 +35,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
   int _date = 0, _payee = 1, _amount = 2, _debit = 2, _credit = 3, _reference = -1, _notes = -1, _page = 0;
   bool _splitColumns = false, _reverse = false, _busy = false, _upgrade = false, _reviewed = false;
   String? _error, _success, _profileId, _profileApplied;
-  bool _profilePending = false;
+  bool _profilePending = false, _profileDialogOpen = false;
   List<Json> get _profiles => ImportProfiles.list(_snapshot);
   CsvMapping get _mapping => CsvMapping(dateColumn: _date, payeeColumn: _payee,
     amountColumn: _splitColumns ? -1 : _amount, debitColumn: _debit, creditColumn: _credit,
@@ -104,7 +104,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       final existing = update ? _profiles.where((p) => p['id'] == _profileId).firstOrNull : null;
       if (update && existing == null) throw const FormatException('Choose an active profile to update.');
       final ids = _profiles.map((p) => p['id']).toSet();
-      setState(() { _busy = true; _error = null; });
+      setState(() { _busy = true; _profileDialogOpen = true; _error = null; });
       final saved = await showDialog<bool>(context: context, barrierDismissible: false,
         builder: (_) => ImportProfileEditor(data: _snapshot, settings: settings,
           existing: existing, onSave: widget.api.saveImportProfile));
@@ -116,7 +116,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         });
       }
     } catch (error) { if (mounted) setState(() => _error = error.toString()); }
-    finally { if (mounted) setState(() => _busy = false); }
+    finally { if (mounted) setState(() { _busy = false; _profileDialogOpen = false; }); }
   }
   Future<void> _manageProfiles() async {
     if (_busy) return;
@@ -124,6 +124,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     try {
       await widget.api.snapshot();
       if (!mounted) return;
+      setState(() => _profileDialogOpen = true);
       await showDialog<void>(context: context, barrierDismissible: false,
         builder: (_) => ImportProfilesManager(snapshot: () => widget.api.vault.ledger.snapshot(),
           onSave: widget.api.saveImportProfile, onState: widget.api.archiveImportProfile,
@@ -136,7 +137,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         });
       }
     } catch (error) { if (mounted) setState(() => _error = error.toString()); }
-    finally { if (mounted) setState(() => _busy = false); }
+    finally { if (mounted) setState(() { _busy = false; _profileDialogOpen = false; }); }
   }
   void _parse() {
     _mappingChanged(); _profilePending = _profileId != null;
@@ -406,7 +407,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Text('Files stay local. Only importing selected rows saves transactions. Saving a profile stores mapping settings, not statement rows. Use fictional data while testing.'),
         const SizedBox(height: 16),
-        if (_busy) const LinearProgressIndicator(),
+        if (_busy && !_profileDialogOpen) const LinearProgressIndicator(),
         if (_error != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
         if (_success != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_success!, key: const ValueKey('import-success'))),
         if (_entries == null) _configuration() else _review(),
