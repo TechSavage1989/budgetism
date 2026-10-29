@@ -5,8 +5,13 @@ with explicit zero-baseline mapping, atomic checkpoints/history, record/match/pa
 ignore/keep decisions and a disabled-by-default switch. Existing databases require
 an explicit additive versioned upgrade. Disposable PostgreSQL upgrade/retry/
 rollback/concurrency and 14-table independent restore tests passed locally.
-Client/native/package CI and private installation remain pending. Dev.19 owner
-sign-in and visible fictional changes were confirmed by the user. No real banks,
+All six CI jobs passed, including 335 client tests, 27 native commands and exact
+package scans; see [DEV20_VALIDATION.md](DEV20_VALIDATION.md). The verified private
+API/schema upgrade preserved legacy table digests, passed a 14-table restore and
+enabled fictional review. No live sources/mappings or journal entries were created.
+A separate verified dev.20 client was delivered and opened at its welcome screen;
+owner sign-in is a local user action. Dev.19 owner sign-in and visible fictional
+changes were previously confirmed by the user. No real banks,
 automatic provider refresh or public/LAN listener is enabled.
 
 Client candidate 0.1.0-dev.19 now wires the [private-server Sandbox panel](SERVER_SANDBOX_CLIENT.md)

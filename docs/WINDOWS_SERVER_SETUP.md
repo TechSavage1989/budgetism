@@ -4,7 +4,11 @@ Dev.20 candidate adds a separately disabled
 [durable fictional source review](SERVER_SANDBOX_REVIEW.md). Existing databases
 require its explicit additive SQL after protected backup/restore; startup does
 not migrate them. Recovery must retain all 14 tables after upgrade. Verified
-artifact installation is pending; do not rerun the installer over an existing DB.
+artifact installation passed privately after all six jobs in run 40959797640.
+All seven legacy table digests were unchanged; all 14 tables passed independent
+restore. Owner, TLS, disabled enrollment and loopback listeners were verified.
+The old API program remains for rollback. No live fixture discovery, mapping or
+ledger posting was performed. Do not rerun the installer over an existing DB.
 
 Status: server smoke-test preparation. The user has authorized a private Windows Server 2025 deployment. The existing API is not yet a completed Plaid service, and dev.18 remains the verified desktop build.
 

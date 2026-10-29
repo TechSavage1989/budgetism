@@ -21,7 +21,7 @@ was inspected for readable labels/amounts and clipping.
 The pinned Dart runtime also validated the existing private server's HTTPS health
 endpoint using default certificate trust. Earlier owner-authenticated server
 preview returned four controlled fictional changes and zero ledger entries.
-Manual sign-in with the newly packaged GUI remains a local user step.
+The user subsequently confirmed local GUI sign-in and visible fictional preview changes.
 Server program files/services/data were not changed for this client.
 
 ## Package and scan evidence

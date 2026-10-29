@@ -6,11 +6,19 @@ The new candidate adds explicit fixture discovery, dedicated zero-baseline
 account mapping, atomic source/checkpoint history and reviewed record/match/pair/
 ignore/keep choices. Existing server databases require an explicit additive,
 versioned upgrade after protected backup/restore; no automatic migration occurs.
-The feature is separately disabled by default. Local PostgreSQL contracts passed
-upgrade preservation, rollback/idempotency/concurrency and a complete 14-table
-independent restore across restart. Full client/native/package validation and
-private upgrade are pending; do not install unverified artifacts or imply this
-candidate is delivered. No real bank linkage or LAN listener is enabled.
+The feature is separately disabled by default. All six jobs in run 40959797640
+passed for application source 269a277497365914000835952bf041af4bb6d4b6:
+335 client tests, 27 retained/extended native commands, database upgrade/review/
+concurrency/full recovery, package verification and exact archive/extracted scans.
+See [dev.20 verification](docs/DEV20_VALIDATION.md). The scanned API program and
+explicit additive schema were upgraded privately after protected recovery.
+All seven legacy table digests were unchanged; all 14 tables passed independent
+restore. Owner, disabled enrollment, distinct service accounts, automatic startup
+and loopback TLS were verified; rollback program files remain. Fictional review
+is enabled privately, but no live connection, mapping, source or journal was
+created by these tests. A separate verified client folder was delivered and its
+dev.20 welcome screen opened. URL entry and owner sign-in remain local user steps.
+No real bank linkage or LAN listener is enabled.
 Older milestone sections below describe earlier verified checkpoints.
 
 Development: 0.1.0-dev.18, provider-independent fictional bank synchronization and unified Needs Review.
