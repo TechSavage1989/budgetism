@@ -13,8 +13,11 @@ notes. Never rerun the installer over that installation.
 The [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md) is authenticated and disabled
 by default. Its verified/scanned API program upgrade was installed privately after
 all six build jobs passed; prior program files remain available for rollback.
-Separate protected Sandbox credential provisioning and an authenticated provider
-preview are still pending. It does not change the schema or enable real bank linkage.
+Separate protected Sandbox credential provisioning and an owner-authenticated
+provider preview passed with four controlled fictional changes and zero ledger
+entries. The initial random fixture's fractional-cent amounts were rejected; the
+positive fixture now uses explicit exact-cent USD data. This does not change the
+schema or enable real bank linkage or client ingestion.
 
 ## Packaged server test
 

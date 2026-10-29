@@ -7,8 +7,9 @@ test retrieved 316 fictional changes and removed its Item, without ledger writes
 An authenticated, disabled-by-default [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md)
 passed all six build/security jobs at source bd101dee3871d691e2065b6c98c9ff2498153460
 and its scanned API package was installed privately with rollback retained.
-Protected Sandbox credential provisioning and authenticated provider preview are
-still pending. The endpoint is not wired into the client; durable bank-source
+Protected Sandbox credentials are configured and an owner-authenticated preview
+passed with four controlled fictional changes and zero ledger entries.
+The endpoint is not wired into the client; durable bank-source
 integration and real bank linkage remain unavailable. Older
 milestone descriptions below describe the prior checkpoint.
 

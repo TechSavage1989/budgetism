@@ -25,9 +25,13 @@ After a fresh protected backup/isolated restore, only the API program was upgrad
 in the private installation, with the prior executable retained for rollback.
 Running executable path, TLS health, owner preservation, disabled enrollment,
 separate service identities, automatic startup and loopback bindings passed.
-No schema, financial data, IIS or firewall changes were made. Sandbox credentials
-remain unconfigured there; the authenticated provider preview still requires local
-provisioning and an owner login. This is not completed client/ledger integration.
+No schema, financial data, IIS or firewall changes were made. Protected Sandbox
+credentials are now configured and the owner-authenticated HTTP preview passed:
+four controlled fictional changes, zero ledger entries, healthy loopback HTTPS.
+The initial random dynamic fixture contained 35 genuine fractional-cent amounts
+and was correctly rejected. It was replaced with a controlled USD custom fixture;
+exact purchase/refund signs and pending state passed, and the old Item was removed.
+The exact-cent normalizer was preserved. This is not completed client/ledger integration.
 
 The earlier milestone notes below are retained history; this checkpoint supersedes
 their pending installation, enrollment, backup and standalone Sandbox statements.
