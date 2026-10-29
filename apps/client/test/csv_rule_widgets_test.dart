@@ -10,10 +10,21 @@ import 'package:budgetism/local/local_api.dart';
 import 'package:budgetism/local/csv_import_widgets.dart';
 import 'package:budgetism/local/csv_rule_widgets.dart';
 import 'local_security_test.dart' show TestDeviceKeys, TestStorage;
-import 'import_profile_widgets_test.dart' show tapVisible;
 import 'csv_rule_suggestions_test.dart';
 
 const sample = 'Date,Description,Amount,Reference\n2026-10-28,Rule test store,-12.34,rule-1';
+
+// Vault reads run in the real async zone. A dialog can complete during a
+// simulated route animation, so drain its real-zone continuation before the
+// next interaction. Otherwise a test can tap the still-disabled parent.
+Future<void> tapVisible(WidgetTester tester, Finder finder, {bool io = false}) async {
+  await tester.ensureVisible(finder); await tester.pumpAndSettle();
+  if (io) { await tester.runAsync(() async { await tester.tap(finder); }); }
+  else { await tester.tap(finder); }
+  await tester.pumpAndSettle();
+  await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+  await tester.pumpAndSettle();
+}
 Future<LocalVault> widgetVault(WidgetTester tester, TestStorage storage) async {
   late LocalVault v;
   await tester.runAsync(() async {
@@ -64,7 +75,9 @@ void main() {
       expect(find.byKey(const Key('csv-rule-applied-2')), findsOneWidget); expect(storage.saved, saved);
       await reviewCsv(tester); expect(find.textContaining('No category changes are suggested'), findsOneWidget);
       await tapVisible(tester, find.byTooltip('Close suggestions'));
-      await tapVisible(tester, find.byKey(ValueKey('Category for row 2:${namedCategory(v.ledger, 'Groceries')}')));
+      final categoryField = find.byKey(ValueKey('Category for row 2:${namedCategory(v.ledger, 'Groceries')}'));
+      expect(tester.widget<DropdownButtonFormField<String>>(categoryField).onChanged, isNotNull);
+      await tapVisible(tester, categoryField);
       await tapVisible(tester, find.text('Other spending').last);
       await reviewCsv(tester); expect(find.textContaining('No category changes are suggested'), findsOneWidget);
       await tapVisible(tester, find.byTooltip('Close suggestions'));
@@ -76,10 +89,13 @@ void main() {
     final storage = TestStorage(); final v = await widgetVault(tester, storage); final saved = storage.saved;
     try {
       await openCsv(tester, v); await reviewCsv(tester); await acceptFirst(tester);
+      expect(find.byType(CsvRuleSuggestionsDialog), findsNothing);
+      expect(tester.widget<CheckboxListTile>(find.byKey(const Key('import-reviewed'))).onChanged, isNotNull);
       storage.failWrite = true;
       await tapVisible(tester, find.byKey(const Key('import-reviewed')));
       await tapVisible(tester, find.byKey(const Key('commit-import')), io: true);
       expect(v.ledger.data['transactions'], isEmpty); expect(storage.saved, saved);
+      expect(find.textContaining('Disk unavailable'), findsOneWidget);
       expect(find.byKey(ValueKey('Category for row 2:${namedCategory(v.ledger, 'Groceries')}')), findsOneWidget);
       storage.failWrite = false;
       await tapVisible(tester, find.byKey(const Key('commit-import')), io: true);
@@ -121,7 +137,7 @@ void main() {
     await tapVisible(tester, find.byKey(const Key('csv-rules-reviewed')));
     await tester.tap(find.byKey(const Key('csv-rules-accept'))); await tester.pump();
     await tester.tap(find.byKey(const Key('csv-rules-accept'))); await tester.pump();
-    expect(calls, 1); expect(tester.widget<IconButton>(find.byTooltip('Close suggestions')).onPressed, isNull);
+    expect(calls, 1); expect(tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == 'Close suggestions')).onPressed, isNull);
     pending.complete(); await tester.pumpAndSettle();
     expect(find.textContaining('Fictional read failure'), findsOneWidget);
     expect(tester.widget<CheckboxListTile>(find.byKey(const Key('csv-rule-row-2'))).value, true);
