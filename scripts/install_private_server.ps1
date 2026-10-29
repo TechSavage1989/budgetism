@@ -88,6 +88,7 @@ $createdDatabaseService = $false
 $createdApiService = $false
 $oldPassFile = [Environment]::GetEnvironmentVariable('PGPASSFILE','Process')
 $oldOptions = [Environment]::GetEnvironmentVariable('PGOPTIONS','Process')
+$oldPassword = [Environment]::GetEnvironmentVariable('PGPASSWORD','Process')
 try {
     # Copy only manifested runtime files, excluding the package's prior test runs.
     foreach ($entry in $manifest.files) {
@@ -123,6 +124,8 @@ try {
     $passFile = Join-Path $admin 'pgpass'
     [IO.File]::WriteAllText($passFile,"127.0.0.1:${DatabasePort}:*:budgetism_admin:$adminPassword",$utf8)
     [Environment]::SetEnvironmentVariable('PGPASSFILE',$passFile,'Process')
+    # libpq gives an inherited PGPASSWORD precedence over this installation's file.
+    [Environment]::SetEnvironmentVariable('PGPASSWORD',$null,'Process')
     [Environment]::SetEnvironmentVariable('PGOPTIONS','-c log_statement=none -c log_min_error_statement=panic','Process')
     # Generated passwords contain hex only and never appear in process arguments.
     $sql = "CREATE ROLE budgetism_app LOGIN PASSWORD '$appPassword' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;`nCREATE DATABASE budgetism OWNER budgetism_app;`nREVOKE ALL ON DATABASE budgetism FROM PUBLIC;"
@@ -160,5 +163,6 @@ try {
 } finally {
     [Environment]::SetEnvironmentVariable('PGPASSFILE',$oldPassFile,'Process')
     [Environment]::SetEnvironmentVariable('PGOPTIONS',$oldOptions,'Process')
+    [Environment]::SetEnvironmentVariable('PGPASSWORD',$oldPassword,'Process')
     $adminPassword = $appPassword = $sql = $null
 }

@@ -39,6 +39,7 @@ jobs:
         run: python scripts/archive_server_test.py build/server-kit build/Budgetism-Windows-Server-Test.zip
       - name: Test permanent services on ephemeral Windows runner
         run: |
+          $env:PGPASSWORD = 'fictional-wrong-ambient-value'
           powershell.exe -NoProfile -File ./build/server-kit/Install-BudgetismServer.ps1 -InstallDirectory "$PWD/build/private-service"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           foreach ($name in @('BudgetismApi','BudgetismDatabase')) {
