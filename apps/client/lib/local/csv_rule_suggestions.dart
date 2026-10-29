@@ -50,14 +50,18 @@ class CsvRuleSuggestions {
       }
       final row = entry.values, choice = choices[entry.rowNumber];
       if (row == null || entry.error != null || choice == null ||
-          choice['action'] != 'create' || reviewedRows.contains(entry.rowNumber)) continue;
+          choice['action'] != 'create' || reviewedRows.contains(entry.rowNumber)) {
+        continue;
+      }
       if (row['rowNumber'] != entry.rowNumber) throw const FormatException('CSV row identity is inconsistent.');
       final amount = LocalLedger.minor(row['signedMinor'], signed: true);
       if (amount == 0) continue;
       final kind = amount < 0 ? 'expense' : 'income';
       // Never change type, transfer direction, duplicate approval or matching.
       if (choice['kind'] != kind || CsvImport.transferHint(row['payee'] as String) ||
-          CsvImport.consumed(snapshot, accountId, fileHash, row)) continue;
+          CsvImport.consumed(snapshot, accountId, fileHash, row)) {
+        continue;
+      }
       LocalLedger.date(row['date']);
       final payee = LocalLedger.text(row['payee'], 'Description', 150);
       final candidate = <String, dynamic>{'kind': kind, 'accountId': accountId,
