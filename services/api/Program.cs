@@ -11,6 +11,7 @@ using Npgsql;
 using Budgetism.Api;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddWindowsService(options => options.ServiceName = "BudgetismApi");
 var databasePassword = ReadSecret("DB_PASSWORD_FILE");
 var bootstrapToken = ReadSecret("BOOTSTRAP_TOKEN_FILE");
 var connection = builder.Configuration.GetConnectionString("Finance");
@@ -21,6 +22,7 @@ if (string.IsNullOrWhiteSpace(connection))
     var csb = new NpgsqlConnectionStringBuilder
     {
         Host = Environment.GetEnvironmentVariable("DB_HOST") ?? "db",
+        Port = int.TryParse(Environment.GetEnvironmentVariable("DB_PORT"), out var dbPort) ? dbPort : 5432,
         Database = Environment.GetEnvironmentVariable("DB_NAME") ?? "budgetism",
         Username = Environment.GetEnvironmentVariable("DB_USER") ?? "finance_app",
         Password = databasePassword,

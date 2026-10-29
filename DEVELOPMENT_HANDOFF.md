@@ -2,6 +2,16 @@
 
 Development: 0.1.0-dev.18, provider-independent fictional bank synchronization and unified Needs Review.
 
+Server preparation now includes Windows service hosting support, configurable PostgreSQL port, a self-contained Windows API/PostgreSQL test kit, five negative package guards, and an additional Windows CI job. User inventory confirms Windows Server 2025 x64, IIS on 80/443, only .NET 7/8 runtimes, and no detected PostgreSQL service. The test kit binds loopback only, initializes a new fictional database, checks auth/idempotency/exact balances/logout and stops both processes. It does not install a permanent service or enable Plaid. Local build and ledger contracts pass; the packaged server smoke test passes. Local Defender is inactive, so no local malware-clearance claim is made; hosted exact-package scanning is required before delivery. Full dev.19 remains unfinished and the desktop version stays dev.18.
+
+October 29 server update: the user authorized private server setup and chose an existing Windows Server 2025 accessed through Remote Desktop. This supersedes earlier deployment-choice-pending and no-server language below. The server's RDP and management ports are reachable; current Windows credentials do not authenticate remote management. No server settings were changed. scripts/server_readiness.ps1 provides a read-only inventory of runtime versions, PostgreSQL services, relevant listening ports and disk space without collecting secrets. Server inventory, authenticated deployment, Plaid integration and verification remain outstanding. Keep the target address and credentials out of public source.
+
+Dev.19 work is on development/plaid-dev19. The initial detached Plaid sync collector and exact-cents conversion have eight fictional tests; all 314 local tests and strict analysis pass. These local changes are not published or connected to the application UI. Credential/authorization and ledger integration await the user's deployment choice in the active chat. Full hosted/native/package/Defender verification has not been run for dev.19, and no dev.19 delivery is claimed.
+
+Plaid Trial signup is now user-completed and dashboard-confirmed: 0/10 connections used. Bank Five - Personal resolves to the intended bankfive.com institution. Live integration, secure credential configuration and fictional API testing remain unimplemented; no secret was revealed or real account linked during the readiness check.
+
+The user has now confirmed dev.18 works and requested the next milestone for BankFive and common United States banks. Provider research and the proposed dev.19 implementation boundary are in docs/DEV19_PROVIDER_DECISION.md. The user selected Plaid first. Trial requirements and adapter constraints are recorded in the provider decision; no new application build, enrollment, payment or server setup has occurred.
+
 ## Baseline and scope
 
 The user explicitly confirmed dev.17 works. Development starts at main b222b62a2293c6092fba3ab92e327b46a7802356, whose application is the verified dev.17 baseline. Live branches, PRs, releases and workflows were checked before editing; there were no PRs, releases or tags. Work is on development/bank-foundation-dev18.

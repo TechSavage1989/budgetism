@@ -9,6 +9,49 @@ permissions:
   contents: read
 
 jobs:
+  windows-server-test:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.403'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tests/server_package_guards.py
+      - name: Retrieve pinned official PostgreSQL binaries
+        run: |
+          New-Item -ItemType Directory build | Out-Null
+          Invoke-WebRequest 'https://sbp.enterprisedb.com/getfile.jsp?fileid=1260609' -OutFile build/postgresql.zip
+          if ((Get-FileHash build/postgresql.zip -Algorithm SHA256).Hash -ne 'E2246BA91D22345BC3D017586C09EDE52D9DF180B1EEB480F050445F1CAD84E2') { throw 'PostgreSQL archive hash mismatch.' }
+          Expand-Archive build/postgresql.zip build/postgresql
+      - name: Build and exercise isolated server package
+        run: |
+          ./scripts/package_server_test.ps1 -DotnetPath (Get-Command dotnet).Source -PostgresDirectory "$PWD/build/postgresql/pgsql" -OutputDirectory "$PWD/build/server-kit"
+          powershell.exe -NoProfile -File ./build/server-kit/Test-BudgetismServer.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Archive only manifested files
+        run: python scripts/archive_server_test.py build/server-kit build/Budgetism-Windows-Server-Test.zip
+      - name: Initialize Defender on ephemeral runner
+        run: powershell.exe -NoProfile -File ./scripts/prepare_ci_defender.ps1 -ReportDirectory build/security
+      - name: Scan exact server archive and extracted files
+        run: ./scripts/scan_windows_package.ps1 -Archive "$PWD/build/Budgetism-Windows-Server-Test.zip" -ReportDirectory "$PWD/build/server-scan"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-Windows-Server-Test
+          path: build/Budgetism-Windows-Server-Test.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Budgetism-server-test-scan
+          path: build/server-scan/*.json
+
   source-layout:
     runs-on: ubuntu-latest
     steps:

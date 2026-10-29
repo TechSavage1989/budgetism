@@ -2,6 +2,8 @@
 
 Dev.18 adds fictional bank synchronization and a unified Needs Review inbox on user-confirmed dev.17 (main b222b62a2293c6092fba3ab92e327b46a7802356). Exact validation and delivery evidence belongs in [VALIDATION.md](VALIDATION.md).
 
+Dev.19 work in progress: detached fictional Plaid pagination tests and an isolated Windows server test kit. The user authorized private Windows Server setup. The backend can run under Windows Service hosting and accepts a separate database port; the test kit exercises temporary loopback processes only. See [WINDOWS_SERVER_SETUP.md](WINDOWS_SERVER_SETUP.md). No permanent service, LAN endpoint, live bank adapter or dev.19 desktop package is delivered yet.
+
 | Area | Current source behavior |
 | --- | --- |
 | Connections | Explicit fictional-account mapping, status, timestamps and manual refresh |
