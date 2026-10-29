@@ -37,6 +37,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Archive only manifested files
         run: python scripts/archive_server_test.py build/server-kit build/Budgetism-Windows-Server-Test.zip
+      - name: Test permanent services on ephemeral Windows runner
+        run: |
+          powershell.exe -NoProfile -File ./build/server-kit/Install-BudgetismServer.ps1 -InstallDirectory "$PWD/build/private-service"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($name in @('BudgetismApi','BudgetismDatabase')) {
+            $service = Get-CimInstance Win32_Service -Filter "Name='$name'"
+            if ($service.StartName -ne "NT SERVICE\$name" -or $service.State -ne 'Running' -or $service.StartMode -ne 'Auto') { throw 'Service identity/state mismatch.' }
+          }
+          $listeners = @(Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in @(55080,55432) })
+          if ($listeners.Count -ne 2 -or @($listeners | Where-Object LocalAddress -ne '127.0.0.1').Count -ne 0) { throw 'Unexpected server listener.' }
+          powershell.exe -NoProfile -File ./build/server-kit/Install-BudgetismServer.ps1 -InstallDirectory "$PWD/build/private-service" 2> build/repeat-error.txt
+          if ($LASTEXITCODE -eq 0 -or (Get-Content build/repeat-error.txt -Raw) -notmatch 'already exists') { throw 'Repeated install was not safely rejected.' }
+          $global:LASTEXITCODE = 0
+          Stop-Service BudgetismApi
+          Stop-Service BudgetismDatabase
       - name: Initialize Defender on ephemeral runner
         run: powershell.exe -NoProfile -File ./scripts/prepare_ci_defender.ps1 -ReportDirectory build/security
       - name: Scan exact server archive and extracted files

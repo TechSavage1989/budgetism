@@ -4,6 +4,22 @@ Status: server smoke-test preparation. The user has authorized a private Windows
 
 ## Packaged server test
 
+## Permanent development services
+
+After the smoke test passes, use a package whose permanent-service CI test and Defender scan have passed. Open Windows PowerShell as Administrator in the extracted package folder, and run the installer with a new destination folder:
+
+```powershell
+powershell.exe -NoProfile -File .\Install-BudgetismServer.ps1 -InstallDirectory D:\Data\Budgetism\PrivateServer
+```
+
+The installer creates BudgetismDatabase and BudgetismApi under separate Windows virtual service accounts. Database port 55432 and API port 55080 bind only to 127.0.0.1. It generates restricted credentials on the server; the API receives a database role without superuser, role-creation or database-creation privileges. Database administrator credentials are not readable by the API service. Program files are read-only for both services. No credentials appear in command arguments or user-facing output.
+
+The installer verifies health and an orderly service restart before setting automatic startup. Existing folders, services or occupied ports cause refusal. A failure stops only the services created by that invocation, leaves them manual, and preserves data for diagnosis; do not delete or rerun over that folder. The installer creates a fresh empty database, not a copy of smoke-test or desktop records. Owner enrollment is disabled. There is no LAN listener, firewall change, IIS change, bank connection or recurring bank refresh. Secure HTTPS/client trust, owner enrollment, database backup/restore and Plaid integration are subsequent work before use with real financial data.
+
+Windows service behavior follows [Microsoft service hosting](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/windows-service?view=aspnetcore-10.0) and PostgreSQL's [pg_ctl service registration](https://www.postgresql.org/docs/current/app-pg-ctl.html).
+
+## Run the smoke test
+
 Extract the complete server-test ZIP into a new folder on the server. In Windows PowerShell in that folder, run:
 
 ```powershell
