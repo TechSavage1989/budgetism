@@ -4,7 +4,12 @@ The development API has a detached `POST /api/bank/sandbox/preview` endpoint.
 It requires the existing owner bearer session and is disabled by default.
 It does not enroll a bank, initialize an owner, change the database schema,
 write a ledger transaction, save a provider cursor, or synchronize a local workspace.
-The installed service must be upgraded from a verified package before this endpoint exists there.
+The private installation was upgraded from the verified/scanned server artifact
+for source bd101dee3871d691e2065b6c98c9ff2498153460 after all six jobs passed in
+[run 40936069606](https://github.com/TechSavage1989/budgetism/actions/runs/40936069606).
+Its post-upgrade health/authentication/isolation checks passed. Protected Sandbox
+credential provisioning and an authenticated provider preview are still pending.
+Other installations require that verified upgrade before the endpoint exists.
 
 An administrator may explicitly enable it with service-specific environment
 `PLAID_SANDBOX_PREVIEW_ENABLED=true` and three separately protected files:

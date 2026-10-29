@@ -5,8 +5,11 @@ protected database backup/isolated restore were verified in the private session.
 LAN access remains disabled at the user's request. A separate Sandbox API smoke
 test retrieved 316 fictional changes and removed its Item, without ledger writes.
 An authenticated, disabled-by-default [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md)
-is now under development in source. It is not installed or wired into the client;
-durable bank-source integration and real bank linkage remain unavailable. Older
+passed all six build/security jobs at source bd101dee3871d691e2065b6c98c9ff2498153460
+and its scanned API package was installed privately with rollback retained.
+Protected Sandbox credential provisioning and authenticated provider preview are
+still pending. The endpoint is not wired into the client; durable bank-source
+integration and real bank linkage remain unavailable. Older
 milestone descriptions below describe the prior checkpoint.
 
 Dev.18 adds fictional bank synchronization and a unified Needs Review inbox on user-confirmed dev.17 (main b222b62a2293c6092fba3ab92e327b46a7802356). Exact validation and delivery evidence belongs in [VALIDATION.md](VALIDATION.md).

@@ -11,12 +11,26 @@ in the private operational notes, not source. The standalone Sandbox smoke test
 then retrieved 316 fictional changes and removed its temporary Item; sanitized
 result evidence was verified locally. No records were written to the ledger.
 
-Next development step adds an authenticated, disabled-by-default Sandbox preview
-API and fictional backend contract tests; see [docs/PLAID_SANDBOX_PREVIEW.md](docs/PLAID_SANDBOX_PREVIEW.md).
-It uses only Sandbox, has bounded complete pagination, exact decimal cents and
-sanitized errors, and performs no database/schema/local-workspace writes. This
-source change is not yet a verified installed upgrade or completed client adapter.
-Keep the installed API unchanged until candidate checks/package scanning pass.
+The authenticated, disabled-by-default Sandbox preview API and fictional backend
+contracts are verified at source commit bd101dee3871d691e2065b6c98c9ff2498153460;
+see [docs/PLAID_SANDBOX_PREVIEW.md](docs/PLAID_SANDBOX_PREVIEW.md). All six jobs in
+[run 40936069606](https://github.com/TechSavage1989/budgetism/actions/runs/40936069606)
+passed, including retained native Windows checks. Server artifact 12925172070 and
+scan artifact 12924782831 were downloaded; the inner server ZIP SHA-256 is
+26e5bc9f98c00d37907d9db97b2f5025297d2c42fa0f717662c975dfe76866ac.
+All 1,931 manifested hashes matched. Defender engine 1.1.26100.4/signatures
+1.463.28.0 reported no threats in the exact ZIP and extracted files.
+
+After a fresh protected backup/isolated restore, only the API program was upgraded
+in the private installation, with the prior executable retained for rollback.
+Running executable path, TLS health, owner preservation, disabled enrollment,
+separate service identities, automatic startup and loopback bindings passed.
+No schema, financial data, IIS or firewall changes were made. Sandbox credentials
+remain unconfigured there; the authenticated provider preview still requires local
+provisioning and an owner login. This is not completed client/ledger integration.
+
+The earlier milestone notes below are retained history; this checkpoint supersedes
+their pending installation, enrollment, backup and standalone Sandbox statements.
 
 The user ran the scanned smoke-test kit on Windows Server 2025 and supplied all PASS results. Permanent loopback-only development installation is now being prepared in scripts/install_private_server.ps1. It uses separate virtual service identities, protected directories, a non-superuser application database role, disabled owner enrollment, restart/health verification and refusal to overwrite existing folders/services. Its dedicated CI step must pass, followed by the exact package Defender scan, before delivery. LAN HTTPS, owner enrollment, backup/restore and Plaid remain unfinished. This does not enable real bank linkage or move local financial records.
 

@@ -10,10 +10,11 @@ and removed its temporary Item without writing ledger records. Keep host-specifi
 addresses, certificate trust, credentials and backup paths in private operations
 notes. Never rerun the installer over that installation.
 
-The next [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md) is an authenticated,
-disabled-by-default source candidate. It requires a verified API upgrade and
-separate protected Sandbox credential provisioning before use. It does not
-change the database schema or enable real bank linkage.
+The [Sandbox preview API](PLAID_SANDBOX_PREVIEW.md) is authenticated and disabled
+by default. Its verified/scanned API program upgrade was installed privately after
+all six build jobs passed; prior program files remain available for rollback.
+Separate protected Sandbox credential provisioning and an authenticated provider
+preview are still pending. It does not change the schema or enable real bank linkage.
 
 ## Packaged server test
 
