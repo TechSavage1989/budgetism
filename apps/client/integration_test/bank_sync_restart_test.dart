@@ -173,8 +173,9 @@ void main() {
           File('${dir.path}${Platform.pathSeparator}fictional-backup.budgetism').writeAsStringSync(backup);
           await v.close();
           vault = null;
-          if (phase != 'write')
+          if (phase != 'write') {
             vault = await LocalVault.open(SqliteVaultStorage(path), '', create: false, deviceKeys: keys);
+          }
         });
         if (phase == 'write') return;
       }

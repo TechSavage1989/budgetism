@@ -20,7 +20,7 @@ Review explicitly records, matches, pairs transfers/card payments, keeps/ignores
 
 ## Validation gate
 
-Local analysis and new bank tests pass; full-suite and hosted verification evidence is recorded in docs/VALIDATION.md. A retained Settings test was updated for the intentional fictional-connection message and checks that both new tools remain disabled outside local workspaces. No existing financial assertion or native gate was removed.
+Strict local analysis and all 306 unit/widget/storage tests pass; hosted verification evidence is recorded in docs/VALIDATION.md. A retained Settings test was updated for the intentional fictional-connection message and checks that both new tools remain disabled outside local workspaces. No existing financial assertion or native gate was removed. The shared Flutter lint configuration is tracked after correcting the first CI candidate's missing-brace findings.
 
 All original 24 native commands remain; the bank_sync_restart_test.dart write/read pair is added with BANK_TEST_PHASE and BANK_TEST_DIRECTORY. This exercises actual mapping/review UI, Windows secure keys/SQLite, interrupted fetch, idempotent replay, pending replacements, paired transfers, reconciliation conflict and independent encrypted backup recovery across processes. Full CI, Windows/web builds, package identity/checksum/runtime verification and exact ZIP/extracted Defender scanning are required before delivery. Never mark an unscanned candidate verified.
 

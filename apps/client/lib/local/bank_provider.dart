@@ -140,8 +140,9 @@ class SimulatedBankProvider implements BankProvider {
       var pending = 0;
       for (final s in all.values.where((s) => s['sourceAccountId'] == a['sourceAccountId'])) {
         if (s['state'] == 'posted') posted += s['signedMinor'] as int;
-        if (s['state'] == 'pending' && !replaced.contains('${s['sourceAccountId']}/${s['sourceId']}'))
+        if (s['state'] == 'pending' && !replaced.contains('${s['sourceAccountId']}/${s['sourceId']}')) {
           pending += s['signedMinor'] as int;
+        }
       }
       balances.add({
         'sourceAccountId': a['sourceAccountId'],
@@ -184,8 +185,9 @@ class BankRefreshService {
       final connection = BankSync.connection(data, connectionId);
       if (connection['connected'] != true) throw StateError('Reconnect the simulation first.');
       final adapter = provider ?? SimulatedBankProvider();
-      if (adapter.providerId != connection['providerId'])
+      if (adapter.providerId != connection['providerId']) {
         throw const FormatException('Wrong provider for this connection.');
+      }
       final batches = BankSync.list(data, 'bankBatches').where((b) => b['connectionId'] == connectionId).toList();
       final start =
           repeatLast && batches.isNotEmpty
@@ -196,8 +198,9 @@ class BankRefreshService {
       BankPage? first;
       final records = <Json>[], balances = <Json>[];
       do {
-        if (seen.length >= 100 || (token != null && !seen.add(token)))
+        if (seen.length >= 100 || (token != null && !seen.add(token))) {
           throw const FormatException('Repeated or excessive source pages.');
+        }
         final page = await adapter.fetch(checkpoint: start, pageToken: token);
         first ??= page;
         if (page.fromCheckpoint != start ||

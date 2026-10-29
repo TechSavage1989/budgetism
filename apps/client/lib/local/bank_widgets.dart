@@ -81,7 +81,7 @@ class _BankConnectionsPanelState extends State<BankConnectionsPanel> {
             ],
           ),
     );
-    if (yes == true)
+    if (yes == true) {
       await widget.api.setBankConnected({
         'operationId': const Uuid().v4(),
         'expectedRevision': widget.api.vault.ledger.revision,
@@ -89,6 +89,7 @@ class _BankConnectionsPanelState extends State<BankConnectionsPanel> {
         'connected': connected,
         'confirmReviewed': true,
       });
+    }
   });
   @override
   Widget build(BuildContext context) {
@@ -295,11 +296,12 @@ class _BankMappingDialogState extends State<BankMappingDialog> {
       await widget.onSave(_request!);
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = error.toString();
           _busy = false;
         });
+      }
     }
   }
 
@@ -544,11 +546,12 @@ class _BankReviewDialogState extends State<BankReviewDialog> {
       await widget.onSave(_request!);
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.toString();
         });
+      }
     }
   }
 

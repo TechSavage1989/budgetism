@@ -94,8 +94,9 @@ class BankSync {
       if (before['connected'] != true) fail('Reconnect the simulation before refreshing.');
       final now = timestamp(input['atUtc']);
       if (action == 'bank-failure') {
-        if (!['interrupted', 'invalid-feed', 'save-failed'].contains(input['errorCode']))
+        if (!['interrupted', 'invalid-feed', 'save-failed'].contains(input['errorCode'])) {
           fail('Invalid refresh failure.');
+        }
         after = {...before, 'lastAttemptUtc': now, 'refreshStatus': 'error', 'errorCode': input['errorCode']};
       } else if (action == 'bank-refresh') {
         after =
@@ -129,11 +130,13 @@ class BankSync {
     }
     final connections = list(next, 'bankConnections');
     // A single reusable simulation avoids accidentally duplicating its history.
-    if (connections.any((c) => c['providerId'] == simulatedProvider))
+    if (connections.any((c) => c['providerId'] == simulatedProvider)) {
       fail('The simulation already exists. Reconnect it instead.');
+    }
     final raw = input['accounts'];
-    if (raw is! List || raw.isEmpty || raw.length > 20 || raw.any((a) => a is! Map))
+    if (raw is! List || raw.isEmpty || raw.length > 20 || raw.any((a) => a is! Map)) {
       fail('Review the account mapping.');
+    }
     final links = list(next, 'bankAccounts');
     final sourceIds = <String>{};
     final targetIds = links.map((a) => a['accountId']).toSet();
@@ -226,8 +229,9 @@ class BankSync {
   }
 
   static void _sourcePayload(Json source) {
-    if (source.length != sourceFields.length || source.keys.any((k) => !sourceFields.contains(k)))
+    if (source.length != sourceFields.length || source.keys.any((k) => !sourceFields.contains(k))) {
       fail('Unsupported source record fields.');
+    }
     for (final key in ['sourceAccountId', 'sourceId']) {
       LocalLedger.text(source[key], 'Source identity', 100);
     }
@@ -245,8 +249,9 @@ class BankSync {
       if (source[key] != null) LocalLedger.text(source[key], 'Source relationship', 100);
     }
     if (source['pendingSourceId'] == source['sourceId'] ||
-        (source['pendingSourceId'] != null && source['state'] == 'pending'))
+        (source['pendingSourceId'] != null && source['state'] == 'pending')) {
       fail('Invalid pending relationship.');
+    }
   }
 
   static Json _refresh(Json next, Json input, String operation, Json before, String now) {
@@ -289,8 +294,9 @@ class BankSync {
       final id = sourceKey(before['id'] as String, record['sourceAccountId'] as String, record['sourceId'] as String);
       final eventKey = '$id/${record['revision']}';
       final content = digest(record);
-      if (eventVersions.containsKey(eventKey) && eventVersions[eventKey] != content)
+      if (eventVersions.containsKey(eventKey) && eventVersions[eventKey] != content) {
         fail('Conflicting source revisions in the same refresh.');
+      }
       eventVersions[eventKey] = content;
       final old = byId[id];
       if (old != null) {
@@ -301,8 +307,9 @@ class BankSync {
         }
         if (old['state'] == 'posted' && record['state'] == 'pending') fail('A posted record cannot return to pending.');
         if (old['pendingSourceId'] != record['pendingSourceId']) fail('A durable pending relationship cannot change.');
-        if (old['supersededBy'] != null && record['state'] == 'posted')
+        if (old['supersededBy'] != null && record['state'] == 'posted') {
           fail('A replaced authorization cannot post again.');
+        }
       }
       final after = <String, dynamic>{
         ...?(old),
@@ -467,8 +474,9 @@ class BankSync {
     for (final schedule in list(data, 'schedules')) {
       if (schedule['paused'] == true ||
           !ScheduleMatching.eligible(schedule, candidate) ||
-          schedule['amountMinor'] != candidate['amountMinor'])
+          schedule['amountMinor'] != candidate['amountMinor']) {
         continue;
+      }
       final high = day.add(const Duration(days: 7));
       final low = day.subtract(const Duration(days: 7));
       final through = high.year > 9999 ? '9999-12-31' : Recurrence.format(high);
@@ -482,12 +490,14 @@ class BankSync {
       };
       for (final index in indices) {
         final original = Recurrence.at(schedule['startDate'], schedule['frequency'], index);
-        if (original == null || (schedule['endDate'] != null && original.compareTo(schedule['endDate'] as String) > 0))
+        if (original == null || (schedule['endDate'] != null && original.compareTo(schedule['endDate'] as String) > 0)) {
           continue;
+        }
         final record = records.where((o) => o['index'] == index).firstOrNull;
         final due = record?['dueDate'] as String? ?? original;
-        if ((record != null && record['status'] != 'postponed') || ScheduleMatching.daysApart(due, source['date']) > 7)
+        if ((record != null && record['status'] != 'postponed') || ScheduleMatching.daysApart(due, source['date']) > 7) {
           continue;
+        }
         result.add({
           'scheduleId': schedule['id'],
           'index': index,
@@ -523,16 +533,19 @@ class BankSync {
         } else if (source['state'] == 'posted') {
           reasons.add('category_needed');
           if (duplicateCandidates(data, source).isNotEmpty) reasons.add('potential_duplicate');
-          if (pendingCandidates(data, source).isNotEmpty && source['pendingSourceId'] == null)
+          if (pendingCandidates(data, source).isNotEmpty && source['pendingSourceId'] == null) {
             reasons.add('pending_ambiguity');
+          }
           if (source['transferKey'] != null ||
               transferCandidates(data, source).isNotEmpty ||
-              RegExp(r'transfer|payment', caseSensitive: false).hasMatch(source['description']))
+              RegExp(r'transfer|payment', caseSensitive: false).hasMatch(source['description'])) {
             reasons.add('possible_transfer');
+          }
         }
       }
-      if (source['decision'] != 'ignored' && scheduleCandidates(data, source).isNotEmpty)
+      if (source['decision'] != 'ignored' && scheduleCandidates(data, source).isNotEmpty) {
         reasons.add('scheduled_match');
+      }
       if (reasons.isNotEmpty) result.add({'id': source['id'], 'source': source, 'reasons': reasons});
     }
     return result;
@@ -582,13 +595,15 @@ class BankSync {
       }
       if (decision == 'match') {
         final match = duplicateCandidates(next, source).where((t) => t['id'] == input['transactionId']).firstOrNull;
-        if (match == null || match['version'] != input['expectedTransactionVersion'])
+        if (match == null || match['version'] != input['expectedTransactionVersion']) {
           fail('Choose a current exact-date, exact-amount existing entry.');
+        }
         source['transactionId'] = match['id'];
         afterTransaction = match;
       } else {
-        if (duplicateCandidates(next, source).isNotEmpty && input['confirmDuplicate'] != true)
+        if (duplicateCandidates(next, source).isNotEmpty && input['confirmDuplicate'] != true) {
           fail('Review possible duplicates before recording a separate entry.');
+        }
         if (pendingCandidates(next, source).isNotEmpty &&
             source['pendingSourceId'] == null &&
             input['confirmPending'] != true) {
@@ -596,8 +611,9 @@ class BankSync {
             'Review the ambiguous pending authorization. It will remain pending until the feed identifies or removes it.',
           );
         }
-        if (decision == 'record' && source['transferKey'] != null && input['confirmSeparate'] != true)
+        if (decision == 'record' && source['transferKey'] != null && input['confirmSeparate'] != true) {
           fail('Review the transfer hint before treating this as income or spending.');
+        }
         String from = accountId;
         String to = LocalLedger.text(
           input['categoryId'] ?? input['otherAccountId'] ?? '',
@@ -609,8 +625,9 @@ class BankSync {
         if (decision == 'transfer') {
           if (input['otherSourceId'] != null) {
             pair = transferCandidates(next, source).where((s) => s['id'] == input['otherSourceId']).firstOrNull;
-            if (pair == null || pair['revision'] != input['expectedOtherSourceRevision'])
+            if (pair == null || pair['revision'] != input['expectedOtherSourceRevision']) {
               fail('Review both current transfer sides.');
+            }
             if (duplicateCandidates(next, pair).isNotEmpty && input['confirmDuplicate'] != true) {
               fail(
                 'The other transfer side may already be recorded. Review both sides before creating a separate transfer.',
@@ -659,8 +676,9 @@ class BankSync {
           oldTransaction['voided'] == true) {
         fail('The linked entry changed or is voided. Review it again.');
       }
-      if (Reconciliation.locked(next, oldTransaction['id']))
+      if (Reconciliation.locked(next, oldTransaction['id'])) {
         fail('Reopen every relevant statement before changing this reconciled entry.');
+      }
       if (source['reviewedRevision'] == source['revision']) fail('This source revision was already reviewed.');
       if (decision == 'remove') {
         if (source['state'] != 'removed' || linkedSources.any((s) => s['state'] != 'removed')) {
@@ -669,8 +687,9 @@ class BankSync {
         afterTransaction = {...oldTransaction, 'voided': true, 'version': (oldTransaction['version'] as int) + 1};
       } else {
         if (source['state'] != 'posted') fail('Only a posted correction can replace a recorded value.');
-        if (oldTransaction['kind'] != 'transfer' && oldTransaction['kind'] != kind)
+        if (oldTransaction['kind'] != 'transfer' && oldTransaction['kind'] != kind) {
           fail('A correction cannot silently change income to spending. Keep the recorded entry and review manually.');
+        }
         if (LocalLedger.rows(oldTransaction['splits']).isNotEmpty && oldTransaction['amountMinor'] != amount) {
           fail('This entry has user splits. Edit their exact amounts in Transactions first, then review again.');
         }
@@ -699,8 +718,9 @@ class BankSync {
         }
       }
     } else if (decision == 'schedule') {
-      if (oldTransaction == null || oldTransaction['version'] != input['expectedTransactionVersion'])
+      if (oldTransaction == null || oldTransaction['version'] != input['expectedTransactionVersion']) {
         fail('Review the current recorded payment first.');
+      }
       final selected =
           scheduleCandidates(
             next,
@@ -758,17 +778,20 @@ class BankSync {
   static void validate(Json data, List<Json> accounts, List<Json> transactions, Set<String> ids) {
     if ((data['schema'] as int) < LocalLedger.bankSchema) {
       for (final key in collections) {
-        if (data.containsKey(key) && (data[key] is! List || (data[key] as List).isNotEmpty))
+        if (data.containsKey(key) && (data[key] is! List || (data[key] as List).isNotEmpty)) {
           fail('Bank records require the upgraded workspace format.');
+        }
       }
       return;
     }
     for (final key in collections) {
-      if (data[key] is! List || (data[key] as List).any((r) => r is! Map) || (data[key] as List).length > 50000)
+      if (data[key] is! List || (data[key] as List).any((r) => r is! Map) || (data[key] as List).length > 50000) {
         fail('Invalid bank records.');
+      }
       for (final record in list(data, key)) {
-        if (!ids.add(LocalLedger.text(record['id'], 'Bank record identity', 100)))
+        if (!ids.add(LocalLedger.text(record['id'], 'Bank record identity', 100))) {
           fail('Duplicate bank record identity.');
+        }
       }
     }
     final connections = list(data, 'bankConnections');
@@ -780,18 +803,21 @@ class BankSync {
           c['version'] is! int ||
           c['version'] < 1 ||
           !['idle', 'success', 'error'].contains(c['refreshStatus']) ||
-          !(data['operations'] as Map).containsKey(c['operationId']))
+          !(data['operations'] as Map).containsKey(c['operationId'])) {
         fail('Invalid simulated connection.');
+      }
       LocalLedger.text(c['checkpoint'], 'Checkpoint', 200, optional: true);
       if ((c['refreshStatus'] == 'error') != (c['errorCode'] != null) ||
-          (c['errorCode'] != null && !['interrupted', 'invalid-feed', 'save-failed'].contains(c['errorCode'])))
+          (c['errorCode'] != null && !['interrupted', 'invalid-feed', 'save-failed'].contains(c['errorCode']))) {
         fail('Invalid refresh status.');
+      }
       for (final key in ['lastAttemptUtc', 'lastSuccessUtc', 'dataTimestampUtc']) {
         if (c[key] != null) timestamp(c[key]);
       }
       if ((c['checkpoint'] == '') != (c['lastSuccessUtc'] == null) ||
-          (c['lastSuccessUtc'] == null) != (c['dataTimestampUtc'] == null))
+          (c['lastSuccessUtc'] == null) != (c['dataTimestampUtc'] == null)) {
         fail('Invalid success checkpoint.');
+      }
     }
     final links = list(data, 'bankAccounts');
     final linkKeys = <String>{}, accountIds = <String>{};
@@ -806,14 +832,16 @@ class BankSync {
           account['currency'] != a['currency'] ||
           account['type'] != a['type'] ||
           !accountIds.add(a['accountId'] as String) ||
-          !linkKeys.add('${a['connectionId']}/${a['sourceAccountId']}'))
+          !linkKeys.add('${a['connectionId']}/${a['sourceAccountId']}')) {
         fail('Invalid or duplicated account link.');
+      }
       for (final key in ['reportedBalanceMinor', 'availableBalanceMinor']) {
         if (a[key] != null) LocalLedger.minor(a[key], signed: true);
       }
       if (a['dataTimestampUtc'] != null) timestamp(a['dataTimestampUtc']);
-      if ((a['reportedBalanceMinor'] == null) != (a['dataTimestampUtc'] == null))
+      if ((a['reportedBalanceMinor'] == null) != (a['dataTimestampUtc'] == null)) {
         fail('Reported balance needs its timestamp.');
+      }
     }
     final sources = list(data, 'bankSources');
     final linkedSides = <String>{};
@@ -827,8 +855,9 @@ class BankSync {
           s['scheduleDismissedRevision'] is! int ||
           s['scheduleDismissedRevision'] < 0 ||
           s['scheduleDismissedRevision'] > s['revision'] ||
-          ![null, 'record', 'transfer', 'match', 'correct', 'remove', 'ignored', 'keep'].contains(s['decision']))
+          ![null, 'record', 'transfer', 'match', 'correct', 'remove', 'ignored', 'keep'].contains(s['decision'])) {
         fail('Invalid bank source relationship.');
+      }
       if (s['supersededBy'] != null) {
         final successor = sources.where((r) => r['id'] == s['supersededBy']).firstOrNull;
         if (s['state'] == 'posted' ||
@@ -836,16 +865,18 @@ class BankSync {
             successor == null ||
             successor['connectionId'] != s['connectionId'] ||
             successor['sourceAccountId'] != s['sourceAccountId'] ||
-            successor['pendingSourceId'] != s['sourceId'])
+            successor['pendingSourceId'] != s['sourceId']) {
           fail('Invalid pending replacement.');
+        }
       }
       if (s['pendingSourceId'] != null) {
         final predecessor =
             sources
                 .where((r) => r['id'] == sourceKey(s['connectionId'], s['sourceAccountId'], s['pendingSourceId']))
                 .firstOrNull;
-        if (predecessor != null && predecessor['supersededBy'] != s['id'])
+        if (predecessor != null && predecessor['supersededBy'] != s['id']) {
           fail('Missing reciprocal pending replacement.');
+        }
       }
       if (s['transactionId'] != null) {
         final t = transactions.where((t) => t['id'] == s['transactionId']).firstOrNull;
@@ -853,8 +884,9 @@ class BankSync {
         if (s['state'] == 'pending' ||
             t == null ||
             effect(t, accountId) == 0 ||
-            !linkedSides.add('${t['id']}/$accountId'))
+            !linkedSides.add('${t['id']}/$accountId')) {
           fail('Invalid or duplicated bank-to-ledger link.');
+        }
       }
     }
     final batchKeys = <String>{};
@@ -867,8 +899,9 @@ class BankSync {
           !RegExp(r'^[0-9a-f]{64}$').hasMatch(b['digest'] as String? ?? '') ||
           !(data['operations'] as Map).containsKey(b['operationId']) ||
           !batchKeys.add('${b['connectionId']}/${b['batchId']}') ||
-          (checkpoints[b['connectionId']] ?? '') != b['fromCheckpoint'])
+          (checkpoints[b['connectionId']] ?? '') != b['fromCheckpoint']) {
         fail('Invalid bank checkpoint history.');
+      }
       checkpoints[b['connectionId'] as String] = b['checkpoint'] as String;
     }
     for (final c in connections) {

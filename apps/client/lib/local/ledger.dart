@@ -101,7 +101,9 @@ class LocalLedger {
       return this;
     }
     if (action == 'bank-refresh' && BankSync.isReplay(data, input) &&
-        BankSync.connection(data, input['connectionId'])['refreshStatus'] != 'error') return this;
+        BankSync.connection(data, input['connectionId'])['refreshStatus'] != 'error') {
+      return this;
+    }
     final next = clone(data);
     final accounts = rows(next['accounts']);
     final categories = rows(next['categories']);
