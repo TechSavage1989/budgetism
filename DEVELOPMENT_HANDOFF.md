@@ -1,35 +1,41 @@
 # Budgetism development handoff
 
 **Development version:** 0.1.0-dev.16, calendar date selection and usability shortcuts.
-**User-confirmed baseline:** dev.15 CSV category suggestions and all earlier milestones work. Do not repeat the earlier setup exercises.
-**Starting main:** 57c958720a87dbe16ae2aa17e1e8e2061a71b2e9, tree 937edf4032ce2b715f69a9c5990284c4986a2403. This documentation-only follow-up preserves application b32e53e1a37a08ca4dd0a4dcb2830ce1b096d153, successful build 40809471115.
+**Application commit:** ef07b3438605a3de215c4cf1f75bccf015f519fc, tree 79cb611fdc65bb2665776e41a0268610c1f4900b.
+**Successful build:** [run 40816063799](https://github.com/TechSavage1989/budgetism/actions/runs/40816063799), all five jobs passed, including the real Windows calendar test and exact-package Defender scans.
+**User-confirmed baseline:** dev.15 CSV category suggestions and all earlier milestones work. Do not repeat earlier setup exercises.
+**Starting main:** 57c958720a87dbe16ae2aa17e1e8e2061a71b2e9, tree 937edf4032ce2b715f69a9c5990284c4986a2403. Its tested application is b32e53e1a37a08ca4dd0a4dcb2830ce1b096d153, run 40809471115.
 
 ## Scope and continuity
 
-Read AGENTS.md, docs/IMPLEMENTATION_STATUS.md, docs/DATE_CONTROLS.md and docs/USABILITY_ROADMAP.md. The user explicitly requested ease-of-use work, especially calendar date selection instead of typing. Public source and development artifacts remain authorized. No releases/tags, visibility or credential changes, server/provider/payment setup, unattended workers or Codex CLI automation. Recheck live refs and PRs before normal expected-head writes; never force-push or discard concurrent work.
+Read AGENTS.md, docs/IMPLEMENTATION_STATUS.md, docs/DATE_CONTROLS.md, docs/USABILITY_ROADMAP.md and docs/BANK_CONNECTION_PLAN.md. The user requested easier dates and explicitly clarified the end goal: a real-bank-connected, intuitive personal finance application. Treat bank connectivity as a primary upcoming product goal while preserving optional local-only operation.
 
-Preserve the optional password, encrypted local workspace, independently encrypted backups, every financial collection and all prior features. No new financial schema or migration, package dependency, encryption format or local data path. Do not copy databases into packages. Stable filenames remain Budgetism.exe and Budgetism-Windows-x64.zip.
+Public source and development artifacts remain authorized. No releases/tags, visibility/credential changes, server/provider/payment setup, unattended workers or Codex CLI automation. Bank integration design is not permission to enroll with a provider, start a paid subscription or connect real accounts. Obtain institution/country/account-type information, never login credentials in chat. Recheck live refs/PRs/releases before expected-head writes; never force-push or overwrite concurrent work.
+
+Keep optional local passwords, encrypted data, independent backups and all existing finance features. No financial schema or storage migration, new dependency or data-path change in dev.16. Stable filenames remain Budgetism.exe and Budgetism-Windows-x64.zip. Existing workspace remains %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3 under the same Windows account.
 
 ## Implementation
 
-New apps/client/lib/date_controls.dart contains strict date-only conversion, a shared calendar picker, date fields with calendar/Today/optional-clear actions, inclusive date-range presets and a visual month/year dialog. Calendar UI starts in calendar mode; manual entry remains optional. Invalid input only influences the temporary picker seed and is not changed on cancel. Date choice updates a controller and callback, never a ledger. Picker controls respect disabled/read-only states, bounds and in-flight selection. A controller changed while the picker is open is not overwritten on return.
+apps/client/lib/date_controls.dart provides strict date-only conversion, calendar date fields with Today/optional Clear, inclusive range presets and a visual month/year selector. Calendar confirmation updates form controls, not financial records. Cancellation preserves the original value, including invalid text. Read-only/disabled states, bounds, overlapping picker launches and stale controller changes are guarded.
 
-Schedule start/end, recorded/postponed occurrence dates, statement ending dates and rule date ranges use the shared controls. Existing schedule anchors remain locked. Postponement and later statement calendars honor their existing lower bounds. Register fields use the shared control and add atomic date-range shortcuts while preserving all other filters. Rule range changes clear old preview/selection/confirmation. Budgets use a month grid and visual year selector, with This month. Transaction editing adds Today/Yesterday and expands calendar selection to the existing ledger-supported years rather than stopping at 2100. Reports, financial calendar and the sample/server form already have calendar controls and remain unchanged.
+Schedule start/end and occurrence dates, statement ending dates and rule/register ranges use the shared controls. Existing recurrence anchors and reviewed statement dates remain locked. Rule-range changes invalidate old preview/selection/review. Register presets change only date filters. Budgets use a month grid, visual year selection and This month. Transaction editing adds Today/Yesterday and supports the ledger's existing year bounds. Reports, planning and sample/server calendars are retained.
 
-## Source and tests
+Only presentation files, version/workflow references, tests and documentation change. Ledger, financial engines, CSV/rules/profiles/history processing, encryption/SQLite/OS-key code, backend and updater implementation remain unchanged.
 
-Only presentation files, version/workflow references, new tests and documentation change. Ledger, financial engines, rules/imports/profiles/history, encryption/SQLite/OS-key code, API and updater implementation are preserved.
+## Validation and package
 
-- test/date_controls_test.dart: exact parsing, leap/DST/year bounds, presets, calendar confirmation/cancel, optional clear, disabled/locked states, stale controller handling, narrow/wide range layouts and visual month/year selection.
-- test/date_workflows_test.dart: real schedule/occurrence/statement/register/rule/transaction screens, unchanged finance data, frozen review dates and old/future date editing.
-- integration_test/date_picker_native_test.dart: real Windows calendar interaction tied to an isolated encrypted SQLite workspace; selection alone leaves ciphertext untouched; explicit transaction save changes only the date and survives reopening.
+Keep Flutter 3.47.8 and all existing gates. The successful run passed analysis, 255 unit/widget tests on Ubuntu, the complete Windows suite, all prior native process/preservation tests, new native date-picker interaction, Windows/web builds, backend/Go checks, packaging and exact ZIP/extracted scanning. No local Flutter/Dart/.NET or Windows GUI exists; hosted runtime tests are separate from user confirmation. See docs/VALIDATION.md for performed checks and log notices.
 
-Retain Flutter 3.47.8 and the complete existing unit/widget/native suite. Add the new native date-picker test after the existing CSV-rule restart pair. Build/package 0.1.0-dev.16, inspect Windows/web compilation, source/package negative controls, backend and updater checks, and exact ZIP/extracted Defender scanning. Do not suppress failures. No local Flutter/Dart/.NET SDK or Windows GUI is available; hosted tests are required and manual user interaction is a separate gate.
+Source artifact 12872462349 was hash-checked and independently reconstructed to the exact application Git tree. Windows artifact 12873575129 has outer SHA-256 5961a7bd1d5f38088dcea71abddb3c5508a089629dcf23dc6eb2d734f5c1af2f. Its inner ZIP is 16,318,836 bytes with SHA-256 fedad80dd470614eea32a955caa175a9aac563faa19b02d03b9deccc6e76a5bc. Security artifact 12873012449 reports no threats for that exact ZIP and its extracted files. Version, identity, dependencies, CRC/hashes and actual updater verify-only acceptance passed. Both executables remain unsigned; no updater install/relaunch/rollback was attempted.
 
-## Delivery gate
-
-Source edits and tests are prepared. Local source-layout and package negative controls passed. No hosted passing build or scanner clearance for dev.16 has been claimed yet. Record exact commit/run/artifact hashes and performed checks in docs/VALIDATION.md before delivery. No app installation or release publication is authorized by this milestone.
+The follow-up commit changes documentation only. Retain historical branches and the tested application/version. No release/tag is created. Generated outputs must stay outside tracked root.
 
 ## Next desktop check
 
-Back up dev.15 and open the new package in a separate program folder using the existing workspace. Try selecting dates in a new schedule and a statement review, then cancel without saving. Use register Last 7 days and All dates, and select a budget month/year visually. Existing balances and transactions should not change. Earlier import/budget/rule test exercises do not need repetition. See docs/WINDOWS_TESTING.md. Next usability priorities are documented separately, not claimed as implemented.
+Export a backup, close the current application and extract the new program into a separate folder. Open the existing workspace, not a replacement database. Choose a date in Scheduled > Add schedule and cancel without saving. Try register Last 7 days/All dates and visual budget month/year selection. No new test transactions or earlier feature setup are required. Dev.16 manual confirmation remains pending.
+
+## Next implementation direction
+
+Prioritize one cohesive everyday-use milestone: clearer navigation/Home, fast transaction entry with payee autocomplete, searchable account/category choices, fewer redundant confirmations and predictable desktop behavior. Design Connect bank, account mapping, sync status and Needs review alongside this work.
+
+Then build a provider-independent, fictional bank-feed test path covering pending/posted replacements, corrections, duplicate-safe retries, preserved user edits, transfer/schedule matching and account baselines. Select a real provider only after verifying the user's bank coverage, current costs, access requirements and privacy/security disclosures. Self-hosted cross-device sync remains the intended architecture, not an already-working feature. Detailed acceptance criteria and researched candidates are in BANK_CONNECTION_PLAN.md. No live service or bank authorization has been performed.

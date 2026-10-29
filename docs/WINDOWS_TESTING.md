@@ -1,6 +1,6 @@
 # Budgetism dev.16 Windows test
 
-Use only the successful dev.16 run and exact package recorded after validation. Export an encrypted backup from dev.15, retain its password and close Budgetism. Extract the development artifact and its inner Budgetism-Windows-x64.zip into a separate folder, keep all supporting files together, confirm 0.1.0-dev.16 and open the existing workspace under the same Windows account. No new workspace-format upgrade is expected.
+Use [successful dev.16 run 40816063799](https://github.com/TechSavage1989/budgetism/actions/runs/40816063799), application ef07b3438605a3de215c4cf1f75bccf015f519fc, Windows artifact 12873575129. Exact package hashes and scanning evidence are recorded in VALIDATION.md. Export an encrypted backup from dev.15, retain its password and close Budgetism. Extract the development artifact and its inner Budgetism-Windows-x64.zip into a separate folder, keep all supporting files together, confirm 0.1.0-dev.16 and open the existing workspace under the same Windows account. No new workspace-format upgrade is expected.
 
 ## Test usability without adding financial records
 
