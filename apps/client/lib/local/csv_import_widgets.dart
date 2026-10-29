@@ -5,6 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'csv_import.dart';
 import 'csv_profiles.dart';
+import 'csv_rule_suggestions.dart';
+import 'csv_rule_widgets.dart';
 import 'import_profile_widgets.dart';
 import 'ledger.dart';
 import 'local_api.dart';
@@ -32,6 +34,9 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
   CsvTable? _table;
   List<CsvEntry>? _entries;
   final _choices = <int, Json>{};
+  final _reviewedCategoryRows = <int>{};
+  final _suggestedBy = <int, String>{};
+  bool _rulesDialogOpen = false;
   int _date = 0, _payee = 1, _amount = 2, _debit = 2, _credit = 3, _reference = -1, _notes = -1, _page = 0;
   bool _splitColumns = false, _reverse = false, _busy = false, _upgrade = false, _reviewed = false;
   String? _error, _success, _profileId, _profileApplied;
@@ -52,7 +57,8 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     }
   }
   void _mappingChanged() {
-    _entries = null; _choices.clear(); _reviewed = false; _profileApplied = null;
+    _entries = null; _choices.clear(); _reviewedCategoryRows.clear(); _suggestedBy.clear();
+    _reviewed = false; _profileApplied = null;
     _operation = const Uuid().v4(); _error = null; _success = null;
   }
   Future<void> _loadProfile() async {
@@ -198,7 +204,8 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       final snapshot = await widget.api.snapshot();
       if (!mounted) return;
       setState(() {
-        _snapshot = snapshot; _entries = rows; _choices.clear(); _page = 0; _upgrade = false; _reviewed = false;
+        _snapshot = snapshot; _entries = rows; _choices.clear(); _reviewedCategoryRows.clear(); _suggestedBy.clear();
+        _page = 0; _upgrade = false; _reviewed = false;
         _operation = const Uuid().v4();
         for (final entry in rows.where((e) => e.values != null)) {
           final row = entry.values!;
@@ -209,6 +216,37 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       });
     } catch (error) { if (mounted) setState(() => _error = error.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
+  }
+  Future<void> _reviewRules() async {
+    if (_busy || _entries == null || _table == null || _account == null) return;
+    setState(() { _busy = true; _error = null; _success = null; });
+    try {
+      final fresh = await widget.api.snapshot();
+      if (fresh['cursor'] != _snapshot['cursor']) {
+        throw const FormatException('Workspace changed. Go back to mapping and preview the CSV again.');
+      }
+      final review = CsvRuleSuggestions.preview(snapshot: _snapshot, accountId: _account!,
+        fileHash: _table!.digest, entries: _entries!, choices: _choices, reviewedRows: _reviewedCategoryRows);
+      if (!mounted) return;
+      setState(() => _rulesDialogOpen = true);
+      await showDialog<bool>(context: context, barrierDismissible: false,
+        builder: (_) => CsvRuleSuggestionsDialog(review: review, onAccept: (selected) async {
+          final current = await widget.api.snapshot();
+          final changes = CsvRuleSuggestions.accept(review: review, snapshot: current,
+            accountId: _account!, fileHash: _table!.digest, entries: _entries!, choices: _choices,
+            reviewedRows: _reviewedCategoryRows, selectedRows: selected, confirmed: true);
+          if (!mounted) return;
+          setState(() {
+            _choices.addAll(changes); _reviewedCategoryRows.addAll(selected);
+            for (final p in review.suggestions.where((p) => selected.contains(p.rowNumber))) {
+              _suggestedBy[p.rowNumber] = p.ruleName;
+            }
+            _reviewed = false; _operation = const Uuid().v4();
+            _success = '${changes.length} category suggestions applied to this preview. No transactions saved.';
+          });
+        }));
+    } catch (error) { if (mounted) setState(() => _error = error.toString()); }
+    finally { if (mounted) setState(() { _busy = false; _rulesDialogOpen = false; }); }
   }
   List<Json> get _selected => [for (final entry in _entries ?? <CsvEntry>[])
     if (entry.values != null && !_done(entry.values!) && _choices[entry.rowNumber]?['action'] != 'skip')
@@ -228,7 +266,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       setState(() {
         _snapshot = widget.api.vault.ledger.snapshot();
         _success = 'Import saved: $added new transactions, ${selected.length - added} matched to existing transactions. Skipped rows were not saved.';
-        _entries = null; _table = null; _text = ''; _choices.clear();
+        _entries = null; _table = null; _text = ''; _choices.clear(); _reviewedCategoryRows.clear(); _suggestedBy.clear();
       });
     } catch (error) { if (mounted) setState(() => _error = error.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
@@ -281,7 +319,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
   Widget _configuration() => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
     _profileControls(),
     _select<String>('Destination account', _account, [for (final a in _accounts) _option(a['id'] as String, '${a['name']} (${a['type']})')],
-      (v) => setState(() => _account = v)),
+      (v) => setState(() { _mappingChanged(); _account = v; })),
     Wrap(spacing: 12, runSpacing: 10, children: [
       FilledButton.icon(onPressed: _busy || _accounts.isEmpty ? null : _chooseFile, icon: const Icon(Icons.file_open_outlined), label: const Text('Choose CSV file')),
       OutlinedButton(onPressed: _busy || _accounts.isEmpty ? null : _example, child: const Text('Use fictional example CSV')),
@@ -349,7 +387,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
             _option('skip', 'Skip this row'), _option('create', 'Import a new transaction'),
             for (final t in matches) _option('match:${t['id']}', 'Match existing: ${t['payee']} [${t['id']}]'),
           ], (v) => setState(() {
-            _reviewed = false;
+            _reviewed = false; _suggestedBy.remove(entry.rowNumber);
             choice['action'] = v!.startsWith('match:') ? 'match' : v;
             choice['transactionId'] = v.startsWith('match:') ? v.substring(6) : null;
           })),
@@ -357,11 +395,18 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
             _select<String>('Type for row ${entry.rowNumber}', kind, [
               _option(signed < 0 ? 'expense' : 'income', signed < 0 ? 'Expense' : 'Income'),
               _option('transfer', 'Transfer / credit card payment'),
-            ], (v) => setState(() { _reviewed = false; choice['kind'] = v; choice['targetId'] = v == 'transfer' ? null : signed < 0 ? _expense : _income; })),
+            ], (v) => setState(() {
+              _reviewed = false; _reviewedCategoryRows.remove(entry.rowNumber); _suggestedBy.remove(entry.rowNumber);
+              choice['kind'] = v; choice['targetId'] = v == 'transfer' ? null : signed < 0 ? _expense : _income;
+            })),
             _select<String>('${kind == 'transfer' ? (signed > 0 ? 'From account' : 'To account') : 'Category'} for row ${entry.rowNumber}',
               targets.any((t) => t['id'] == choice['targetId']) ? choice['targetId'] as String? : null,
               [for (final t in targets) _option(t['id'] as String, t['name'] as String)],
-              (v) => setState(() { _reviewed = false; choice['targetId'] = v; })),
+              (v) => setState(() {
+                _reviewed = false; choice['targetId'] = v; _reviewedCategoryRows.add(entry.rowNumber); _suggestedBy.remove(entry.rowNumber);
+              })),
+            if (_suggestedBy.containsKey(entry.rowNumber)) Text('Category suggested by ${_suggestedBy[entry.rowNumber]}.',
+              key: ValueKey('csv-rule-applied-${entry.rowNumber}')),
             if (possible) CheckboxListTile(contentPadding: EdgeInsets.zero, value: choice['allowDuplicate'] == true,
               title: const Text('I checked: import this as a separate transaction despite the possible duplicate'),
               onChanged: _busy ? null : (v) => setState(() { _reviewed = false; choice['allowDuplicate'] = v ?? false; })),
@@ -386,6 +431,11 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
         Text('Page ${_page + 1} of ${(entries.length / 25).ceil()}'),
         TextButton(onPressed: _busy || (_page + 1) * 25 >= entries.length ? null : () => setState(() => _page++), child: const Text('Next rows')),
       ]),
+      const SizedBox(height: 8),
+      Align(alignment: Alignment.centerLeft, child: OutlinedButton.icon(
+        key: const Key('review-csv-rules'), onPressed: _busy ? null : _reviewRules,
+        icon: const Icon(Icons.rule), label: const Text('Review category suggestions'))),
+      const SizedBox(height: 8),
       ...entries.skip(_page * 25).take(25).map(_row),
       if ((_snapshot['schema'] as int) < LocalLedger.importSchema) ...[
         const Text('First import: export a backup first. This preserves finances and the password setting, but older builds cannot open the import-history format.'),
@@ -407,7 +457,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
       padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Text('Files stay local. Only importing selected rows saves transactions. Saving a profile stores mapping settings, not statement rows. Use fictional data while testing.'),
         const SizedBox(height: 16),
-        if (_busy && !_profileDialogOpen) const LinearProgressIndicator(),
+        if (_busy && !_profileDialogOpen && !_rulesDialogOpen) const LinearProgressIndicator(),
         if (_error != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
         if (_success != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(_success!, key: const ValueKey('import-success'))),
         if (_entries == null) _configuration() else _review(),

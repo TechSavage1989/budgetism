@@ -1,13 +1,15 @@
-# Budgetism dev.14 Windows test
+# Budgetism dev.15 Windows test
 
-Use [successful dev.14 run 40801825492](https://github.com/TechSavage1989/budgetism/actions/runs/40801825492), application commit b6d515686ba8344d957fe5ec3dd692c283141691, Windows artifact 12866993294. The exact package hashes and scan results are recorded in VALIDATION.md. Export an encrypted backup from working dev.13 and retain its separate password. Close all Budgetism windows. Download Budgetism-Windows-x64-development, not source or the updater-only binary. Extract the outer ZIP and its inner Budgetism-Windows-x64.zip into a separate folder. Keep Budgetism.exe, DLLs and data together, and open the existing workspace under the same Windows account. Do not replace its database.
+Use only the completed verified Windows run recorded in VALIDATION.md. Export an encrypted backup from working dev.14, keep its password and close Budgetism. Download Budgetism-Windows-x64-development, not the source/updater-only artifact. Extract both ZIP layers into a separate folder, keep all files together, confirm 0.1.0-dev.15 and open the existing workspace under the same Windows account. Do not replace or recreate its database.
 
-## Test saved import settings without adding more transactions
+## Test rule-assisted import review
 
-1. Confirm 0.1.0-dev.14. Open Transactions > Import CSV and select an existing fictional account. Choose Use fictional example CSV. Keep its Date/Description/Amount mappings and set Default expense category to Groceries.
-2. Choose Save as new profile, enter Fictional CSV profile, and after exporting the backup approve the import-profile format upgrade. Select Save profile. No transactions or import receipts should be added, and account balances should not change.
-3. Close/reopen Budgetism. Open Import CSV, choose the fictional example again, choose Fictional CSV profile under Saved profile, then Apply selected profile. The Date/Description/Amount mapping, date/sign settings and Groceries default should return. The selected destination account must not change.
-4. Select Preview transactions. Review the fictional amounts and categories without importing. Already handled rows may be marked as such if the same example was previously imported into that account on the same date. Neither the preview nor closing it should change transaction counts or balances.
-5. Manage profiles optionally archives and restores the definition with confirmation. The profile should disappear from the active selector while archived and return with the same settings when restored. Saved rules and their undo history, statements and optional-password setting remain intact.
+Use fictional data only. The existing Rule test rule can be reused if enabled, with payee Contains Rule test, current category Other spending and proposed category Groceries.
 
-Only the first profile save upgrades the financial payload to schema 7. Do not open the upgraded workspace using dev.13 or older. Loading or previewing does not upgrade. Saved profiles use header names, not indexes: reordered columns are supported, but a missing or ambiguous mapped header must block application until manual mapping or a different profile is explicitly chosen. No bank connection or server setup is needed. This remains a development preview. The exact delivered package passed the retained build-time Defender scan, which is not publisher signing or a guarantee of browser reputation.
+1. Open Transactions > Import CSV and select an existing fictional account. Load a fictional CSV with Date,Description,Amount headers and one row such as 2026-10-28,Rule test store import preview,-23.45. Keep Default expense category as Other spending.
+2. Preview transactions. The row initially stays Other spending. It must be marked Import a new transaction to be eligible; do not override a genuine duplicate warning just to test this feature.
+3. Choose Review category suggestions. Check the row, Other spending to Groceries and the matching rule. Select the suggestion and review confirmation, then choose Use selected suggestions.
+4. The main preview should now show Groceries with the rule label. Account balances and stored transaction counts remain unchanged. The final CSV review checkbox must be unchecked again.
+5. Close without importing. Reopening and previewing the CSV begins from the chosen defaults again; suggestions are not auto-applied. Saved rules/profiles/security and existing records remain intact. No schema-upgrade prompt is expected.
+
+No earlier setup tests or new bank connection are required. The optional final import uses the existing confirmation and duplicate protections and creates one transaction with the reviewed category. Accepted suggestions do not create a historical category-undo batch. Manual category choices and existing matched transactions are not changed by rule suggestions. This remains a development preview.
