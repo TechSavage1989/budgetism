@@ -9,8 +9,14 @@ responses are discarded and failures clear earlier previews. Exact signed cents,
 calendar dates, pending identities and removal tombstones are validated. No local
 workspace, financial schema or ledger writes are introduced. Client tests and one
 additional Windows native isolation/screenshot check supplement the retained suite.
-This candidate still needs full CI/package/security verification before delivery.
-No source or secrets change is needed in the already verified installed API.
+All six jobs in run 40946563501 passed for application 69b360fe99eef39f94976fa3c501f86a23ed9197,
+including 328 tests, 27 native Windows commands, package verification and exact
+ZIP/extracted Defender scans. See [docs/DEV19_CLIENT_VALIDATION.md](docs/DEV19_CLIENT_VALIDATION.md).
+The verified package was extracted to a fresh private workspace delivery folder;
+local owner sign-in with the new GUI remains the user step. Automatic approval
+review blocked the separate system-drive staging/updater-execution command;
+no executable was automatically launched. The safer workspace delivery completed.
+No source or secrets change was needed in the already verified installed API.
 
 Private server follow-up: the user completed permanent services, owner setup and
 certificate-validated loopback HTTPS. A protected database backup was restored to

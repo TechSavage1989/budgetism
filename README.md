@@ -4,6 +4,8 @@
 
 **0.1.0-dev.19 client candidate.** Adds an explicit, read-only private-server Sandbox preview to Connections while retaining the user-confirmed dev.18 local fictional feed, account mapping and Needs Review. The server preview never imports or records transactions and stays separate from saved local workspaces. Local first mapping still requires backup and format-8 consent; opening the app never upgrades data. Check [the handoff](DEVELOPMENT_HANDOFF.md) for current candidate verification and [validation](docs/VALIDATION.md) for the earlier verified desktop baseline. Keep independent encrypted backups. This is not a production release.
 
+The client has now passed all six build/security jobs, 328 tests and 27 native Windows commands. The verified package and scan hashes are in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
+
 ## Features
 
 | Area | Implemented behavior |

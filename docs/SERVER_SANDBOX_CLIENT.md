@@ -47,6 +47,8 @@ separate temporary encrypted workspace to verify no writes across preview,
 failure and navigation. Its screenshot artifact contains invented data only.
 The retained native tests and package/security gates remain enabled.
 
-The source candidate is not a delivery until full CI, native checks, package
-verification and exact archive/extracted scans pass. The dev.18 package remains
-the previously user-confirmed desktop baseline until the new client is verified.
+The client passed full CI, 328 unit/widget tests, 27 native Windows commands,
+package verification and exact archive/extracted scans; see
+[DEV19_CLIENT_VALIDATION.md](DEV19_CLIENT_VALIDATION.md). Its verified package is
+staged separately for local owner sign-in. Dev.18 remains the earlier user-confirmed
+desktop baseline; the new GUI still requires the user's manual check.
