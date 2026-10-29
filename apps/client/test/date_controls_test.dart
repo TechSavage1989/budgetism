@@ -159,7 +159,7 @@ void main() {
   testWidgets('invalid custom range starts empty and cancelling does not emit a replacement', (tester) async {
     var calls = 0;
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: FinanceDateRangeBar(
-      from: '2026-11-01', through: '2026-10-01', onChanged: (_, __) => calls++))));
+      from: '2026-11-01', through: '2026-10-01', onChanged: (_, _) => calls++))));
     await tester.tap(find.text('Choose date range')); await tester.pumpAndSettle();
     expect(tester.widget<DateRangePickerDialog>(find.byType(DateRangePickerDialog)).initialDateRange, isNull);
     Navigator.of(tester.element(find.byType(DateRangePickerDialog))).pop(); await tester.pumpAndSettle();
