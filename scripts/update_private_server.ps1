@@ -10,6 +10,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $utf8 = New-Object Text.UTF8Encoding $false
 $tables = @('Owners','Sessions','LedgerAccounts','JournalEntries','LedgerPostings','OperationRecords','ChangeRecords','BankConnections','BankAccounts','BankSources','BankSourceRevisions','BankBatches','BankEvents','BankSchemaVersions','PlanningSchemaVersions','PlanningWorkspaces','PlanningEvents')

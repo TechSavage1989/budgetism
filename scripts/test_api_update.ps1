@@ -39,6 +39,7 @@ function Coordinator([string]$Archive,[string]$Version,[string]$Manifest,[string
  if (-not $ArchiveDigest) { $ArchiveDigest=Hash $Archive }
  $output = & powershell.exe -NoProfile -File (Join-Path $repo 'scripts\update_private_server.ps1') -InstallDirectory $root -ApiProgramDirectory $Target -Archive $Archive -ArchiveSha256 $ArchiveDigest -ExpectedCurrentVersion $Version -CurrentManifest $Manifest -CurrentManifestSha256 (Hash $Manifest) -ExpectedSchemaSha256 $SchemaHash -HealthUri "$uri/health/update-readiness" -DatabaseAdminPassFile $pass -DatabaseAdminUser budgetism_admin 2> (Join-Path $work 'last-error.txt')
  $code=$LASTEXITCODE
+ $script:lastCoordinatorError=Get-Content (Join-Path $work 'last-error.txt') -Raw
  foreach ($line in @($output)) { Write-Host $line }
  # Disposable fictional fixture only: retain the actual refusal reason so a
  # nonzero exit cannot masquerade as an expected negative-control result.
@@ -102,7 +103,7 @@ INSERT INTO "LedgerPostings" ("Id","JournalEntryId","LedgerAccountId","OwnerId",
  [IO.File]::WriteAllText((Join-Path $forbidden 'migration.sql'),'-- never executed',$utf8)
  Compress-Archive -Path (Join-Path $forbidden '*') -DestinationPath (Join-Path $work 'forbidden.zip')
  $code=Coordinator (Join-Path $work 'forbidden.zip') '0.1.0-dev.26' $current $schema
- Check ($code -ne 0 -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Unmanifested migration content refused before stop'
+ Check ($code -ne 0 -and $script:lastCoordinatorError -match 'Unsafe API-only package path|Forbidden API-only package content|Unmanifested archive members' -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Unmanifested migration content refused for the correct reason before stop'
  # A real incomplete HTTP body holds an admitted request without a production
  # delay hook. The maintenance gate must not hide this in-flight work.
  $held=New-Object Net.Sockets.TcpClient
