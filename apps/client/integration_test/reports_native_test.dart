@@ -73,7 +73,10 @@ void main() {
       await tapControl('report-category-scope'); await tapControl('report-category-choice-$categoryId'); await tapControl('apply-report-categories');
       await tapControl('report-comparison-none');
       await tester.tap(find.text('Previous equal-length period').last); await tester.pumpAndSettle();
-      expect(find.text('Current: \$123.45'), findsOneWidget);
+      // This income-only fixture has equal income and net income, not one total.
+      expect(find.text('Current: \$123.45'), findsNWidgets(2));
+      expect(find.text('Current: \$0.00'), findsOneWidget);
+      expect(find.text('Comparison: \$0.00'), findsNWidgets(3));
       expect(find.text('Comparison: 2026-09-03 through 2026-09-30 (28 days).'), findsOneWidget);
       await tester.ensureVisible(find.text('Period comparison')); await tester.pumpAndSettle();
       final comparisonBoundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
