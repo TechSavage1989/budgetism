@@ -2,15 +2,16 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.20 development candidate.** Adds [durable private-server fictional source review](docs/SERVER_SANDBOX_REVIEW.md): dedicated Sandbox accounts, atomic source/checkpoint history and explicit record, match, transfer pair, ignore and keep choices. Pending activity never posts; changed sources never silently change recorded entries. Local workspaces remain separate and unchanged. Existing server databases require a verified explicit additive upgrade after protected backup/restore. Check [the handoff](DEVELOPMENT_HANDOFF.md) for current verification and [validation](docs/VALIDATION.md) for earlier milestones. Keep independent encrypted backups. This is not a production release.
+**0.1.0-dev.21 client candidate.** Adds [optional private-server address continuity](docs/SERVER_ADDRESS.md) and stale-destination guards. It remembers only an opted-in successful HTTPS address, never a password or session. The user-confirmed dev.20 [fictional source review](docs/SERVER_SANDBOX_REVIEW.md) remains intact: dedicated Sandbox accounts, atomic source/checkpoint history and explicit record, match, transfer pair, ignore and keep choices. Local workspaces remain separate. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification and [validation](docs/VALIDATION.md) for earlier milestones. This is not a production release.
 
-The dev.20 candidate passed all six build/security jobs, 335 client tests, 27 native Windows commands and isolated database upgrade/review/recovery contracts. Verified package and scan hashes are in [dev.20 verification](docs/DEV20_VALIDATION.md). The earlier user-confirmed preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
+Dev.21 native/package verification is pending. The verified dev.20 baseline passed all six jobs, 335 client tests, 27 native commands and database upgrade/review/recovery contracts; see [dev.20 verification](docs/DEV20_VALIDATION.md). Its mapped fictional source history passed a fresh independent restore after user confirmation. Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
 
 ## Features
 
 | Area | Implemented behavior |
 | --- | --- |
 | Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
+| Server address | Opt-in device-only HTTPS address, Forget, no automatic connection from remembered values, cleared credentials on destination changes |
 | Private server Sandbox preview | Authenticated HTTPS, explicit fictional retrieval, exact cents, pending/posted/removed status and memory-only preview; no ledger writes |
 | Private server fictional review | Explicit zero-baseline account mapping, durable source/checkpoint history, reviewed record/match/pair/ignore/keep and disconnect; server correction/void tools remain future work |
 | Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |

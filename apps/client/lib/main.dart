@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'server_sandbox_widgets.dart';
 import 'server_bank_widgets.dart';
+import 'server_address.dart';
 import 'money.dart';
 import 'local/local_api.dart';
 import 'local/bank_widgets.dart';
@@ -224,17 +225,19 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
 }
 
 class ConnectionScreen extends StatefulWidget {
-  const ConnectionScreen({required this.onSignedIn, required this.onCheckUpdates, super.key});
+  const ConnectionScreen({required this.onSignedIn, required this.onCheckUpdates,
+    this.addressPreferences, this.apiFactory, super.key});
   final void Function(FinanceApi, String) onSignedIn;
   final VoidCallback onCheckUpdates;
+  final ServerAddressPreferences? addressPreferences;
+  final FinanceApi Function(String)? apiFactory;
   @override
   State<ConnectionScreen> createState() => _ConnectionScreenState();
 }
 
 class _ConnectionScreenState extends State<ConnectionScreen> {
   static const _configuredServer = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-  final _server = TextEditingController(text: _configuredServer.isNotEmpty
-      ? _configuredServer : (kIsWeb ? '' : 'http://localhost:8088'));
+  final _server = TextEditingController(text: _configuredServer);
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _bootstrap = TextEditingController();
@@ -242,59 +245,129 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
   bool _busy = false;
   String? _error;
   FinanceApi? _api;
+  late final ServerAddressPreferences _addresses;
+  bool _loadingAddress = true, _rememberAddress = false, _authenticating = false, _openingLocal = false;
+  String? _savedAddress, _notice;
+  int _generation = 0;
 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb && _configuredServer.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _connect());
+    _addresses = widget.addressPreferences ?? ServerAddressPreferences();
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    final generation = _generation;
+    try {
+      final address = await _addresses.read();
+      if (!mounted) return;
+      setState(() {
+        _savedAddress = address;
+        if (generation == _generation && address != null) {
+          if (_configuredServer.isEmpty) _server.text = address;
+          _rememberAddress = true;
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _notice = 'Saved address unavailable. Enter your trusted HTTPS address.');
+    } finally {
+      if (mounted) setState(() => _loadingAddress = false);
+    }
+    if (mounted && generation == _generation && kIsWeb && _configuredServer.isNotEmpty) _connect(persistAddress: false);
+  }
+
+  void _destinationChanged() {
+    _generation++;
+    _username.clear(); _password.clear(); _bootstrap.clear();
+    setState(() { _initialized = null; _api = null; _busy = false; _error = null; _notice = null; });
+  }
+
+  Future<void> _forgetAddress() async {
+    try {
+      await _addresses.save(null);
+      if (mounted) setState(() { _savedAddress = null; _rememberAddress = false; _notice = 'Saved address forgotten.'; });
+    } catch (_) {
+      if (mounted) setState(() => _notice = 'The saved address could not be removed. Try again.');
     }
   }
 
-  Future<void> _connect() async {
+  Future<void> _connect({bool persistAddress = true}) async {
+    if (_busy || _loadingAddress) return;
+    final generation = ++_generation;
     setState(() { _busy = true; _error = null; });
-    final api = FinanceApi(_server.text);
     try {
+      final address = ServerAddressPreferences.canonical(_server.text);
+      if (address == null) throw FinanceApiException('Use a trusted private HTTPS server URL.', 0);
+      final api = widget.apiFactory?.call(address) ?? FinanceApi(address);
       api.requireHttpsServer();
       final initialized = await api.isInitialized();
-      if (mounted) setState(() { _api = api; _initialized = initialized; });
+      if (!mounted || generation != _generation) return;
+      if (persistAddress && (_rememberAddress || _savedAddress != null)) {
+      try {
+        final saved = _rememberAddress ? address : null;
+        await _addresses.save(saved);
+        if (mounted) setState(() => _savedAddress = saved);
+      } catch (_) {
+        if (mounted && generation == _generation) setState(() => _notice = 'Connected, but the address preference could not be saved.');
+      }
+      }
+      if (mounted && generation == _generation) {
+        setState(() {
+        _server.text = address; _api = api; _initialized = initialized;
+      });
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted && generation == _generation) {
+        setState(() => _error =
+        error is FinanceApiException && error.message == 'Use a trusted private HTTPS server URL.'
+          ? error.message : 'Could not confirm this server. Check its HTTPS address, certificate trust and connection.');
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && generation == _generation) setState(() => _busy = false);
     }
   }
 
   Future<void> _openLocal() async {
-    setState(() { _busy = true; _error = null; });
+    if (_busy) return;
+    _generation++;
+    setState(() { _busy = true; _openingLocal = true; _error = null; });
     try {
       final api = await openLocalWorkspace(context);
       if (api != null && mounted) widget.onSignedIn(api, 'Local workspace');
     } catch (error) { if (mounted) setState(() => _error = error.toString()); }
-    finally { if (mounted) setState(() => _busy = false); }
+    finally { if (mounted) setState(() { _busy = false; _openingLocal = false; }); }
   }
 
-  void _openDemo() => widget.onSignedIn(DemoFinanceApi(), 'Demo');
+  void _openDemo() { _generation++; widget.onSignedIn(DemoFinanceApi(), 'Demo'); }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final api = _api;
     if (api == null) return;
-    setState(() { _busy = true; _error = null; });
+    final generation = ++_generation;
+    setState(() { _busy = true; _authenticating = true; _error = null; });
     try {
       if (_initialized == false) {
         await api.initialize(_username.text.trim(), _password.text, _bootstrap.text.trim());
       }
       final username = await api.login(_username.text.trim(), _password.text);
-      if (mounted) widget.onSignedIn(api, username);
+      if (mounted && generation == _generation && identical(_api, api)) widget.onSignedIn(api, username);
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted && generation == _generation) {
+        setState(() => _error = error is FinanceApiException &&
+        (error.statusCode == 401 || error.statusCode == 403) ? 'Sign-in failed. Check your owner login.' :
+        error is FinanceApiException && error.statusCode == 429 ? 'Too many sign-in attempts. Wait before trying again.' :
+        'Sign-in did not finish. Check your connection and try again.');
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && generation == _generation) setState(() { _busy = false; _authenticating = false; });
     }
   }
 
   @override
   void dispose() {
+    _generation++;
     _server.dispose(); _username.dispose(); _password.dispose(); _bootstrap.dispose();
     super.dispose();
   }
@@ -326,29 +399,38 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     const Text('Encrypted, saved on this device. No server required.', textAlign: TextAlign.center),
                     const SizedBox(height: 22),
                   ],
-                  TextField(controller: _server, decoration: const InputDecoration(
+                  TextField(controller: _server, enabled: !_authenticating && !_openingLocal, decoration: const InputDecoration(
                     labelText: 'Private server URL', hintText: 'https://finance.private.example',
                     prefixIcon: Icon(Icons.dns_outlined), border: OutlineInputBorder(),
                     helperText: 'Use your trusted private HTTPS address.',
-                  ), onChanged: (_) { if (_initialized != null) setState(() { _initialized = null; _api = null; }); }),
+                  ), onChanged: (_) => _destinationChanged()),
+                  CheckboxListTile(value: _rememberAddress, contentPadding: EdgeInsets.zero,
+                    onChanged: _busy || _loadingAddress ? null : (value) {
+                      setState(() => _rememberAddress = value ?? false);
+                      if (value != true && _savedAddress != null) _forgetAddress();
+                    },
+                    title: const Text('Remember server address on this device'),
+                    subtitle: const Text('Address only, stored without encryption. Your password is not saved.')),
+                  if (_savedAddress != null) TextButton(onPressed: _busy ? null : _forgetAddress,
+                    child: const Text('Forget saved address')),
                   const SizedBox(height: 14),
                   if (_initialized == null)
-                    FilledButton.icon(onPressed: _busy ? null : _connect,
+                    FilledButton.icon(onPressed: _busy || _loadingAddress ? null : _connect,
                         icon: const Icon(Icons.link), label: const Text('Connect to server')),
                   if (_initialized != null) ...[
                     if (_initialized == false) ...[
                       const Text('First-time owner setup', style: TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
-                      TextField(controller: _bootstrap, obscureText: true,
+                      TextField(controller: _bootstrap, obscureText: true, enabled: !_busy,
                         decoration: const InputDecoration(labelText: 'Server bootstrap token',
                           border: OutlineInputBorder(), prefixIcon: Icon(Icons.key_outlined))),
                       const SizedBox(height: 12),
                     ],
-                    TextField(controller: _username, autocorrect: false,
+                    TextField(controller: _username, autocorrect: false, enabled: !_busy,
                       decoration: const InputDecoration(labelText: 'Username',
                         border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline))),
                     const SizedBox(height: 12),
-                    TextField(controller: _password, obscureText: true,
+                    TextField(controller: _password, obscureText: true, enabled: !_busy,
                       onSubmitted: (_) => _busy ? null : _submit(),
                       decoration: InputDecoration(labelText: 'Password',
                         helperText: _initialized == false ? 'At least 14 characters' : null,
@@ -357,13 +439,14 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     FilledButton(onPressed: _busy ? null : _submit,
                       child: Text(_initialized == false ? 'Create private workspace' : 'Sign in')),
                     const SizedBox(height: 8),
-                    TextButton(onPressed: _busy ? null : () => setState(() { _initialized = null; _api = null; }),
+                    TextButton(onPressed: _busy ? null : _destinationChanged,
                       child: const Text('Change server')),
                   ],
                   if (_busy) const Padding(padding: EdgeInsets.symmetric(vertical: 16),
                     child: LinearProgressIndicator()),
                   if (_error != null) Padding(padding: const EdgeInsets.only(top: 16),
                     child: Text(_error!, style: const TextStyle(color: Color(0xFFEA8B84)))),
+                  if (_notice != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_notice!)),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _openDemo,

@@ -20,6 +20,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const BudgetismApp()); await tester.pump();
     await tester.enterText(find.widgetWithText(TextField, 'Private server URL'), 'http://fictional.example');
+    await tester.ensureVisible(find.text('Connect to server'));
     await tester.tap(find.text('Connect to server')); await tester.pump();
     expect(find.text('Use a trusted private HTTPS server URL.'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Password'), findsNothing);

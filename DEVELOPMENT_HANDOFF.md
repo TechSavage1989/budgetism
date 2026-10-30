@@ -1,5 +1,18 @@
 # Budgetism development handoff
 
+The user confirmed dev.20 works. Independent follow-up found one mapped fictional
+account and four durable sources, with no linked sources, journal entries or
+pending postings. A fresh full 14-table backup/restore passed with that source
+history present. This confirms discovery/mapping/refresh and recovery, not manual
+posting. Host details and recovery files remain in private operations notes.
+
+Next client candidate: dev.21 [optional server address continuity](docs/SERVER_ADDRESS.md)
+addresses repeated setup and stale-destination responses. It starts with a blank
+HTTPS field, explicitly remembers only an opted-in successful address, supports
+Forget, clears credentials when destinations change and never auto-connects from
+remembered preferences. The existing dev.20 API and database stay installed.
+New client/native/package verification and separate delivery remain pending.
+
 Current work: dev.20 [durable private-server fictional review](docs/SERVER_SANDBOX_REVIEW.md).
 The user confirmed the delivered dev.19 preview is visible after local sign-in.
 The new candidate adds explicit fixture discovery, dedicated zero-baseline
