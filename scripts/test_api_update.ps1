@@ -40,6 +40,9 @@ function Coordinator([string]$Archive,[string]$Version,[string]$Manifest,[string
  $output = & powershell.exe -NoProfile -File (Join-Path $repo 'scripts\update_private_server.ps1') -InstallDirectory $root -ApiProgramDirectory $Target -Archive $Archive -ArchiveSha256 $ArchiveDigest -ExpectedCurrentVersion $Version -CurrentManifest $Manifest -CurrentManifestSha256 (Hash $Manifest) -ExpectedSchemaSha256 $SchemaHash -HealthUri "$uri/health/update-readiness" -DatabaseAdminPassFile $pass -DatabaseAdminUser budgetism_admin 2> (Join-Path $work 'last-error.txt')
  $code=$LASTEXITCODE
  foreach ($line in @($output)) { Write-Host $line }
+ # Disposable fictional fixture only: retain the actual refusal reason so a
+ # nonzero exit cannot masquerade as an expected negative-control result.
+ if ($code -ne 0) { Get-Content (Join-Path $work 'last-error.txt') | ForEach-Object { Write-Host $_ } }
  return $code
 }
 try {
