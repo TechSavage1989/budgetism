@@ -7,6 +7,7 @@ import 'budgets.dart';
 import 'ledger.dart';
 import 'recurrence.dart';
 import 'reports.dart';
+import 'report_charts.dart';
 
 typedef ReportSaver = Future<bool> Function(String filename, String content);
 
@@ -143,11 +144,12 @@ class _ReportPanelState extends State<ReportPanel> {
       if (error != null) Padding(padding: const EdgeInsets.all(12), child: Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error))),
       if (report != null && accounts.isNotEmpty) ...[
         const SizedBox(height: 16),
-        Wrap(spacing: 8, runSpacing: 8, children: [for (final view in ['Overview', 'Categories', 'Monthly', 'Balances'])
+        Wrap(spacing: 8, runSpacing: 8, children: [for (final view in ['Overview', 'Graphs', 'Categories', 'Monthly', 'Balances'])
           ChoiceChip(key: ValueKey('report-view-$view'), label: Text(view), selected: _view == view,
             onSelected: (_) => setState(() => _view = view))]),
         const SizedBox(height: 16),
         if (_view == 'Overview') _overview(report),
+        if (_view == 'Graphs') ReportCharts(report: report),
         if (_view == 'Categories') _categories(report),
         if (_view == 'Monthly') _monthly(report),
         if (_view == 'Balances') _balances(report),

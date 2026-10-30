@@ -27,6 +27,7 @@ class _PlanningPanelState extends State<PlanningPanel> {
   late String _date = _today;
   String _account = '';
   int _days = 30, _selected = 0, _visibleDays = 30;
+  Set<String> _excludedSchedules = {};
   SharedPreferences? _prefs;
   String? _preferenceError;
   Timer? _timer;
@@ -67,6 +68,21 @@ class _PlanningPanelState extends State<PlanningPanel> {
     if (date != null && mounted) setState(() { _month = Recurrence.format(date).substring(0, 7); _date = Recurrence.format(date); });
   }
   void _shiftMonth(int delta) => setState(() { _month = LocalLedger.shiftMonth(_month, delta); _date = '$_month-01'; });
+
+  Future<void> _configureForecast(Json data) async {
+    final schedules = LocalLedger.rows(data['schedules'] ?? <Json>[]);
+    final result = await showDialog<ForecastConfiguration>(context: context,
+      builder: (_) => ForecastConfigurationDialog(days: _days,
+        excludedScheduleIds: _excludedSchedules, schedules: schedules));
+    if (result != null && mounted) {
+      setState(() {
+        _days = result.days;
+        _excludedSchedules = result.excludedScheduleIds;
+        _selected = 0;
+        _visibleDays = 30;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +126,10 @@ class _PlanningPanelState extends State<PlanningPanel> {
       ]);
     } catch (error) {
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [header,
-        Text('Planning unavailable: $error', style: TextStyle(color: Theme.of(context).colorScheme.error))]);
+        Text('Planning unavailable: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        if (!widget.calendar) TextButton(onPressed: () => setState(() {
+          _days = 30; _excludedSchedules = {}; _selected = 0; _visibleDays = 30;
+        }), child: const Text('Reset baseline'))]);
     }
   }
 
@@ -163,7 +182,10 @@ class _PlanningPanelState extends State<PlanningPanel> {
   }
 
   Widget _forecast(Json data, Set<String> ids, List<Json> accounts, List<Json> chosen) {
-    final result = PlanningEngine.forecast(data, today: _today, days: _days);
+    final baseline = PlanningEngine.forecast(data, today: _today, days: _days);
+    final result = _excludedSchedules.isEmpty ? baseline : PlanningEngine.forecast(
+      data, today: _today, days: _days, excludedScheduleIds: _excludedSchedules);
+    final scenario = _excludedSchedules.isNotEmpty;
     final selected = result.days[_selected.clamp(0, result.days.length - 1)];
     final starting = ids.fold<int>(0, (sum, id) => BudgetEngine.add(sum, result.starting[id]!));
     final minimum = result.days.map((d) => d.total(ids)).reduce(math.min);
@@ -172,15 +194,31 @@ class _PlanningPanelState extends State<PlanningPanel> {
       (t['effectiveDate'] as String).compareTo(_today) > 0 &&
       LocalLedger.rows(t['postings']).any((p) => ids.contains(p['ledgerId'])));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(width: 280, child: DropdownButtonFormField<int>(key: const ValueKey('forecast-horizon'),
+      SizedBox(width: 280, child: DropdownButtonFormField<int>(key: ValueKey('forecast-horizon:$_days'),
         initialValue: _days, isExpanded: true,
         decoration: const InputDecoration(labelText: 'Forecast period', border: OutlineInputBorder()),
-        items: [for (final days in [30, 60, 90, 365]) DropdownMenuItem(value: days,
+        items: [for (final days in ({30, 60, 90, 365, _days}.toList()..sort())) DropdownMenuItem(value: days,
           child: Text('$days days including today', overflow: TextOverflow.ellipsis))],
         onChanged: (value) => setState(() { _days = value!; _selected = 0; _visibleDays = 30; }))),
+      const SizedBox(height: 10),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        OutlinedButton.icon(key: const ValueKey('configure-forecast'),
+          onPressed: () => _configureForecast(data), icon: const Icon(Icons.tune),
+          label: const Text('Configure forecast')),
+        TextButton(key: const ValueKey('reset-forecast'),
+          onPressed: _days == 30 && !scenario ? null : () => setState(() {
+            _days = 30; _excludedSchedules = {}; _selected = 0; _visibleDays = 30;
+          }), child: const Text('Reset baseline')),
+      ]),
+      const SizedBox(height: 8),
+      Text(scenario
+        ? 'What-if scenario: ${_excludedSchedules.length} schedule(s) excluded. Normal schedules and recorded activity remain unchanged.'
+        : 'Baseline: all active unresolved schedules. No what-if exclusions.'),
+      const Text('Forecast configuration is session-only; it is not saved or synchronized. Reset restores all schedules and 30 days.'),
       const SizedBox(height: 14),
       Wrap(spacing: 28, runSpacing: 14, children: [
-        _stat('Recorded through $_today', starting), _stat('Projected ${result.days.last.date}', result.days.last.total(ids)),
+        _stat('Recorded through $_today', starting), _stat('${scenario ? 'What-if' : 'Projected'} ${result.days.last.date}', result.days.last.total(ids)),
+        if (scenario) _stat('Baseline with all schedules', baseline.days.last.total(ids)),
         _stat('Lowest projected closing balance', minimum),
       ]),
       const SizedBox(height: 12),
@@ -198,26 +236,35 @@ class _PlanningPanelState extends State<PlanningPanel> {
           '${a['name']}: below ${money(_minimum(a))} on ${result.firstBelow(a['id'] as String, _minimum(a)!)}',
           style: TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.w600))),
       const SizedBox(height: 14),
-      const Text('Daily closing balance: solid = with schedules; dashed = recorded entries only. Tap the chart to inspect a day.'),
+      Text(scenario
+        ? 'Daily closing balance: solid = what-if; dotted = normal schedule baseline; dashed = recorded entries only. Tap to inspect a day.'
+        : 'Daily closing balance: solid = with schedules; dashed = recorded entries only. Tap the chart to inspect a day.'),
       const SizedBox(height: 8),
+      Text('${result.days.first.date} through ${result.days.last.date}; USD. Chart scale adapts to the displayed series.'),
       LayoutBuilder(builder: (context, c) => Semantics(label: 'Cash flow chart. Exact values are available in the daily balances list below.',
         child: GestureDetector(onTapDown: (tap) => setState(() => _selected =
           ((tap.localPosition.dx / c.maxWidth) * (result.days.length - 1)).round().clamp(0, result.days.length - 1)),
           child: SizedBox(height: 170, width: double.infinity, child: CustomPaint(painter: _ForecastPainter(
             result.days.map((d) => d.total(ids)).toList(), result.days.map((d) => d.total(ids, includePlans: false)).toList(),
-            Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.outline, _selected)))))),
-      Slider(value: _selected.toDouble(), min: 0, max: (result.days.length - 1).toDouble(),
+            Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.outline, _selected,
+            baseline: scenario ? baseline.days.map((d) => d.total(ids)).toList() : null,
+            baselineColor: Theme.of(context).colorScheme.tertiary)))))),
+      if (result.days.length > 1) Slider(value: _selected.toDouble(), min: 0, max: (result.days.length - 1).toDouble(),
         divisions: result.days.length - 1, label: selected.date,
+        semanticFormatterCallback: (value) => '${result.days[value.round()].date}: ${money(result.days[value.round()].total(ids))}',
         onChanged: (value) => setState(() => _selected = value.round())),
-      Text('${selected.date}: ${money(selected.total(ids))} projected', style: Theme.of(context).textTheme.titleLarge),
+      Text('${selected.date}: ${money(selected.total(ids))} ${scenario ? 'what-if' : 'projected'}', style: Theme.of(context).textTheme.titleLarge),
       Text('Recorded-only closing balance: ${money(selected.total(ids, includePlans: false))}'),
+      if (scenario) Text('Normal schedule baseline: ${money(baseline.days[_selected].total(ids))}. '
+        'What-if difference: ${money(BudgetEngine.add(selected.total(ids), -baseline.days[_selected].total(ids)))}.'),
       if (selected.date == _today) const Text('Recorded entries listed for today are already included in the starting balance.'),
       _events(selected.events.where((e) => e.accountIds.any(ids.contains)).toList(), ids, accounts),
       const SizedBox(height: 16),
       ExpansionTile(title: const Text('Daily balances'), subtitle: const Text('Exact values and daily activity'), children: [
         for (var i = 0; i < math.min(_visibleDays, result.days.length); i++) ListTile(dense: true,
           selected: _selected == i, title: Text(result.days[i].date),
-          subtitle: Text('Recorded only: ${money(result.days[i].total(ids, includePlans: false))}'),
+          subtitle: Text('Recorded only: ${money(result.days[i].total(ids, includePlans: false))}'
+            '${scenario ? '\nNormal baseline: ${money(baseline.days[i].total(ids))}' : ''}'),
           trailing: Text(money(result.days[i].total(ids))), onTap: () => setState(() => _selected = i)),
         if (_visibleDays < result.days.length) TextButton(onPressed: () => setState(() => _visibleDays += 30), child: const Text('Show 30 more days')),
       ]),
@@ -257,21 +304,40 @@ class _PlanningPanelState extends State<PlanningPanel> {
 }
 
 class _ForecastPainter extends CustomPainter {
-  _ForecastPainter(this.projected, this.recorded, this.primary, this.outline, this.selected);
+  _ForecastPainter(this.projected, this.recorded, this.primary, this.outline, this.selected,
+    {this.baseline, required this.baselineColor});
+  final List<int>? baseline;
+  final Color baselineColor;
   final List<int> projected, recorded;
   final Color primary, outline;
   final int selected;
   @override
   void paint(Canvas canvas, Size size) {
-    final low = math.min(projected.reduce(math.min), recorded.reduce(math.min));
-    final high = math.max(projected.reduce(math.max), recorded.reduce(math.max));
+    final values = [...projected, ...recorded, ...?baseline];
+    final low = values.reduce(math.min);
+    final high = values.reduce(math.max);
     final span = math.max(1, high - low);
-    Offset point(int i, int value) => Offset(i * size.width / (projected.length - 1),
+    Offset point(int i, int value) => Offset((projected.length == 1 ? size.width / 2 : i * size.width / (projected.length - 1)),
       size.height - 12 - (value - low) / span * (size.height - 24));
+    if (baseline != null) {
+      final paint = Paint()..color = baselineColor..strokeWidth = 2;
+      if (baseline!.length == 1) { canvas.drawCircle(point(0, baseline!.first), 6, paint..style = PaintingStyle.stroke); }
+      for (var i = 1; i < baseline!.length; i++) {
+        final a = point(i - 1, baseline![i - 1]), b = point(i, baseline![i]);
+        final length = (b - a).distance;
+        for (var d = 0.0; d < length; d += 6) {
+          canvas.drawCircle(Offset.lerp(a, b, d / length)!, 1.5, paint);
+        }
+      }
+    }
     final path = Path()..moveTo(point(0, projected[0]).dx, point(0, projected[0]).dy);
     for (var i = 1; i < projected.length; i++) { final p = point(i, projected[i]); path.lineTo(p.dx, p.dy); }
     canvas.drawPath(path, Paint()..color = primary..strokeWidth = 2.5..style = PaintingStyle.stroke);
     final dashed = Paint()..color = outline..strokeWidth = 1.5;
+    if (recorded.length == 1) {
+      final p = point(0, recorded.first);
+      canvas.drawLine(p.translate(-9, 0), p.translate(9, 0), dashed);
+    }
     for (var i = 1; i < recorded.length; i++) {
       final a = point(i - 1, recorded[i - 1]), b = point(i, recorded[i]);
       final length = (b - a).distance;
@@ -332,4 +398,77 @@ class _ForecastMinimumDialogState extends State<ForecastMinimumDialog> {
       TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: const Text('Cancel')),
       FilledButton(onPressed: _busy ? null : _save, child: const Text('Save minimum')),
     ]));
+}
+
+/// Detached session configuration, never a saved schedule or financial command.
+class ForecastConfiguration {
+  ForecastConfiguration(this.days, Set<String> excludedScheduleIds)
+      : excludedScheduleIds = Set.unmodifiable(excludedScheduleIds);
+  final int days;
+  final Set<String> excludedScheduleIds;
+}
+
+class ForecastConfigurationDialog extends StatefulWidget {
+  const ForecastConfigurationDialog({required this.days,
+    required this.excludedScheduleIds, required this.schedules, super.key});
+  final int days;
+  final Set<String> excludedScheduleIds;
+  final List<Json> schedules;
+  @override
+  State<ForecastConfigurationDialog> createState() => _ForecastConfigurationDialogState();
+}
+
+class _ForecastConfigurationDialogState extends State<ForecastConfigurationDialog> {
+  late final _days = TextEditingController(text: widget.days.toString());
+  late final _excluded = Set<String>.from(widget.excludedScheduleIds);
+  String? _error;
+  @override
+  void dispose() { _days.dispose(); super.dispose(); }
+  void _apply() {
+    final text = _days.text.trim();
+    final days = RegExp(r'^\d{1,3}$').hasMatch(text) ? int.tryParse(text) : null;
+    if (days == null || days < 1 || days > 365) {
+      setState(() => _error = 'Enter a whole number from 1 to 365 days.');
+      return;
+    }
+    Navigator.pop(context, ForecastConfiguration(days, _excluded));
+  }
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Configure forecast'),
+    content: SizedBox(width: 500, child: SingleChildScrollView(child: Column(
+      mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      TextField(key: const ValueKey('forecast-custom-days'), controller: _days,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Days including today (1–365)', border: OutlineInputBorder())),
+      const SizedBox(height: 12),
+      const Text('Include schedules in this what-if projection. Unchecking a schedule removes only its unresolved occurrences due today or later from the scenario, never recorded transactions or the baseline.'),
+      const SizedBox(height: 8),
+      Wrap(spacing: 8, children: [
+        TextButton(key: const ValueKey('forecast-include-all'),
+          onPressed: () => setState(_excluded.clear), child: const Text('Include all')),
+        TextButton(key: const ValueKey('forecast-exclude-all'),
+          onPressed: () => setState(() { _excluded.addAll(widget.schedules.map((s) => s['id'] as String)); }),
+          child: const Text('Recorded only')),
+      ]),
+      if (widget.schedules.isEmpty) const Text('No saved schedules. The forecast contains recorded activity only.'),
+      for (final schedule in widget.schedules) CheckboxListTile(
+        key: ValueKey('forecast-schedule-${schedule['id']}'), contentPadding: EdgeInsets.zero,
+        title: Text(schedule['name'] as String),
+        subtitle: Text('${schedule['kind']} · ${schedule['frequency']} · ${money(schedule['amountMinor'] as int)}'
+          '${schedule['paused'] == true ? ' · Paused; excluded regardless' : ''}'),
+        value: !_excluded.contains(schedule['id']),
+        onChanged: (include) => setState(() {
+          if (include == true) { _excluded.remove(schedule['id']); }
+          else { _excluded.add(schedule['id'] as String); }
+        })),
+      const SizedBox(height: 8),
+      const Text('Session-only. Apply changes the view, not balances, schedules, bank data or server settings. Cancel discards these choices. Overdue unresolved items remain excluded and disclosed.'),
+      if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+    ]))),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(key: const ValueKey('apply-forecast-configuration'), onPressed: _apply,
+        child: const Text('Apply forecast')),
+    ]);
 }

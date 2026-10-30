@@ -2,6 +2,8 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
+**Dev.25 development candidate:** configurable report graphs and session-only forecast scenarios; validation and delivery pending. See [scope](docs/REPORT_FORECAST_DEV25.md) and [replacement roadmap](docs/REPLACEMENT_ROADMAP.md). No server upgrade, real bank linkage or financial data migration is included.
+
 **Verified 0.1.0-dev.24 server planning suite.** Adds [server budgets, schedules, calendar/forecasts, reports/account trends, categories, labels and saved searches](docs/SERVER_PLANNING.md). All six CI jobs passed, including 359 client tests, 34 native Windows commands and exact package scans. The private additive upgrade preserved every prior table digest; all 17 tables and the separate protected planning key passed recovery verification. The verified client and API were delivered; see [dev.24 verification](docs/DEV24_VALIDATION.md). Local workspaces and advanced local tools remain separate.
 
 **Verified dev.23 private-server dashboard.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. All six CI jobs passed: 354 tests, 33 native Windows commands and exact package scans. The schema-free private API program upgrade and separately staged client delivery passed; see [dev.23 verification](docs/DEV23_VALIDATION.md).

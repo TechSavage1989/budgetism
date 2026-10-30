@@ -176,8 +176,14 @@ class PlanningEngine {
   /// Starting balances include recorded entries through today, not future-dated
   /// entries. Future recorded entries enter on their effective date. Confirmed
   /// occurrences appear only as their actual transaction, including edited dates.
-  static CashForecast forecast(Json data, {required String today, int days = 30}) {
+  static CashForecast forecast(Json data, {required String today, int days = 30,
+      Set<String> excludedScheduleIds = const {}}) {
     if (days < 1 || days > 365) throw const FormatException('Choose 1 to 365 forecast days.');
+    final scheduleIds = LocalLedger.rows(data['schedules'] ?? <Json>[])
+        .map((s) => s['id'] as String).toSet();
+    if (!scheduleIds.containsAll(excludedScheduleIds)) {
+      throw const FormatException('A forecast schedule no longer exists. Reset the scenario and try again.');
+    }
     final start = Recurrence.parse(today);
     final end = start.add(Duration(days: days - 1));
     if (end.year > 9999) throw const FormatException('Forecast exceeds the supported date range.');
@@ -189,7 +195,11 @@ class PlanningEngine {
         balances[entry.key] = BudgetEngine.add(balances[entry.key]!, entry.value);
       }
     }
-    final events = calendar(data, from: today, through: Recurrence.format(end), today: today);
+    // Filter detached planned events only. Recorded transactions, including
+    // transactions linked to an excluded schedule, always remain authoritative.
+    final events = calendar(data, from: today, through: Recurrence.format(end), today: today)
+        .where((event) => !event.planned ||
+          !excludedScheduleIds.contains(event.occurrence!.schedule['id'])).toList();
     final byDate = <String, List<PlanningEvent>>{};
     for (final event in events) { (byDate[event.date] ??= []).add(event); }
     final recorded = Map<String, int>.from(balances), projected = Map<String, int>.from(balances);
