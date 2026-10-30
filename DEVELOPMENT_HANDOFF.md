@@ -6,12 +6,18 @@ presets plus a custom accent, and clearer review filters/batch controls.
 Dev.22 [themes and review](docs/THEMES_AND_REVIEW.md) implements six presets,
 custom accent, Light/Dark/System, contrast/spacing and preview/Apply/Cancel.
 Server review filters and visible selection are session-only. Bounded, reasoned
-batch Ignore/Keep decisions are atomic, stale-safe and auditable, with no ledger
+batch Ignore/Keep/Reopen decisions are atomic, stale-safe and auditable, with no ledger
 or checkpoint changes. Financial posting remains individual review.
 See [the reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md) for broader feature
 priorities. This does not connect to PocketSmith/MoneyWiz or copy their data.
-Candidate verification/delivery and its schema-free API program upgrade remain
-pending. Keep the working installation until exact package/scans pass.
+All six CI jobs passed: 350 client tests, 32 native Windows commands, package
+verification and exact ZIP/extracted Defender scans. See [dev.22 verification](docs/DEV22_VALIDATION.md).
+After a fresh protected 14-table isolated restore, only the API program was
+upgraded with rollback retained; HTTPS, owner, disabled enrollment and service
+identities passed. No schema migration or data review was performed. The verified
+client was staged separately and the existing owned desktop shortcut updated;
+the current window and previous program were preserved. First use of dev.22
+appearance remains unconfirmed by the user. Host details stay outside source.
 
 The user confirmed dev.20 works. Independent follow-up found one mapped fictional
 account and four durable sources, with no linked sources, journal entries or
