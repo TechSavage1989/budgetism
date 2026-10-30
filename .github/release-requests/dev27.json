@@ -1,0 +1,30 @@
+{
+  "repository": "TechSavage1989/budgetism",
+  "version": "0.1.0-dev.27",
+  "testedSha": "f0bff724e9e5d8f1b92c1dedccdab845d0c61f98",
+  "buildRunId": 41117020352,
+  "artifacts": {
+    "api": {
+      "id": 13006309917,
+      "sha256": "0c5bf7d6f11ad8ea6efc3ddfbf4b68a21cc3b87673ee023515a9406ebb7ae731",
+      "zipSha256": "cd86a7b137ff7ae0641737c00c2d072675fcea0d39364fd1ae3691784c515db1",
+      "zipSize": 51074939
+    },
+    "apiSecurity": {
+      "id": 13007891152,
+      "sha256": "75286c00b588bcfe34db842efa5d7152f88792f04e7dc5039d5113b026f7c340",
+      "reportSha256": "8332ced3598ce863eb1329bf64e54cb06baa138ed6a5e01af44c7ae9008ddc07"
+    },
+    "client": {
+      "id": 13008003591,
+      "sha256": "b9566075820a37115b9d5cc7b7ff991b52124f25de4ec287ac7cc02c0f781b21",
+      "zipSha256": "66e3a84ec226e25607c85b9a78cb5a9ec0e616077533405b47d02f6be915e0d5",
+      "zipSize": 16892474
+    },
+    "clientSecurity": {
+      "id": 13008063487,
+      "sha256": "6f9fb7f258748acf6ad49ef88bbda97dbf37646a68f03bf08a80e0eaa5433db9",
+      "reportSha256": "c1750216a91096a7e31dcfc19830db48c3249a42da6e818436f04a219d8e6e1f"
+    }
+  }
+}
