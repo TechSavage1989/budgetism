@@ -100,10 +100,14 @@ public sealed class FinanceDb(DbContextOptions<FinanceDb> options) : DbContext(o
     public DbSet<BankSourceRevision> BankSourceRevisions => Set<BankSourceRevision>();
     public DbSet<BankBatch> BankBatches => Set<BankBatch>();
     public DbSet<BankEvent> BankEvents => Set<BankEvent>();
+    public DbSet<PlanningSchemaVersion> PlanningSchemaVersions => Set<PlanningSchemaVersion>();
+    public DbSet<PlanningWorkspace> PlanningWorkspaces => Set<PlanningWorkspace>();
+    public DbSet<PlanningEvent> PlanningEvents => Set<PlanningEvent>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
         BankModel.Configure(m);
+        m.Entity<PlanningEvent>().HasIndex(x => new { x.OwnerId, x.CreatedUtc });
         m.Entity<Owner>().HasIndex(x => x.Username).IsUnique();
         m.Entity<Session>().HasIndex(x => x.TokenHash).IsUnique();
         m.Entity<LedgerAccount>().HasIndex(x => new { x.OwnerId, x.LedgerKind });

@@ -107,6 +107,9 @@ class ReportEngine {
         else { movement[month] = add(movement[month] ?? 0, amount); }
       }
       if (!inside) continue;
+      // Server openings have effective dates and signed postings. They affect
+      // balances/monthly movement, never income, spending or transfer counts.
+      if (t['kind'] == 'opening') continue;
       if (t['kind'] == 'transfer') {
         if (touchesSelected) transfers++;
         continue;

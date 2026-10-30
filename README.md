@@ -2,7 +2,9 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.23 private-server dashboard.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. All six CI jobs passed: 354 tests, 33 native Windows commands and exact package scans. The schema-free private API program upgrade and separately staged client delivery passed; see [dev.23 verification](docs/DEV23_VALIDATION.md).
+**0.1.0-dev.24 server planning candidate.** Adds [server budgets, schedules, calendar/forecasts, reports/account trends, categories, labels and saved searches](docs/SERVER_PLANNING.md). Planning documents/audit details are encrypted; existing server storage needs a separately verified additive upgrade and key recovery. CI/scanned delivery is pending.
+
+**Verified dev.23 private-server dashboard.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. All six CI jobs passed: 354 tests, 33 native Windows commands and exact package scans. The schema-free private API program upgrade and separately staged client delivery passed; see [dev.23 verification](docs/DEV23_VALIDATION.md).
 
 **Verified dev.22 themes and review.** Adds [preset/custom-accent themes and server review controls](docs/THEMES_AND_REVIEW.md), following the user-selected [PocketSmith/MoneyWiz reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md). Preview appearance before Apply, combine source filters and explicitly batch Ignore, Keep unchanged or Reopen decisions. Financial posting remains individual review; local workspaces remain separate. The verified [address continuity](docs/SERVER_ADDRESS.md) and [fictional source pipeline](docs/SERVER_SANDBOX_REVIEW.md) remain intact. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification. This is not a production release.
 
@@ -14,6 +16,7 @@ Dev.22 passed all six jobs, 350 tests, 32 native commands and exact package scan
 | --- | --- |
 | Server dashboard | Read-only through-day posting balances, month-to-date income/spending, recent/category scope and complete review counts; no provider calls |
 | Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
+| Server labels/searches | Explicit encrypted saved searches and labels, combined session filters and custom category management |
 | Server address | Opt-in device-only HTTPS address, Forget, no automatic connection from remembered values, cleared credentials on destination changes |
 | Themes | Six presets/custom accent, Light/Dark/System, contrast, compact spacing and preview/Apply/Cancel; device-only preferences |
 | Server source review controls | Combined session-only filters, visible selection and reasoned atomic Ignore/Keep/Reopen; recorded money is unchanged |
@@ -23,14 +26,14 @@ Dev.22 passed all six jobs, 350 tests, 32 native commands and exact package scan
 | Local Needs Review | Categories, duplicates, pending ambiguity, transfers/card payments, schedule matches, corrections/removals and reconciliation conflicts |
 | Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
 | Accounts and transactions | USD checking/savings/cash/debt, exact cents, balanced postings, transfers, splits, edits, voids, audit and search |
-| Budgets | Monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
-| Scheduled | Bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
+| Budgets | Local and private-server monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
+| Scheduled | Local and private-server bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
 | Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
-| Calendar and forecasts | Read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
+| Calendar and forecasts | Local/private-server read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
 | Import profiles | Saved header/date/sign settings, default categories, explicit application, rename/archive/restore |
 | Category history | Inspect prior rule-applied batches and explicitly undo eligible complete batches without moving money |
 | CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
-| Reports | Historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
+| Reports | Local/private-server historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
 | Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
 | Transaction register | Search words/phrases/exclusions, combined dates/accounts/categories/types/amount/source/status filters, sorting, whole and split totals, protected details |
 | CSV category suggestions | Explicit preview and selected rule suggestions for new import rows; manual choices, transfers and duplicate decisions protected |
@@ -97,6 +100,6 @@ Keep all supporting files after extraction. An older executable must not open a 
 
 Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules/quick-entry/bank-sync write/read process pairs and planning/report/register preservation tests plus native calendar UI/save/reopen checks. Build Windows/web with APP_VERSION=0.1.0-dev.23. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules/quick-entry/bank-sync write/read process pairs and planning/report/register preservation tests plus native calendar UI/save/reopen checks. Build Windows/web with APP_VERSION=0.1.0-dev.24. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
 
 Supporting details: [everyday use](docs/DAILY_USE.md), [bank connection plan](docs/BANK_CONNECTION_PLAN.md), [date controls](docs/DATE_CONTROLS.md), [next usability priorities](docs/USABILITY_ROADMAP.md), [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md), [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.18.md).

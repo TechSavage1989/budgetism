@@ -7,6 +7,7 @@ import 'finance_api.dart';
 import 'server_sandbox_widgets.dart';
 import 'server_bank_widgets.dart';
 import 'server_dashboard_widgets.dart';
+import 'server_planning_widgets.dart';
 import 'server_address.dart';
 import 'appearance.dart';
 import 'money.dart';

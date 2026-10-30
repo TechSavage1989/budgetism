@@ -1,5 +1,7 @@
 # Budgetism development handoff
 
+Current candidate: dev.24 [server planning suite](docs/SERVER_PLANNING.md), authorized as the remaining roadmap work. Budgets, schedules, calendar/forecasts, reports/account trends, categories, labels and saved searches are wired to protected server state. Existing storage needs an explicit additive 17-table upgrade and protected key provisioning/recovery after all gates pass. Local records and earlier advanced tools remain separate. Local 359-test suite, web, packaged HTTP and isolated 17-table/key recovery passed. Hosted native/package scans and private delivery remain pending; keep the installed dev.23 program until verified.
+
 Dev.23 [private-server dashboard](docs/SERVER_DASHBOARD.md) is verified and privately delivered. It adds through-day recorded balances, month-to-date spending/income, category summaries, recent activity, full review counts and distinct cached provider references. Reads never call the provider or change finances/decisions; local/demo remain separate.
 
 All six CI jobs and the source archive passed for aaee33e9b711b3cc80e61811336dfce361c5ebf4: 354 client tests, 33 native commands, database/HTTP/recovery contracts and exact ZIP/extracted Defender scans. See [dev.23 verification](docs/DEV23_VALIDATION.md). A fresh protected isolated restore matched all 14 tables. Only the API program was upgraded; HTTPS health, owner, disabled enrollment, separate automatic service identities and unauthenticated dashboard rejection passed. No schema migration or data/provider mutation was performed.

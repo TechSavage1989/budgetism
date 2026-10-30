@@ -104,6 +104,11 @@ try {
     $passwordFile = Join-Path $admin 'database-password'
     [IO.File]::WriteAllText($passwordFile,$adminPassword,$utf8)
     [IO.File]::WriteAllText((Join-Path $secrets 'database-password'),$appPassword,$utf8)
+    $planningBytes = New-Object byte[] 32
+    $planningRng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $planningRng.GetBytes($planningBytes) } finally { $planningRng.Dispose() }
+    [IO.File]::WriteAllText((Join-Path $secrets 'planning-key'),[Convert]::ToBase64String($planningBytes),$utf8)
+    [Array]::Clear($planningBytes,0,$planningBytes.Length)
     & (Join-Path $pgBin 'initdb.exe') -D $data -U budgetism_admin --auth=scram-sha-256 --encoding=UTF8 --locale=C "--pwfile=$passwordFile" *> (Join-Path $admin 'init.log')
     if ($LASTEXITCODE -ne 0) { throw 'Database initialization failed; see admin/init.log.' }
     [IO.File]::AppendAllText((Join-Path $data 'postgresql.conf'), "`nlisten_addresses = '127.0.0.1'`nport = $DatabasePort`nlog_statement = 'none'`nlog_min_error_statement = 'panic'`n",$utf8)
@@ -132,7 +137,7 @@ try {
     $sql | & (Join-Path $pgBin 'psql.exe') -X -w -h 127.0.0.1 -p $DatabasePort -U budgetism_admin -d postgres -v ON_ERROR_STOP=1 *> (Join-Path $admin 'database-setup.log')
     if ($LASTEXITCODE -ne 0) { throw 'Database role setup failed; see protected database-setup.log.' }
     $environment = @(
-        "DB_PASSWORD_FILE=$(Join-Path $secrets 'database-password')",'DB_HOST=127.0.0.1',"DB_PORT=$DatabasePort",
+        "DB_PASSWORD_FILE=$(Join-Path $secrets 'database-password')","PLANNING_KEY_FILE=$(Join-Path $secrets 'planning-key')",'DB_HOST=127.0.0.1',"DB_PORT=$DatabasePort",
         'DB_NAME=budgetism','DB_USER=budgetism_app',"ASPNETCORE_URLS=http://127.0.0.1:$ApiPort",
         'ASPNETCORE_ENVIRONMENT=Production','BOOTSTRAP_TOKEN_FILE=','ConnectionStrings__Finance=',
         'Logging__LogLevel__Default=Warning','Logging__LogLevel__Microsoft=Warning'

@@ -66,6 +66,7 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 app.MapServerBank();
 app.MapDashboard();
+app.MapPlanning();
 app.UseRouting();
 app.UseRateLimiter();
 
@@ -376,6 +377,7 @@ using (var scope = app.Services.CreateScope())
     if (await db.Database.EnsureCreatedAsync())
     {
         db.BankSchemaVersions.Add(new BankSchemaVersion());
+        db.PlanningSchemaVersions.Add(new PlanningSchemaVersion());
         await db.SaveChangesAsync();
     }
 }

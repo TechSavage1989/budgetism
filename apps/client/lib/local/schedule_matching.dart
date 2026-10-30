@@ -7,7 +7,7 @@ class ScheduleMatching {
   static const maxDays = 90;
 
   static bool eligible(Json schedule, Json transaction) {
-    if (transaction['voided'] != false || transaction.containsKey('scheduleId') ||
+    if (transaction['amountMinor'] is! int || (transaction['amountMinor'] as int) <= 0 || transaction['voided'] != false || transaction.containsKey('scheduleId') ||
         transaction.containsKey('occurrenceIndex') || transaction['kind'] != schedule['kind'] ||
         transaction['accountId'] != schedule['accountId'] || transaction['currency'] != schedule['currency']) {
       return false;

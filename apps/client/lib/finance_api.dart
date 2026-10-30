@@ -137,6 +137,41 @@ class FinanceApi {
   Future<Map<String, dynamic>> snapshot() async =>
       Map<String, dynamic>.from(await request('GET', '/api/sync/snapshot') as Map);
 
+  Future<Map<String, dynamic>> planningRequest([Map<String, dynamic>? body]) async {
+    requireHttpsServer();
+    final session = token;
+    if (session == null || session.isEmpty) throw FinanceApiException('Sign in again.', 401);
+    final client = _previewClientFactory();
+    try {
+      Future<Map<String, dynamic>> fetch() async {
+        final request = http.Request(body == null ? 'GET' : 'POST', _uri('/api/planning/${body == null ? 'state' : 'command'}'))
+          ..followRedirects = false
+          ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $session'});
+        if (body != null) { request.headers['Content-Type'] = 'application/json'; request.body = jsonEncode(body); }
+        final response = await client.send(request);
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw FinanceApiException(switch (response.statusCode) {
+            401 || 403 => 'Your session expired. Sign in again.',
+            404 || 503 => 'Server planning is unavailable or needs its verified storage upgrade. No completion was confirmed.',
+            409 => 'The workspace changed. Reload before starting another action; retry an uncertain action unchanged.',
+            >= 300 && < 400 => 'Server redirects are blocked.',
+            _ => 'The planning action was rejected. Check values and reload if another window changed the workspace.',
+          }, response.statusCode);
+        }
+        final bytes = BytesBuilder(copy: false);
+        await for (final chunk in response.stream) {
+          if (bytes.length + chunk.length > 16 * 1024 * 1024) throw const FormatException();
+          bytes.add(chunk);
+        }
+        if (session != token) throw FinanceApiException('Your session changed. Sign in again.', 401);
+        return Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes.takeBytes())) as Map);
+      }
+      return await fetch().timeout(const Duration(seconds: 30));
+    } on FinanceApiException { rethrow; }
+    catch (_) { throw FinanceApiException('The planning request did not finish. Retry the unchanged action to confirm its result.', 0); }
+    finally { client.close(); }
+  }
+
   Future<ServerDashboard> dashboard(String through) async {
     requireHttpsServer();
     final session = token;

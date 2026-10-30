@@ -48,6 +48,8 @@ internal static class Contracts
         {
             Check(await Digests("bank_recovery") == await File.ReadAllTextAsync(Path.Combine(directory, "expected-digests.json")),
                 "Independent dump/restore preserves every table, source revision, cursor and ledger link");
+            await PlanningContracts.VerifyRestoreAsync(() => new FinanceDb(new DbContextOptionsBuilder<FinanceDb>().UseNpgsql(
+                new NpgsqlConnectionStringBuilder(csb.ConnectionString) { Database = "bank_recovery" }.ConnectionString).Options));
             return;
         }
         var sql = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "upgrade_bank_sources_v1.sql"));
@@ -58,7 +60,7 @@ internal static class Contracts
             guard.CommandText = "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'";
             Check(Convert.ToInt32(await guard.ExecuteScalarAsync()) == 0, "Disposable database starts empty");
             var legacy = db.Database.GenerateCreateScript().Split(';', StringSplitOptions.RemoveEmptyEntries)
-                .Where(s => !s.TrimStart().StartsWith("CREATE TABLE \"Bank", StringComparison.Ordinal) && !s.Contains(" ON \"Bank", StringComparison.Ordinal));
+                .Where(s => !s.TrimStart().StartsWith("CREATE TABLE \"Bank", StringComparison.Ordinal) && !s.Contains(" ON \"Bank", StringComparison.Ordinal) && !s.Contains("\"Planning", StringComparison.Ordinal));
             // Only EF-generated DDL is accepted here; no input is interpolated into identifiers.
 #pragma warning disable EF1003
             await db.Database.ExecuteSqlRawAsync(string.Join(';', legacy) + ";");
@@ -275,6 +277,7 @@ internal static class Contracts
         }
         Check(await Digests("postgres") == dashboardBefore, "Dashboard with saved source history preserves all table digests");
         await DashboardContracts.RunAsync(Db, Digests);
+        await PlanningContracts.RunAsync(Db, Digests);
         await File.WriteAllTextAsync(Path.Combine(directory, "expected-digests.json"), await Digests("postgres"));
         Console.WriteLine("PASS: All server bank contracts used invented data in an isolated loopback cluster.");
     }

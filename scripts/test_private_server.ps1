@@ -81,11 +81,13 @@ $ownerPassword = New-RandomSecret
 $bootstrap = New-RandomSecret
 [IO.File]::WriteAllText((Join-Path $run 'db-password'), $dbPassword, $utf8)
 [IO.File]::WriteAllText((Join-Path $run 'bootstrap'), $bootstrap, $utf8)
+[IO.File]::WriteAllText((Join-Path $run 'planning-key'), (New-RandomSecret), $utf8)
 $data = Join-Path $run 'database'
 $pgBin = Join-Path $package 'postgresql\bin'
 $base = "http://127.0.0.1:$ApiPort"
 $environment = @{
     DB_PASSWORD_FILE = (Join-Path $run 'db-password'); BOOTSTRAP_TOKEN_FILE = (Join-Path $run 'bootstrap')
+    PLANNING_KEY_FILE = (Join-Path $run 'planning-key')
     DB_HOST = '127.0.0.1'; DB_PORT = [string]$DatabasePort; DB_NAME = 'postgres'; DB_USER = 'budgetism_test'
     ASPNETCORE_URLS = $base; ASPNETCORE_ENVIRONMENT = 'Production'; ConnectionStrings__Finance = $null
     Logging__LogLevel__Default = 'Warning'; Logging__LogLevel__Microsoft = 'Warning'
@@ -142,6 +144,15 @@ try {
         $overview.incomeMinor -eq 0 -and $overview.bank.status -eq 'disabled' -and $null -eq $overview.bank.needsReviewCount) 'Authenticated dashboard returns exact recorded totals and unavailable disabled review count'
     $again = Invoke-Api 'GET' '/api/sync/snapshot' $null $auth.token
     Assert-Check (@($again.transactions).Count -eq 2) 'Dashboard request did not create recorded entries'
+    Assert-Status 'GET' '/api/planning/state' $null '' 401
+    $planning = Invoke-Api 'GET' '/api/planning/state' $null $auth.token
+    $command = @{operationId=[Guid]::NewGuid().ToString();expectedVersion=$planning.version;expectedLedgerCursor=$planning.ledgerCursor;action='budget';confirmed=$true;
+        data=@{month='2026-10';categoryId=$expense.id;expectedVersion=0;amountMinor=10000;rollover='positive'}}
+    $plan = Invoke-Api 'POST' '/api/planning/command' $command $auth.token
+    $replay = Invoke-Api 'POST' '/api/planning/command' $command $auth.token
+    $planning = Invoke-Api 'GET' '/api/planning/state' $null $auth.token
+    Assert-Check ($plan.version -eq $replay.version -and @($planning.snapshot.budgets).Count -eq 1 -and
+        @($planning.snapshot.transactions).Count -eq 2) 'Encrypted planning budget save/retry survives API read without recording money'
     $null = Invoke-Api 'POST' '/api/auth/logout' $null $auth.token
     Assert-Status 'GET' '/api/accounts' $null $auth.token 401
     Assert-Status 'GET' '/api/dashboard?through=2026-10-30' $null $auth.token 401

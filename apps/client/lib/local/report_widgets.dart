@@ -153,7 +153,9 @@ class _ReportPanelState extends State<ReportPanel> {
         if (_view == 'Balances') _balances(report),
         const SizedBox(height: 20),
         const Divider(),
-        const Text('Recorded balances use saved, undated opening balances plus recorded entries through the ending date. They are not historical market valuations. Debt is negative. Partial months use only the selected dates.'),
+        Text(data['datedOpenings'] == true
+          ? 'Recorded balances include signed opening postings on their effective dates. These are not market valuations. Debt is negative. Partial months use only the selected dates.'
+          : 'Recorded balances use saved, undated opening balances plus recorded entries through the ending date. They are not historical market valuations. Debt is negative. Partial months use only the selected dates.'),
         const SizedBox(height: 12),
         if (canExport) Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
           SizedBox(width: 280, child: DropdownButtonFormField<ReportExport>(initialValue: _export, isExpanded: true,

@@ -5,14 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../money.dart';
 import 'budgets.dart';
 import 'ledger.dart';
-import 'local_api.dart';
+import 'planning_api.dart';
 import 'planning.dart';
 import 'recurrence.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({required this.api, required this.calendar,
     required this.onOpenTransaction, required this.onOpenScheduled, this.today, super.key});
-  final LocalFinanceApi api;
+  final PlanningWorkspaceApi api;
   final bool calendar;
   final Future<void> Function(Json) onOpenTransaction;
   final VoidCallback onOpenScheduled;
@@ -70,7 +70,7 @@ class _PlanningPanelState extends State<PlanningPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final data = widget.api.vault.ledger.snapshot(includeVoided: true);
+    final data = widget.api.planningSnapshot;
     final accounts = LocalLedger.rows(data['accounts']);
     if (_account.isNotEmpty && !accounts.any((a) => a['id'] == _account)) _account = '';
     final chosen = accounts.where((a) => _account.isEmpty ? PlanningEngine.cashAccount(a) : a['id'] == _account).toList();

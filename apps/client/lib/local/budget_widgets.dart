@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'budgets.dart';
 import 'ledger.dart';
-import 'local_api.dart';
+import 'planning_api.dart';
 
 class BudgetOverview extends StatelessWidget {
   const BudgetOverview({required this.snapshot, required this.onOpen, super.key});
@@ -54,7 +54,7 @@ class BudgetTotals extends StatelessWidget {
 class BudgetPanel extends StatefulWidget {
   const BudgetPanel({required this.api, required this.month, required this.onMonthChanged,
     required this.onChanged, required this.onOpenTransaction, super.key});
-  final LocalFinanceApi api;
+  final PlanningWorkspaceApi api;
   final String month;
   final ValueChanged<String> onMonthChanged;
   final Future<void> Function() onChanged;
@@ -67,12 +67,12 @@ class _BudgetPanelState extends State<BudgetPanel> {
   Future<void> _edit(CategoryBudget row) async {
     final changed = await showDialog<bool>(context: context, barrierDismissible: false,
       builder: (_) => BudgetEditorDialog(row: row, month: widget.month,
-        requiresUpgrade: widget.api.vault.ledger.data['schema'] == LocalLedger.legacySchema,
+        requiresUpgrade: widget.api.planningSnapshot['schema'] == LocalLedger.legacySchema,
         onSave: widget.api.saveBudget, onRemove: widget.api.removeBudget));
     if (changed == true && mounted) await widget.onChanged();
   }
   Future<void> _copy() async {
-    final data = widget.api.vault.ledger.snapshot();
+    final data = widget.api.planningSnapshot;
     final changed = await showDialog<bool>(context: context, barrierDismissible: false,
       builder: (_) => CopyBudgetsDialog(month: widget.month, revision: data['cursor'] as int,
         requiresUpgrade: data['schema'] == LocalLedger.legacySchema, onCopy: widget.api.copyBudgets));
@@ -83,7 +83,7 @@ class _BudgetPanelState extends State<BudgetPanel> {
     if (month != null && mounted) widget.onMonthChanged(month);
   }
   Future<void> _details(CategoryBudget row) async {
-    final data = widget.api.vault.ledger.snapshot();
+    final data = widget.api.planningSnapshot;
     final transactions = BudgetEngine.transactionsFor(data, widget.month, row.id);
     final accounts = {for (final a in LocalLedger.rows(data['accounts'])) a['id']: a['name']};
     final selected = await showDialog<Json>(context: context, builder: (dialogContext) => AlertDialog(
@@ -106,7 +106,7 @@ class _BudgetPanelState extends State<BudgetPanel> {
   }
   @override
   Widget build(BuildContext context) {
-    final data = widget.api.vault.ledger.snapshot();
+    final data = widget.api.planningSnapshot;
     final MonthlyBudget summary;
     try { summary = BudgetEngine.calculate(data, widget.month); }
     catch (error) { return Text('Unable to calculate budgets: $error'); }

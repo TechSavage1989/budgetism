@@ -4,7 +4,7 @@ import '../date_controls.dart';
 import 'package:uuid/uuid.dart';
 import '../money.dart';
 import 'ledger.dart';
-import 'local_api.dart';
+import 'planning_api.dart';
 import 'recurrence.dart';
 import 'schedules.dart';
 import 'schedule_match_dialog.dart';
@@ -41,7 +41,7 @@ class ScheduleOverview extends StatelessWidget {
 
 class SchedulePanel extends StatefulWidget {
   const SchedulePanel({required this.api, required this.onChanged, required this.onOpenTransaction, super.key});
-  final LocalFinanceApi api;
+  final PlanningWorkspaceApi api;
   final Future<void> Function() onChanged;
   final Future<void> Function(Json) onOpenTransaction;
   @override
@@ -63,7 +63,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
   void dispose() { _clock?.cancel(); super.dispose(); }
 
   Future<void> _edit([Json? existing]) async {
-    final data = widget.api.vault.ledger.snapshot();
+    final data = widget.api.planningSnapshot;
     final accounts = LocalLedger.rows(data['accounts']);
     if (accounts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Create an account before adding a schedule.')));
@@ -85,7 +85,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   Future<void> _match(ScheduledOccurrence occurrence) async {
     final changed = await showDialog<bool>(context: context, barrierDismissible: false,
-      builder: (_) => ScheduleMatchDialog(occurrence: occurrence, snapshot: widget.api.vault.ledger.snapshot(),
+      builder: (_) => ScheduleMatchDialog(occurrence: occurrence, snapshot: widget.api.planningSnapshot,
         onSave: widget.api.matchOccurrence));
     if (changed == true && mounted) await widget.onChanged();
   }
@@ -110,7 +110,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   @override
   Widget build(BuildContext context) {
-    final data = widget.api.vault.ledger.snapshot();
+    final data = widget.api.planningSnapshot;
     final today = Recurrence.today();
     final schedules = LocalLedger.rows(data['schedules']);
     final accounts = {for (final a in LocalLedger.rows(data['accounts'])) a['id']: a['name']};
@@ -118,8 +118,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
     final history = LocalLedger.rows(data['occurrences']).where((o) => o['status'] != 'postponed').toList()
       ..sort((a, b) => (b['resolvedAtUtc'] as String).compareTo(a['resolvedAtUtc'] as String));
     final scheduleById = {for (final s in schedules) s['id']: s};
-    final allTransactions = {for (final t in LocalLedger.rows(widget.api.vault.ledger.data['transactions'])) t['id']: t};
-    final matchedOccurrences = LocalLedger.rows(widget.api.vault.ledger.data['audit'])
+    final allTransactions = {for (final t in LocalLedger.rows(data['transactions'])) t['id']: t};
+    final matchedOccurrences = LocalLedger.rows(data['audit'])
         .where((a) => a['action'] == 'schedule-match').map((a) => a['objectId']).toSet();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Scheduled bills and income', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),

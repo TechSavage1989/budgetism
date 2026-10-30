@@ -133,6 +133,18 @@ class _ServerDashboardPanelState extends State<ServerDashboardPanel> {
               onPressed: () => widget.onNavigate(9),
               child: const Text('Connections'),
             ),
+            TextButton(
+              onPressed: () => widget.onNavigate(3),
+              child: const Text('Budgets'),
+            ),
+            TextButton(
+              onPressed: () => widget.onNavigate(4),
+              child: const Text('Bills and income'),
+            ),
+            TextButton(
+              onPressed: () => widget.onNavigate(7),
+              child: const Text('Reports and trends'),
+            ),
           ],
         ),
         if (_loading)
