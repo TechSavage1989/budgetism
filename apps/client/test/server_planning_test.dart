@@ -421,6 +421,10 @@ Future<void> runPlanningScenario(
   for (final index in [4, 5, 6, 7, 2]) {
     await page(index);
     expect(tester.takeException(), isNull);
+    if (index == 5 || index == 6) {
+      expect(find.textContaining('Signed opening postings use their effective dates.'), findsOneWidget);
+      expect(find.textContaining('Opening balances have no dates in this preview.'), findsNothing);
+    }
     await capture?.call('server-planning-$index-native.png');
     if (index == 4) {
       await press('Skip');

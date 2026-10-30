@@ -104,8 +104,8 @@ class _PlanningPanelState extends State<PlanningPanel> {
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [header,
         if (widget.calendar) _calendar(data, ids, accounts) else _forecast(data, ids, accounts, chosen),
         const SizedBox(height: 24),
-        const Text('Limits: scheduled amounts may differ from actual payments. Unscheduled spending, interest, fees, exchange rates, '
-          'and bank pending items are not predicted. Opening balances have no dates in this preview. '
+        Text('Limits: scheduled amounts may differ from actual payments. Unscheduled spending, interest, fees, exchange rates, '
+          'and bank pending items are not predicted. ${data['datedOpenings'] == true ? 'Signed opening postings use their effective dates.' : 'Opening balances have no dates in this preview.'} '
           'Paused schedules are excluded. Review overdue items separately.'),
       ]);
     } catch (error) {
