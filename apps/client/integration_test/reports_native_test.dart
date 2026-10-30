@@ -58,7 +58,13 @@ void main() {
       image.dispose();
       await tester.runAsync(() => File('build/report-graphs-dev25-native.png').writeAsBytes(bytes!.buffer.asUint8List()));
       Future<void> tapControl(String key) async {
-        final target = find.byKey(ValueKey(key)); await tester.ensureVisible(target);
+        final target = find.byKey(ValueKey(key));
+        if (key.startsWith('report-category-choice-')) {
+          await tester.scrollUntilVisible(target, 100, scrollable: find.descendant(
+            of: find.byKey(const ValueKey('report-category-options')), matching: find.byType(Scrollable)));
+        } else {
+          await tester.ensureVisible(target);
+        }
         await tester.tap(target); await tester.pumpAndSettle();
       }
       await tapControl('report-category-scope'); await tapControl('report-no-categories'); await tapControl('apply-report-categories');

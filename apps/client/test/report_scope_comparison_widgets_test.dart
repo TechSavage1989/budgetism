@@ -17,7 +17,14 @@ void main() {
         padding: const EdgeInsets.all(16), child: ReportPanel(readSnapshot: () => ledger.snapshot(includeVoided: true), today: '2026-10-28'))))));
       await tester.pumpAndSettle();
       Future<void> tapKey(String key) async {
-        final finder = find.byKey(ValueKey(key)); await tester.ensureVisible(finder); await tester.tap(finder); await tester.pumpAndSettle();
+        final finder = find.byKey(ValueKey(key));
+        if (key.startsWith('report-category-choice-')) {
+          await tester.scrollUntilVisible(finder, 100, scrollable: find.descendant(
+            of: find.byKey(const ValueKey('report-category-options')), matching: find.byType(Scrollable)));
+        } else {
+          await tester.ensureVisible(finder);
+        }
+        await tester.tap(finder); await tester.pumpAndSettle();
       }
       await tapKey('report-category-scope'); await tapKey('report-no-categories');
       await tester.tap(find.text('Cancel')); await tester.pumpAndSettle();

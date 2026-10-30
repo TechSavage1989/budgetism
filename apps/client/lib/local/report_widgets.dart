@@ -102,7 +102,7 @@ class _ReportPanelState extends State<ReportPanel> {
             TextButton(onPressed: () => update(() { chosen.addAll(categories.map((c) => c['id'] as String)); }), child: const Text('All categories')),
             TextButton(key: const ValueKey('report-no-categories'), onPressed: () => update(chosen.clear), child: const Text('No categories')),
           ]),
-          Expanded(child: ListView(children: [for (final c in categories) CheckboxListTile(
+          Expanded(child: ListView(key: const ValueKey('report-category-options'), children: [for (final c in categories) CheckboxListTile(
             key: ValueKey('report-category-choice-${c['id']}'), title: Text(c['name'] as String),
             subtitle: Text('${c['kind']}${c['archived'] == true ? ' · Archived' : ''}'),
             value: chosen.contains(c['id']), onChanged: (value) => update(() {
