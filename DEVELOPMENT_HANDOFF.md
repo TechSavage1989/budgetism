@@ -2,8 +2,8 @@
 
 ## Current checkpoint
 
-- **Verified delivered client:** dev.25, tested application `dba09b0a5ad39cc0dfed5e9bf74e5ad7fd2236c2`, documentation closure `cc0e815e832cedeab2f5a5e584c7f3b597992750`, branch `development/report-forecast-dev25`.
-- **Current candidate:** dev.26, client-only category-scoped reporting and previous-period/year comparisons on `development/report-controls-dev26`. Verification/delivery are pending; do not replace the verified package yet.
+- **Verified delivered client:** dev.26, application `b8d21ed69fd1cc137461919ae3b2e0c3d8a37020`, branch `development/report-controls-dev26`. [Full provenance](docs/DEV26_VALIDATION.md). Further increments are paused for user review.
+- Prior verified dev.25 remains preserved on `development/report-forecast-dev25`, documentation closure `cc0e815e832cedeab2f5a5e584c7f3b597992750`.
 - Repository is public: [TechSavage1989/budgetism](https://github.com/TechSavage1989/budgetism). Main `8bd6472bc0bd567f90b491b1767736e5a030521e` is an older dev.18 checkpoint. Do not overwrite newer development with main. No release or tag exists.
 - Prior `development/plaid-dev19` head `15cc77a8171bea3fd70048f267d19b05c0bc76fa` contains the verified dev.24 server planning suite. The existing private API, database, protected keys, current window and rollback files remain untouched.
 
@@ -12,18 +12,19 @@ Read [AGENTS.md](AGENTS.md), [implementation status](docs/IMPLEMENTATION_STATUS.
 before changes. Older milestones are preserved in
 [development history](docs/releases/development-history-through-dev25.md), not repeated here.
 
-## Verified dev.25 package
+## Verified dev.26 package
 
-[Build 41060657452](https://github.com/TechSavage1989/budgetism/actions/runs/41060657452)
-passed all six jobs, 372 client tests and all 34 retained/extended native Windows
+[Build 41071151884](https://github.com/TechSavage1989/budgetism/actions/runs/41071151884)
+passed all six jobs, 381 client tests on Linux/Windows and all 34 native Windows
 commands. Source archive, Windows/web compilation, package validation and exact
-ZIP/extracted Defender scans passed. New fictional screenshots were inspected.
-[Full provenance](docs/DEV25_VALIDATION.md) records source and artifact hashes.
+ZIP/extracted Defender scans passed. Fictional native screenshots were inspected.
+[Full provenance](docs/DEV26_VALIDATION.md) includes both earlier failed candidates,
+corrections and final artifact hashes.
 
-Use **Budgetism-Windows-x64-development**, artifact 12981736554, from that run.
-The inner Budgetism-Windows-x64.zip is 16,601,349 bytes, SHA-256
-`085daa0027bf42a537661996597f50ee621be6a15b6c54d3e0d26a4ceeb18d90`.
-The unchanged separately delivered copy is Budgetism-Dev25-Windows-x64-Verified.zip.
+Use **Budgetism-Windows-x64-development**, artifact 12985329455, from that run.
+Inner Budgetism-Windows-x64.zip is 16,612,545 bytes, SHA-256
+`b8204a6e55a7ed9cd952e3eb7b6afc9fa155b00660f890c47eb4d8f2915e6bd4`.
+The unchanged delivered copy is Budgetism-Dev26-Windows-x64-Verified.zip.
 It is unsigned; a clean build-time scan is not publisher signing or universal
 antivirus/browser clearance. User acceptance remains unconfirmed.
 
@@ -82,5 +83,6 @@ Local Flutter bootstrap in this executor was blocked for unexpected metadata
 endpoint access. Do not retry indirectly or weaken security. Use existing
 hosted checks, disclose local omissions and verify final exact package evidence.
 Synthetic native data and screenshots do not establish live authenticated user
-acceptance. Dev.26 tests, README rendering and final package evidence remain
-pending until recorded in its validation document.
+acceptance. Dev.26 runtime/package checks passed as recorded in its validation document.
+README structure/rendered HTML passed; local browser pixel rendering was blocked
+by sandbox socket restrictions. No blocked runtime was retried indirectly.

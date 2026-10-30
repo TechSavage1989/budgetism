@@ -3,13 +3,14 @@
 <p align="center"><a href="#download">Download</a> | <a href="#getting-started">Get started</a> | <a href="#features">Features</a> | <a href="#updates-and-settings">Updates</a> | <a href="#development">Development</a></p>
 
 A Windows-first personal-finance app for private, deliberate budgeting and planning.
-**Development preview, not a production release.** Dev.25 is the verified client
-package; dev.26 report comparison/category controls are currently being validated.
+**Development preview, not a production release.** Dev.26 is the verified client
+package, including category scopes and historical period comparisons.
 
 ## Features
 
 - Accounts, transactions, budgets, recurring bills and a financial calendar.
-- Configurable historical report graphs with exact values and explicit CSV export.
+- Configurable historical report graphs, category scopes and period comparisons,
+  with exact values and explicit CSV export.
 - Read-only cash-flow forecasts with a custom 1–365-day horizon and schedule-based
   what-if comparisons. Report/scenario configuration is currently session-only.
 - Encrypted local workspaces, optional password prompting and independent encrypted backups.
@@ -114,7 +115,7 @@ The current source is on the development branch identified there; **main is an
 older checkpoint**, not the latest implementation.
 
 [Build/test commands and code map](docs/DEVELOPMENT.md) cover Flutter, the retained
-.NET API and Go updater helper. [Dev.25 validation](docs/DEV25_VALIDATION.md) records
+.NET API and Go updater helper. [Dev.26 validation](docs/DEV26_VALIDATION.md) records
 the verified package; [development history](docs/releases/development-history-through-dev25.md)
 preserves earlier milestones. No license is asserted solely from public visibility.
 

@@ -9,8 +9,9 @@ of feature parity. The verified starting point is dev.24 on
 
 | Phase | Scope | Completion evidence |
 | --- | --- | --- |
-| Dev.25 candidate | Configurable report graphs and session-only forecast controls | Exact chart/table agreement, signed values, chosen account/date scope, baseline/scenario distinction, no ledger writes, native UI checks |
-| Reporting depth | Category and comparison-period controls, reusable encrypted report presets, richer export | Saved configuration restores faithfully; totals reconcile to source transactions; canceled edits do not persist |
+| Dev.25 verified | Configurable report graphs and session-only forecast controls | Exact chart/table agreement, signed values, chosen account/date scope, baseline/scenario distinction, no ledger writes, native UI checks |
+| Dev.26 verified | Session-only category and comparison-period controls | Exact split scopes, matching period filters, native read-only checks; see [validation](DEV26_VALIDATION.md) |
+| Reporting depth | Reusable encrypted report presets, richer export | Saved configuration restores faithfully; totals reconcile to source transactions; canceled edits do not persist |
 | Forecasting depth | Reusable encrypted scenarios, explicit amount/date assumptions, broader horizon policy | Baseline remains deterministic; assumptions never post money; future actuals and transfers enter once; recovery preserves scenarios |
 | Schedule depth | One-time/custom/finite recurrence, occurrence-specific changes versus future series, variable expected amounts | Stable identities, explicit change scope, no historical rewrites, exact retry/record/match behavior |
 | Bank readiness | BankFive/United States and Plaid-first compatibility, supported account types and history, initial review and connection recovery | Verified institution/provider coverage and cost, separate live authorization, complete atomic imports, pending/posted corrections, no duplicates or silent reconciled edits |
@@ -37,10 +38,11 @@ Budgetism does not copy private data or assets or connect to either competitor.
 
 ## Current boundaries
 
-Dev.25 does not save report/scenario choices across sessions. Persisted financial
+Dev.25/dev.26 do not save report/scenario choices across sessions. Persisted financial
 configuration must use deliberately designed encrypted local/server contracts,
-not ordinary device preferences. It does not add hypothetical amount edits,
-comparison periods, new recurrence semantics, live banks or migrations.
+not ordinary device preferences. Dev.26 adds historical comparison periods, but not hypothetical amount edits,
+new recurrence semantics, live banks or migrations. Further increments are paused
+for user review after delivery; no full-replacement claim is made.
 No release/tag, paid service, credential setup, real account linkage, unattended
 refresh, public/LAN exposure or installed server change is included. The existing
 server and protected recovery keys remain untouched. Bank account types and

@@ -1,6 +1,6 @@
 # Current implementation state
 
-Dev.26 is a client-only candidate for category-scoped report contributions and historical period comparisons. No stored presets, server/schema changes or new bank setup are included. Validation and delivery are pending; dev.25 remains the verified client package.
+Dev.26 is the verified client-only package for category-scoped report contributions and historical period comparisons. All six jobs, 381 tests on both platforms, 34 native commands and exact package scans passed; see [verification](DEV26_VALIDATION.md). No stored presets, server/schema changes or new bank setup are included. User acceptance is unconfirmed.
 
 Dev.25 is a verified client-only development package for configurable report graphs and read-only forecast scenarios. All six jobs, 372 tests, 34 native commands and exact package scans passed; see [verification](DEV25_VALIDATION.md). Configuration remains session-only. No private installation, server change, new migration or live-bank access occurred.
 

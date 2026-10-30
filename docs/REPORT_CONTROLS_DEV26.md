@@ -1,6 +1,6 @@
 # Dev.26 report category scopes and comparisons
 
-Client-only candidate following verified dev.25. No financial schema, stored
+Verified client-only increment following dev.25. No financial schema, stored
 schedule, server deployment, account setup or new dependency is required.
 Local/server reports continue to use their existing detached read snapshots.
 
@@ -46,7 +46,7 @@ explains this. Existing formula/control-character protections remain.
 
 ## Validation status
 
-Hosted checks and exact package validation are pending. No local Flutter runtime
+Hosted checks and exact package validation passed; see [full evidence](DEV26_VALIDATION.md). No local Flutter runtime
 was retried after the existing security block. Local source-layout, package guard
 negative controls, diff checks and README structural checks are available; they
 are not substitutes for final native checks.
@@ -57,9 +57,9 @@ root allowlist are unchanged. Prior detailed workflows and development history
 remain linked under docs. README HTML generation and structural link/anchor checks
 are performed locally; browser visual rendering could not run because the local
 Chromium process was denied socket creation by the filesystem/process sandbox.
-No sandbox permission was changed. Actual application visuals will be inspected
+No sandbox permission was changed. Actual application visuals were inspected
 from hosted fictional native screenshots.
 
 No server setup, Codex CLI automation, unattended worker, payment/API-account
-setup, release/tag, access change or live-bank action is included. Dev.25 remains
-the delivered package until this candidate is verified.
+setup, release/tag, access change or live-bank action is included. Dev.26 was delivered as an unsigned development package; user acceptance remains
+unconfirmed.
