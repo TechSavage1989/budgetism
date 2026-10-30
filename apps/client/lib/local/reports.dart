@@ -37,11 +37,14 @@ class FinanceReport {
   FinanceReport({required this.from, required this.through, required this.today,
     required this.income, required this.expense, required this.starting,
     required this.closing, required this.transferCount,
+    this.categoryScope = 'All categories', this.categoryFiltered = false,
     required List<ReportTransaction> transactions, required List<ReportCategory> categories,
     required List<ReportMonth> months, required List<ReportBalance> balances})
       : transactions = List.unmodifiable(transactions), categories = List.unmodifiable(categories),
         months = List.unmodifiable(months), balances = List.unmodifiable(balances);
   final String from, through, today;
+  final String categoryScope;
+  final bool categoryFiltered;
   final int income, expense, starting, closing, transferCount;
   final List<ReportTransaction> transactions;
   final List<ReportCategory> categories;
@@ -71,7 +74,7 @@ class ReportEngine {
   /// null selects all accounts; an empty set deliberately selects none.
   /// Undated opening balances are the saved ledger baseline, not valuations.
   static FinanceReport calculate(Json data, {required String from, required String through,
-      required String today, Set<String>? accountIds}) {
+      required String today, Set<String>? accountIds, Set<String>? categoryIds}) {
     final first = Recurrence.parse(from), last = Recurrence.parse(through);
     final current = Recurrence.parse(today);
     if (last.isBefore(first) || last.isAfter(current) || last.difference(first).inDays >= maxRangeDays) {
@@ -86,6 +89,10 @@ class ReportEngine {
     final accounts = all.where((a) => selected.contains(a['id'])).toList()
       ..sort((a, b) => (a['name'] as String).toLowerCase().compareTo((b['name'] as String).toLowerCase()));
     final categoryMap = {for (final c in LocalLedger.rows(data['categories'])) c['id'] as String: c};
+    final categorySelection = categoryIds == null ? null : Set<String>.from(categoryIds);
+    if (categorySelection != null && categorySelection.any((id) => !categoryMap.containsKey(id))) {
+      throw const FormatException('A report category is no longer available. Reset the category selection.');
+    }
     final before = {for (final a in accounts) a['id'] as String: a['openingBalanceMinor'] as int};
     final closing = Map<String, int>.from(before);
     final movement = <String, int>{}, monthlyIncome = <String, int>{}, monthlyExpense = <String, int>{};
@@ -116,11 +123,9 @@ class ReportEngine {
       }
       if (!selected.contains(t['accountId'])) continue;
       final kind = t['kind'] as String, amount = t['amountMinor'] as int;
-      if (kind == 'income') {
-        income = add(income, amount); monthlyIncome[month] = add(monthlyIncome[month] ?? 0, amount);
-      } else if (kind == 'expense') {
-        expense = add(expense, amount); monthlyExpense[month] = add(monthlyExpense[month] ?? 0, amount);
-      } else { throw const FormatException('Unsupported transaction type in report.'); }
+      if (kind != 'income' && kind != 'expense') {
+        throw const FormatException('Unsupported transaction type in report.');
+      }
       final contributions = <String, int>{};
       for (final p in LocalLedger.rows(t['postings'])) {
         final ledgerId = p['ledgerId'] as String;
@@ -131,6 +136,18 @@ class ReportEngine {
         contributions[id] = add(contributions[id] ?? 0, part);
       }
       if (_sum(contributions.values) != amount) throw const FormatException('Category amounts do not match the recorded transaction.');
+      // Validate the full transaction first, then scope only category contributions.
+      // Whole-account postings above deliberately remain unfiltered.
+      if (categorySelection != null) {
+        contributions.removeWhere((id, _) => !categorySelection.contains(id));
+      }
+      if (contributions.isEmpty) continue;
+      final scopedAmount = _sum(contributions.values);
+      if (kind == 'income') {
+        income = add(income, scopedAmount); monthlyIncome[month] = add(monthlyIncome[month] ?? 0, scopedAmount);
+      } else {
+        expense = add(expense, scopedAmount); monthlyExpense[month] = add(monthlyExpense[month] ?? 0, scopedAmount);
+      }
       for (final item in contributions.entries) {
         categoryTotals[item.key] = add(categoryTotals[item.key] ?? 0, item.value);
         categoryCounts[item.key] = (categoryCounts[item.key] ?? 0) + 1;
@@ -159,12 +176,19 @@ class ReportEngine {
     final lastMonth = through.substring(0, 7), months = <ReportMonth>[];
     while (true) {
       running = add(running, movement[month] ?? 0);
+      add(monthlyIncome[month] ?? 0, -(monthlyExpense[month] ?? 0));
       months.add(ReportMonth(month, monthlyIncome[month] ?? 0, monthlyExpense[month] ?? 0, running));
       if (month == lastMonth) break;
       month = LocalLedger.shiftMonth(month, 1);
     }
     if (running != finalBalance) throw const FormatException('Report balance cross-check failed.');
+    add(income, -expense);
+    final selectedCategoryNames = categorySelection?.map((id) => categoryMap[id]!['name'] as String).toList();
+    selectedCategoryNames?.sort();
     return FinanceReport(from: from, through: through, today: today,
+      categoryFiltered: categorySelection != null,
+      categoryScope: categorySelection == null ? 'All categories' : categorySelection.isEmpty
+        ? 'No categories' : selectedCategoryNames!.join(' | '),
       income: income, expense: expense, starting: starting, closing: finalBalance, transferCount: transfers,
       transactions: entries, categories: categories, months: months,
       balances: [for (final a in accounts) ReportBalance(a['id'] as String,
@@ -197,8 +221,8 @@ class ReportCsv {
   }
   static String encode(FinanceReport report, ReportExport type) {
     final rows = <List<Object>>[];
-    final common = <Object>['Period from', 'Period through', 'Currency'];
-    final prefix = <Object>[report.from, report.through, 'USD'];
+    final common = <Object>['Period from', 'Period through', 'Currency', 'Category scope', 'Balance scope'];
+    final prefix = <Object>[report.from, report.through, 'USD', report.categoryScope, 'Whole selected accounts; category filter does not affect balances'];
     void row(List<Object> value) => rows.add([...prefix, ...value]);
     final scope = report.balances.map((a) => a.name).join(' | ');
     switch (type) {

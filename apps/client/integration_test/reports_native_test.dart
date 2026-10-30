@@ -22,6 +22,7 @@ void main() {
     LocalVault? vault;
     Object? encoded;
     var original = '';
+    var categoryId = '';
     var revision = 0;
     try {
       await tester.runAsync(() async {
@@ -30,6 +31,7 @@ void main() {
           'type': 'checking', 'currency': 'USD', 'openingBalanceMinor': 100000});
         final account = LocalLedger.rows(vault!.ledger.data['accounts']).single['id'];
         final category = LocalLedger.rows(vault!.ledger.data['categories']).firstWhere((c) => c['kind'] == 'Income')['id'];
+        categoryId = category as String;
         await vault!.apply('transaction', {'operationId': 'graph-income', 'kind': 'income', 'accountId': account,
           'counterpartyAccountId': category, 'currency': 'USD', 'amountMinor': 12345,
           'effectiveDate': '2026-10-27', 'payee': 'Fictional graph income', 'notes': ''});
@@ -39,6 +41,7 @@ void main() {
         padding: const EdgeInsets.all(16), child: ReportPanel(
           readSnapshot: () => vault!.ledger.snapshot(includeVoided: true), today: '2026-10-28')))))));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('report-view-Graphs')));
       await tester.tap(find.byKey(const ValueKey('report-view-Graphs'))); await tester.pumpAndSettle();
       expect(find.text('Income: \$123.45'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const ValueKey('report-chart-bars')));
@@ -54,6 +57,26 @@ void main() {
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       await tester.runAsync(() => File('build/report-graphs-dev25-native.png').writeAsBytes(bytes!.buffer.asUint8List()));
+      Future<void> tapControl(String key) async {
+        final target = find.byKey(ValueKey(key)); await tester.ensureVisible(target);
+        await tester.tap(target); await tester.pumpAndSettle();
+      }
+      await tapControl('report-category-scope'); await tapControl('report-no-categories'); await tapControl('apply-report-categories');
+      expect(find.text('Category scope: No categories'), findsOneWidget);
+      expect(find.text('Recorded net balance: \$1,123.45'), findsWidgets);
+      await tapControl('report-category-scope'); await tapControl('report-category-choice-$categoryId'); await tapControl('apply-report-categories');
+      await tapControl('report-comparison-none');
+      await tester.tap(find.text('Previous equal-length period').last); await tester.pumpAndSettle();
+      expect(find.text('Current: \$123.45'), findsOneWidget);
+      expect(find.text('Comparison: 2026-09-03 through 2026-09-30 (28 days).'), findsOneWidget);
+      await tester.ensureVisible(find.text('Period comparison')); await tester.pumpAndSettle();
+      final comparisonBoundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final comparisonImage = await comparisonBoundary.toImage();
+      final comparisonBytes = await comparisonImage.toByteData(format: ui.ImageByteFormat.png);
+      comparisonImage.dispose();
+      await tester.runAsync(() => File('build/report-controls-dev26-native.png').writeAsBytes(comparisonBytes!.buffer.asUint8List()));
+      await tapControl('reset-report-controls');
+      expect(find.text('Period comparison'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.runAsync(() async {

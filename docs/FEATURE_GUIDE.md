@@ -1,0 +1,64 @@
+# Feature and workflow guide
+
+Detailed retained behavior from the verified dev.25 baseline. See the root README for the current development package and newer report controls.
+
+## Features
+
+| Area | Implemented behavior |
+| --- | --- |
+| Server dashboard | Read-only through-day posting balances, month-to-date income/spending, recent/category scope and complete review counts; no provider calls |
+| Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
+| Server labels/searches | Explicit encrypted saved searches and labels, combined session filters and custom category management |
+| Server address | Opt-in device-only HTTPS address, Forget, no automatic connection from remembered values, cleared credentials on destination changes |
+| Themes | Six presets/custom accent, Light/Dark/System, contrast, compact spacing and preview/Apply/Cancel; device-only preferences |
+| Server source review controls | Combined session-only filters, visible selection and reasoned atomic Ignore/Keep/Reopen; recorded money is unchanged |
+| Private server Sandbox preview | Authenticated HTTPS, explicit fictional retrieval, exact cents, pending/posted/removed status and memory-only preview; no ledger writes |
+| Private server fictional review | Explicit zero-baseline account mapping, durable source/checkpoint history, reviewed record/match/pair/ignore/keep and disconnect; server correction/void tools remain future work |
+| Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |
+| Local Needs Review | Categories, duplicates, pending ambiguity, transfers/card payments, schedule matches, corrections/removals and reconciliation conflicts |
+| Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
+| Accounts and transactions | USD checking/savings/cash/debt, exact cents, balanced postings, transfers, splits, edits, voids, audit and search |
+| Budgets | Local and private-server monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
+| Scheduled | Local and private-server bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
+| Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
+| Calendar and forecasts | Local/private-server read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
+| Import profiles | Saved header/date/sign settings, default categories, explicit application, rename/archive/restore |
+| Category history | Inspect prior rule-applied batches and explicitly undo eligible complete batches without moving money |
+| CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
+| Reports | Local/private-server historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
+| Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
+| Transaction register | Search words/phrases/exclusions, combined dates/accounts/categories/types/amount/source/status filters, sorting, whole and split totals, protected details |
+| CSV category suggestions | Explicit preview and selected rule suggestions for new import rows; manual choices, transfers and duplicate decisions protected |
+| Date controls | Calendar selection for schedule/occurrence/statement/rule/register dates, Today/Yesterday, quick ranges and visual budget month/year |
+| Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
+
+No cross-device synchronization, real bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. Saved local workspaces require no server. The optional [Sandbox client preview](SERVER_SANDBOX_CLIENT.md) requires a separately configured private HTTPS server. The web build retains the sample/server interface; it does not provide browser-local financial storage.
+
+## How to use
+
+Home separates recorded balances through today from future-dated actuals, scheduled plans and forecasts. Its budget shortcut opens the current month. Accounts and Transactions continue to include all recorded dates. See [everyday use](DAILY_USE.md).
+
+Connections stages a fictional feed locally. Use separate fictional accounts, review the opening baseline, and explicitly approve the format upgrade before mapping. Needs Review controls recording, linking, paired transfers and corrections. Refresh never alters recorded spending or user categories/notes. Reconciled corrections require reopening statements or keeping the recorded entry unchanged. See [bank synchronization](BANK_SYNC.md) and [desktop test steps](WINDOWS_TESTING.md). No live bank enrollment, credentials, remote service or background retrieval is enabled.
+
+Record actual income/expenses/transfers in Transactions. Budget allocations and schedules do not move money. Record a scheduled occurrence only when appropriate, or use Match existing when its actual transaction is already present. CSV preview is read-only until explicit import; review signs, dates, categories, transfer direction and duplicate decisions.
+
+Accounts > Reconcile statements compares outstanding recorded entries with a signed statement closing balance. The first statement starts at the account opening balance; later statements start at the prior completed closing balance. Select only entries cleared on the statement. Finish requires exact zero difference and review confirmation. No balancing transactions are created. Reopen the latest statement with a reason before correcting a protected transaction. Transfers remain protected while reconciled on either side.
+
+Reports reads existing records without a new format upgrade. Select dates/accounts and inspect Overview, Categories, Monthly or Balances. CSV exports are unencrypted, require explicit confirmation and are not backups. See [report semantics](REPORTS.md), including the limits of undated opening balances.
+
+The first reconciliation completion still requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](RECONCILIATION.md) and [the new-feature desktop test](WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
+
+Categorization rules are opened from **User options > Manage categories > Categorization rules**. Add a rule, then generate a dated preview and select the entries to change. Saving a rule does not change transactions, and no rule runs automatically. Category changes can move spending between budgets, but account balances and transaction counts stay unchanged. Reconciled, split, transfer and voided entries are excluded. The first rule save needs backup/consent for financial schema 6; older builds cannot open it. See [categorization rules](CATEGORIZATION_RULES.md).
+
+The local Transactions screen now provides combined search and filters. Search words are ANDed; use quoted phrases or a minus-prefixed exclusion. Amount filters/sorting use the full unsigned transaction amount. A category filter uses that category's exact contribution in income/expense summaries. Transfers are listed separately, never as spending. Voided entries are hidden by default and excluded from totals when shown. Filters stay in this workspace session only. Select a row to inspect it, then explicitly choose Edit transaction when allowed. No format upgrade. See [register behavior](TRANSACTION_REGISTER.md).
+
+CSV import profiles save only mapping settings and defaults inside the encrypted workspace. Select a file and profile, choose Apply selected profile, review its mapping and destination account, then preview before importing. Missing or ambiguous mapped headers are rejected. First profile save requires backup/consent for schema 7, which older apps cannot open. See [saved import profiles](IMPORT_PROFILES.md).
+
+Categorization rules > History shows prior batches and supports reviewed, reasoned, category-only undo when every affected transaction remains unchanged and unprotected. See [category history](CATEGORY_HISTORY.md).
+
+During CSV review, **Review category suggestions** uses saved enabled rules for eligible new rows. Nothing is selected automatically. Acceptance only changes the unsaved preview; the final CSV review/import remains separate. Manual categories, matches, transfers, handled and skipped rows are protected. No new format upgrade. See [CSV rule suggestions](CSV_RULE_SUGGESTIONS.md).
+
+Date fields have a calendar-month icon; choose a day and Use date rather than typing. Optional end dates can be cleared. Register and rule ranges support calendar ranges and common shortcuts, preserving other filters. Budget month navigation now offers a month grid and year picker. Transaction entry has Today and Yesterday. Choosing or cancelling a date never saves a transaction by itself, and locked dates remain protected. See [date controls](DATE_CONTROLS.md).
+
+When adding local transactions, account/category fields are searchable and payees can be completed from existing local history. Save and add another explicitly commits one entry, then clears amount, payee, notes, splits and transfer destination. The ordinary category, account, type and date remain only for the open dialog. Closing does not undo entries already saved. No personal defaults or search terms are written to unencrypted preferences.
+

@@ -1,6 +1,6 @@
 # Budgetism update architecture and release gate
 
-Current release state: no GitHub Releases published, no compiled Flutter Windows app, native installation disabled.
+Current release state: no GitHub Releases published. Verified compiled Windows development artifacts exist (see the current handoff), but native in-app installation remains disabled. Full previous-release download/install/relaunch and real native timer/focus acceptance have not been established.
 
 ## Update discovery
 

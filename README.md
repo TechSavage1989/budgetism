@@ -1,107 +1,124 @@
 <h1 align="center">Budgetism</h1>
 <p align="center">Your finances. Your control.</p>
-<p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
+<p align="center"><a href="#download">Download</a> | <a href="#getting-started">Get started</a> | <a href="#features">Features</a> | <a href="#updates-and-settings">Updates</a> | <a href="#development">Development</a></p>
 
-**Verified dev.25 graphical reports and forecast controls.** Choose report measures and line/bar graphs with exact monthly values; configure 1–365-day forecasts and schedule-based what-if comparisons. All six jobs, 372 client tests, retained native checks and exact package scans passed. Settings are session-only, not saved presets. See [verification](docs/DEV25_VALIDATION.md), [scope](docs/REPORT_FORECAST_DEV25.md) and [replacement roadmap](docs/REPLACEMENT_ROADMAP.md). Client-only: no server upgrade, real bank linkage or data migration.
-
-**Verified 0.1.0-dev.24 server planning suite.** Adds [server budgets, schedules, calendar/forecasts, reports/account trends, categories, labels and saved searches](docs/SERVER_PLANNING.md). All six CI jobs passed, including 359 client tests, 34 native Windows commands and exact package scans. The private additive upgrade preserved every prior table digest; all 17 tables and the separate protected planning key passed recovery verification. The verified client and API were delivered; see [dev.24 verification](docs/DEV24_VALIDATION.md). Local workspaces and advanced local tools remain separate.
-
-**Verified dev.23 private-server dashboard.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. All six CI jobs passed: 354 tests, 33 native Windows commands and exact package scans. The schema-free private API program upgrade and separately staged client delivery passed; see [dev.23 verification](docs/DEV23_VALIDATION.md).
-
-**Verified dev.22 themes and review.** Adds [preset/custom-accent themes and server review controls](docs/THEMES_AND_REVIEW.md), following the user-selected [PocketSmith/MoneyWiz reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md). Preview appearance before Apply, combine source filters and explicitly batch Ignore, Keep unchanged or Reopen decisions. Financial posting remains individual review; local workspaces remain separate. The verified [address continuity](docs/SERVER_ADDRESS.md) and [fictional source pipeline](docs/SERVER_SANDBOX_REVIEW.md) remain intact. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification. This is not a production release.
-
-Dev.22 passed all six jobs, 350 tests, 32 native commands and exact package scans; see [dev.22 verification](docs/DEV22_VALIDATION.md). The private schema-free API program update and separately staged client delivery passed. Dev.21 passed all six jobs, 344 tests, 29 native commands and package scans; see [dev.21 verification](docs/DEV21_VALIDATION.md). The working dev.20 API and mapped fictional source history passed an independent restore after user confirmation; see [dev.20 verification](docs/DEV20_VALIDATION.md). Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
+A Windows-first personal-finance app for private, deliberate budgeting and planning.
+**Development preview, not a production release.** Dev.25 is the verified client
+package; dev.26 report comparison/category controls are currently being validated.
 
 ## Features
 
-| Area | Implemented behavior |
-| --- | --- |
-| Server dashboard | Read-only through-day posting balances, month-to-date income/spending, recent/category scope and complete review counts; no provider calls |
-| Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
-| Server labels/searches | Explicit encrypted saved searches and labels, combined session filters and custom category management |
-| Server address | Opt-in device-only HTTPS address, Forget, no automatic connection from remembered values, cleared credentials on destination changes |
-| Themes | Six presets/custom accent, Light/Dark/System, contrast, compact spacing and preview/Apply/Cancel; device-only preferences |
-| Server source review controls | Combined session-only filters, visible selection and reasoned atomic Ignore/Keep/Reopen; recorded money is unchanged |
-| Private server Sandbox preview | Authenticated HTTPS, explicit fictional retrieval, exact cents, pending/posted/removed status and memory-only preview; no ledger writes |
-| Private server fictional review | Explicit zero-baseline account mapping, durable source/checkpoint history, reviewed record/match/pair/ignore/keep and disconnect; server correction/void tools remain future work |
-| Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |
-| Local Needs Review | Categories, duplicates, pending ambiguity, transfers/card payments, schedule matches, corrections/removals and reconciliation conflicts |
-| Local workspace | Encrypted SQLite data, optional password or protected device key, independent encrypted backup/restore |
-| Accounts and transactions | USD checking/savings/cash/debt, exact cents, balanced postings, transfers, splits, edits, voids, audit and search |
-| Budgets | Local and private-server monthly allocations, actual spending, three rollover modes, copying and transaction drilldown |
-| Scheduled | Local and private-server bills, income and transfers; manual recording, postpone/skip, pause/resume and history |
-| Matching | Explicit linking of an existing actual transaction to an unresolved occurrence without reposting |
-| Calendar and forecasts | Local/private-server read-only dated activity and scheduled daily cash flow, with overdue disclosure and device-only thresholds |
-| Import profiles | Saved header/date/sign settings, default categories, explicit application, rename/archive/restore |
-| Category history | Inspect prior rule-applied batches and explicitly undo eligible complete batches without moving money |
-| CSV imports | Local mapping/review, signed amounts, transfers, existing matches, persistent duplicate receipts |
-| Reports | Local/private-server historical date/account filters, income/spending totals, category drilldown, monthly trends, recorded balances and explicit CSV export |
-| Categorization rules | Ordered payee/account/amount/source conditions, preview and explicit selected category changes; protected entries excluded |
-| Transaction register | Search words/phrases/exclusions, combined dates/accounts/categories/types/amount/source/status filters, sorting, whole and split totals, protected details |
-| CSV category suggestions | Explicit preview and selected rule suggestions for new import rows; manual choices, transfers and duplicate decisions protected |
-| Date controls | Calendar selection for schedule/occurrence/statement/rule/register dates, Today/Yesterday, quick ranges and visual budget month/year |
-| Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
+- Accounts, transactions, budgets, recurring bills and a financial calendar.
+- Configurable historical report graphs with exact values and explicit CSV export.
+- Read-only cash-flow forecasts with a custom 1–365-day horizon and schedule-based
+  what-if comparisons. Report/scenario configuration is currently session-only.
+- Encrypted local workspaces, optional password prompting and independent encrypted backups.
+- Themes, quick entry, search, import review, reconciliation and categorization tools.
+- Existing private-server dashboard, planning and fictional bank-source review;
+  local workspaces remain separate and are never silently uploaded.
 
-No cross-device synchronization, real bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. Saved local workspaces require no server. The optional [Sandbox client preview](docs/SERVER_SANDBOX_CLIENT.md) requires a separately configured private HTTPS server. The web build retains the sample/server interface; it does not provide browser-local financial storage.
+**Not enabled:** real bank feeds, local/server synchronization, multi-currency,
+automatic posting or in-app installation. Advanced local tools are not all
+available on the server. See the [feature guide](docs/FEATURE_GUIDE.md) and
+[replacement roadmap](docs/REPLACEMENT_ROADMAP.md); no MoneyWiz/PocketSmith parity is claimed.
 
 ## Download
 
-Use **Budgetism-Windows-x64-development** from the successful GitHub Actions run recorded in [the handoff](DEVELOPMENT_HANDOFF.md). Do not download the source snapshot or updater-only binary to run the application. Extract the outer artifact ZIP and then the inner **Budgetism-Windows-x64.zip**. Keep Budgetism.exe, every DLL and the data folder together.
+**No GitHub release is published.** Verified development downloads are retained as
+[GitHub Actions artifacts](https://github.com/TechSavage1989/budgetism/actions/workflows/build-checks.yml).
+Use only the successful, exact run identified in the [current handoff](DEVELOPMENT_HANDOFF.md),
+and choose **Budgetism-Windows-x64-development**, not the source or updater-only artifact.
+Artifact downloads may require GitHub sign-in and expire. The separately delivered
+verified client ZIP is an alternative.
 
-Development artifacts are temporary test downloads, not GitHub releases. Before delivery, CI must build/test and scan both the exact Windows ZIP and extracted runtime files with Microsoft Defender. Scan evidence is retained separately. A clean scan is not signing, an independent audit or universal browser reputation. Do not bypass antivirus detections; retain the exact detection name and affected file for investigation.
+[Release index](https://github.com/TechSavage1989/budgetism/releases) is the intended
+release/update destination, currently empty. Development artifacts are not stable
+releases. Packages are unsigned. Exact-package Defender scans do not establish
+publisher identity or guarantee every antivirus/browser will accept a download.
+Never bypass a malware detection.
 
 ## Requirements
 
-Windows x64 for the validated portable distribution. No Flutter, developer tools, bank connection or server is required to run the saved local workspace. Other native targets remain unvalidated. Use the same Windows account and its protected key store when replacing only the program folder.
+- Windows x64 for the validated portable distribution; other native targets are unvalidated.
+- All files from the application ZIP, including DLLs and the data folder.
+- No developer tools, bank account connection or server for a local workspace.
+- The same Windows account/protected key store for existing device-unlocked data.
+- Existing private HTTPS server access only if using an already configured server session.
+
+Web compilation is tested; browser-local financial storage is not implemented.
+No server setup is part of the current work.
 
 ## Getting started
 
-Export a backup before testing a newer build, retain its separate password, and close all Budgetism windows. Extract the new application into its own folder and launch Budgetism.exe. Choose **Open local workspace** for saved records; **Explore with sample data** is temporary and separate. Do not delete or recreate the saved workspace when updating.
-
-Settings provides direct access to categories, categorization rules/history, saved import profiles, statements, workspace security and backups. The previous User options routes remain available. Narrow windows offer the full navigation through More. Local password prompting is optional; independently encrypted exports still require a backup password. There is no recovery of a forgotten backup password or lost device key without a usable backup.
+1. Before replacing a working client, export an encrypted backup and retain its
+   separate password. Close Budgetism; do not delete or recreate its workspace.
+2. Download the verified development artifact. Extract the outer ZIP, then the
+   inner **Budgetism-Windows-x64.zip**, into a separate program folder.
+3. Keep every bundled file together and run **Budgetism.exe**. Confirm the version
+   against the [handoff](DEVELOPMENT_HANDOFF.md).
+4. Choose **Open local workspace** for saved records. **Explore with sample data**
+   is fictional, temporary and separate.
+5. For an existing server session, use its existing explicit HTTPS connection and
+   sign-in flow. Do not rerun server installation or a database upgrade for a client-only update.
 
 ## How to use
 
-Home separates recorded balances through today from future-dated actuals, scheduled plans and forecasts. Its budget shortcut opens the current month. Accounts and Transactions continue to include all recorded dates. See [everyday use](docs/DAILY_USE.md).
+- **Home** shows recorded balances through today. Future actuals, schedules and
+  projections are distinct; they are not bank-reported available balances.
+- **Transactions** records actual money movement. Budget allocations and plans do
+  not move money. Use **Match existing** instead of posting a scheduled payment twice.
+- **Reports > Graphs** selects a measure and line/bar view. Use the dates/accounts
+  controls and exact-value table to inspect the same underlying recorded totals.
+- **Forecast > Configure forecast** chooses a horizon and included schedules.
+  **Apply** changes only the what-if view; **Cancel** discards edits and **Reset baseline**
+  restores all schedules and 30 days. No setting here posts a transaction.
+- **Settings** opens themes, categories, imports, security and backups. Narrow
+  windows provide additional destinations through **More**.
 
-Connections stages a fictional feed locally. Use separate fictional accounts, review the opening baseline, and explicitly approve the format upgrade before mapping. Needs Review controls recording, linking, paired transfers and corrections. Refresh never alters recorded spending or user categories/notes. Reconciled corrections require reopening statements or keeping the recorded entry unchanged. See [bank synchronization](docs/BANK_SYNC.md) and [desktop test steps](docs/WINDOWS_TESTING.md). No live bank enrollment, credentials, remote service or background retrieval is enabled.
-
-Record actual income/expenses/transfers in Transactions. Budget allocations and schedules do not move money. Record a scheduled occurrence only when appropriate, or use Match existing when its actual transaction is already present. CSV preview is read-only until explicit import; review signs, dates, categories, transfer direction and duplicate decisions.
-
-Accounts > Reconcile statements compares outstanding recorded entries with a signed statement closing balance. The first statement starts at the account opening balance; later statements start at the prior completed closing balance. Select only entries cleared on the statement. Finish requires exact zero difference and review confirmation. No balancing transactions are created. Reopen the latest statement with a reason before correcting a protected transaction. Transfers remain protected while reconciled on either side.
-
-Reports reads existing records without a new format upgrade. Select dates/accounts and inspect Overview, Categories, Monthly or Balances. CSV exports are unencrypted, require explicit confirmation and are not backups. See [report semantics](docs/REPORTS.md), including the limits of undated opening balances.
-
-The first reconciliation completion still requires backup/consent for financial schema 5. Viewing alone does not upgrade. Older builds cannot read the upgraded workspace. See [reconciliation semantics](docs/RECONCILIATION.md) and [the new-feature desktop test](docs/WINDOWS_TESTING.md). Earlier budgeting/import/forecast setup tests need not be repeated.
-
-Categorization rules are opened from **User options > Manage categories > Categorization rules**. Add a rule, then generate a dated preview and select the entries to change. Saving a rule does not change transactions, and no rule runs automatically. Category changes can move spending between budgets, but account balances and transaction counts stay unchanged. Reconciled, split, transfer and voided entries are excluded. The first rule save needs backup/consent for financial schema 6; older builds cannot open it. See [categorization rules](docs/CATEGORIZATION_RULES.md).
-
-The local Transactions screen now provides combined search and filters. Search words are ANDed; use quoted phrases or a minus-prefixed exclusion. Amount filters/sorting use the full unsigned transaction amount. A category filter uses that category's exact contribution in income/expense summaries. Transfers are listed separately, never as spending. Voided entries are hidden by default and excluded from totals when shown. Filters stay in this workspace session only. Select a row to inspect it, then explicitly choose Edit transaction when allowed. No format upgrade. See [register behavior](docs/TRANSACTION_REGISTER.md).
-
-CSV import profiles save only mapping settings and defaults inside the encrypted workspace. Select a file and profile, choose Apply selected profile, review its mapping and destination account, then preview before importing. Missing or ambiguous mapped headers are rejected. First profile save requires backup/consent for schema 7, which older apps cannot open. See [saved import profiles](docs/IMPORT_PROFILES.md).
-
-Categorization rules > History shows prior batches and supports reviewed, reasoned, category-only undo when every affected transaction remains unchanged and unprotected. See [category history](docs/CATEGORY_HISTORY.md).
-
-During CSV review, **Review category suggestions** uses saved enabled rules for eligible new rows. Nothing is selected automatically. Acceptance only changes the unsaved preview; the final CSV review/import remains separate. Manual categories, matches, transfers, handled and skipped rows are protected. No new format upgrade. See [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md).
-
-Date fields have a calendar-month icon; choose a day and Use date rather than typing. Optional end dates can be cleared. Register and rule ranges support calendar ranges and common shortcuts, preserving other filters. Budget month navigation now offers a month grid and year picker. Transaction entry has Today and Yesterday. Choosing or cancelling a date never saves a transaction by itself, and locked dates remain protected. See [date controls](docs/DATE_CONTROLS.md).
-
-When adding local transactions, account/category fields are searchable and payees can be completed from existing local history. Save and add another explicitly commits one entry, then clears amount, payee, notes, splits and transfer destination. The ordinary category, account, type and date remain only for the open dialog. Closing does not undo entries already saved. No personal defaults or search terms are written to unencrypted preferences.
+CSV reports are **unencrypted and not backups**. Export requires explicit consent
+and a chosen destination. Reconciled records require explicit reopening before
+protected changes. See [detailed workflows](docs/FEATURE_GUIDE.md),
+[report semantics](docs/REPORTS.md) and [forecast controls](docs/REPORT_FORECAST_DEV25.md).
 
 ## Updates and settings
 
-The public release checker uses caching, rate limits and verified downloads. No release feed exists yet and installation remains disabled pending native end-to-end update validation. Stable filenames are Budgetism.exe and Budgetism-Windows-x64.zip. Settings and data are per-user, not beside the executable.
+The implemented public release checker runs asynchronously at startup, every five
+minutes while active, and on focus return after at least two minutes. **Check for
+updates** is also available on the connection screen/user controls. Requests are
+single-flight with caching/ETags, cooldowns and throttling; failures do not mean
+“up to date.” No release is currently available.
 
-Windows workspace: %LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3. Copying that database alone is not a portable backup. Read [local storage](docs/LOCAL_STORAGE.md) before changing recovery or security behavior.
+Downloading is explicit when a verified eligible release exists. **Install and
+restart is disabled** pending full previous-release-to-new-release native testing.
+Do not assume timer logic or helper unit tests prove installation/rollback/relaunch.
+See the [update release gate](docs/UPDATES.md).
+
+Stable names are **Budgetism.exe** and **Budgetism-Windows-x64.zip**. Data and
+settings are per-user, not beside the executable. The Windows local workspace is
+`%LOCALAPPDATA%/Budgetism/finance/workspace.sqlite3`; copying it alone is not a
+portable backup. Keep independent encrypted backups and their passwords.
 
 ## Troubleshooting
 
-Keep all supporting files after extraction. An older executable must not open a newer financial schema; use the pre-upgrade exported backup for recovery rather than deleting application data. Stale-window errors require closing and reopening the workspace. A nonzero statement difference requires reviewing entries and balances, not forcing an adjustment. Report the exact message without posting private financial data.
+- Missing DLLs: re-extract the complete verified ZIP rather than copying only the EXE.
+- Antivirus warning: retain the exact detection name and affected file; do not disable protection.
+- Stale-window error: close and reopen the workspace before retrying.
+- Wrong schema/older build: use the pre-upgrade encrypted backup; do not delete data.
+- Lost device key or backup password: there is no bypass recovery without a usable backup.
+- Connection failure: use the existing trusted HTTPS address; never disable certificate validation.
 
 ## Development
 
-Read AGENTS.md and DEVELOPMENT_HANDOFF.md before changes. Source is Flutter/Dart with a retained .NET API, PostgreSQL design, Go update helper and non-publishing GitHub Actions validation. Do not enable server deployment, integrations, releases, tags or automatic installation without the relevant authorization.
+Read [AGENTS.md](AGENTS.md) and [DEVELOPMENT_HANDOFF.md](DEVELOPMENT_HANDOFF.md) first.
+The current source is on the development branch identified there; **main is an
+older checkpoint**, not the latest implementation.
 
-Flutter remains pinned to 3.47.8 in CI. Generate temporary runners, resolve packages, run analysis and all unit/widget tests, then the native security/schedule/import/matching/reconciliation/rules/undo/profiles/CSV-rules/quick-entry/bank-sync write/read process pairs and planning/report/register preservation tests plus native calendar UI/save/reopen checks. Build Windows/web with APP_VERSION=0.1.0-dev.24. Run the source-layout and package-verifier negative controls, backend ledger contracts, Go tests and the exact-package scan. Record any unperformed checks explicitly.
+[Build/test commands and code map](docs/DEVELOPMENT.md) cover Flutter, the retained
+.NET API and Go updater helper. [Dev.25 validation](docs/DEV25_VALIDATION.md) records
+the verified package; [development history](docs/releases/development-history-through-dev25.md)
+preserves earlier milestones. No license is asserted solely from public visibility.
 
-Supporting details: [everyday use](docs/DAILY_USE.md), [bank connection plan](docs/BANK_CONNECTION_PLAN.md), [date controls](docs/DATE_CONTROLS.md), [next usability priorities](docs/USABILITY_ROADMAP.md), [CSV rule suggestions](docs/CSV_RULE_SUGGESTIONS.md), [import profiles](docs/IMPORT_PROFILES.md), [category history](docs/CATEGORY_HISTORY.md), [register](docs/TRANSACTION_REGISTER.md), [categorization rules](docs/CATEGORIZATION_RULES.md), [status](docs/IMPLEMENTATION_STATUS.md), [recurring](docs/RECURRING.md), [matching](docs/MATCHING.md), [CSV](docs/CSV_IMPORT.md), [planning](docs/PLANNING.md), [reconciliation](docs/RECONCILIATION.md), [reports](docs/REPORTS.md), [validation](docs/VALIDATION.md), and [development notes](docs/releases/0.1.0-dev.18.md).
+The current scope excludes server setup, Codex CLI automation, unattended workers,
+payment/API-account setup, real bank linkage, release/tag publication and access
+changes. Existing authorized development-branch source/workflow sync is separate
+from release permission.

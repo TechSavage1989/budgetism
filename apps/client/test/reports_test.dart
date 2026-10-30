@@ -125,7 +125,7 @@ void main() {
     }
     final detail = CsvTable.parse(ReportCsv.encode(r, ReportExport.transactions));
     expect(detail.records.length, 4);
-    expect(detail.records.where((row) => row[4] == 'expense').map((row) => row[8]).toList()..sort(), ['140.00', '30.00', '60.00']);
+    expect(detail.records.where((row) => row[detail.headers.indexOf('Type')] == 'expense').map((row) => row[detail.headers.indexOf('Category contribution USD')]).toList()..sort(), ['140.00', '30.00', '60.00']);
     final balances = CsvTable.parse(ReportCsv.encode(r, ReportExport.balances));
     expect(balances.records.any((row) => row.last == '-100.00'), isTrue);
   });
@@ -134,12 +134,12 @@ void main() {
       var l = reconcileFixture(); final t = LocalLedger.rows(l.data['transactions']).last;
       l = l.apply('transaction', {...t, 'operationId': 'text', 'expectedVersion': t['version'], 'payee': value});
       final table = CsvTable.parse(ReportCsv.encode(reportFor(l), ReportExport.transactions));
-      expect(table.records.firstWhere((row) => row[4] == 'expense')[6], startsWith('Text: '));
+      expect(table.records.firstWhere((row) => row[table.headers.indexOf('Type')] == 'expense')[table.headers.indexOf('Payee')], startsWith('Text: '));
     }
     var l = reconcileFixture(); final t = LocalLedger.rows(l.data['transactions']).last;
     l = l.apply('transaction', {...t, 'operationId': 'quoted', 'expectedVersion': t['version'], 'payee': 'Shop, "quoted"\nnext line'});
     final table = CsvTable.parse(ReportCsv.encode(reportFor(l), ReportExport.transactions));
-    expect(table.records.firstWhere((row) => row[4] == 'expense')[6], 'Shop, "quoted" next line');
+    expect(table.records.firstWhere((row) => row[table.headers.indexOf('Type')] == 'expense')[table.headers.indexOf('Payee')], 'Shop, "quoted" next line');
   });
   test('empty workspace produces valid zero totals and header-only detail', () {
     final l = LocalLedger.empty(), r = reportFor(l);

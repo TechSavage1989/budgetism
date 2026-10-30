@@ -8,6 +8,8 @@ import 'ledger.dart';
 import 'recurrence.dart';
 import 'reports.dart';
 import 'report_charts.dart';
+import 'report_comparison.dart';
+import 'report_comparison_widgets.dart';
 
 typedef ReportSaver = Future<bool> Function(String filename, String content);
 
@@ -38,7 +40,8 @@ class _ReportPanelState extends State<ReportPanel> {
   String get _today => widget.today ?? Recurrence.today();
   String _period = 'This month', _view = 'Overview', _kind = 'Expense';
   String? _customFrom, _customThrough;
-  Set<String>? _accounts;
+  Set<String>? _accounts, _categoryIds;
+  ReportComparisonPeriod _comparison = ReportComparisonPeriod.none;
   String? _message;
   bool _exporting = false;
   ReportExport _export = ReportExport.summary;
@@ -89,6 +92,31 @@ class _ReportPanelState extends State<ReportPanel> {
     if (result != null && mounted) setState(() { _accounts = result; _message = null; });
   }
 
+  Future<void> _chooseCategories(List<Json> categories) async {
+    final chosen = Set<String>.from(_categoryIds ?? categories.map((c) => c['id'] as String));
+    final result = await showDialog<Set<String>>(context: context, builder: (dialogContext) =>
+      StatefulBuilder(builder: (context, update) => AlertDialog(title: const Text('Report category scope'),
+        content: SizedBox(width: 440, height: 350, child: Column(children: [
+          const Text('Includes only selected category contributions, including splits. Account balances remain whole-account totals. Archived categories retain their history.'),
+          Wrap(spacing: 8, children: [
+            TextButton(onPressed: () => update(() { chosen.addAll(categories.map((c) => c['id'] as String)); }), child: const Text('All categories')),
+            TextButton(key: const ValueKey('report-no-categories'), onPressed: () => update(chosen.clear), child: const Text('No categories')),
+          ]),
+          Expanded(child: ListView(children: [for (final c in categories) CheckboxListTile(
+            key: ValueKey('report-category-choice-${c['id']}'), title: Text(c['name'] as String),
+            subtitle: Text('${c['kind']}${c['archived'] == true ? ' · Archived' : ''}'),
+            value: chosen.contains(c['id']), onChanged: (value) => update(() {
+              if (value == true) { chosen.add(c['id'] as String); } else { chosen.remove(c['id']); }
+            }))])),
+        ])),
+        actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(key: const ValueKey('apply-report-categories'),
+            onPressed: () => Navigator.pop(dialogContext, chosen), child: const Text('Apply categories'))])));
+    if (result != null && mounted) {
+      setState(() { _categoryIds = result.length == categories.length ? null : result; _message = null; });
+    }
+  }
+
   Future<void> _exportCsv(FinanceReport report) async {
     if (_exporting) return;
     final type = _export;
@@ -97,6 +125,7 @@ class _ReportPanelState extends State<ReportPanel> {
       final accepted = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
         title: const Text('Export an unencrypted report?'),
         content: Text('${ReportCsv.label(type)} for ${report.from} through ${report.through}. '
+          'Category scope: ${report.categoryScope}. Balances remain whole selected-account totals. Comparison values are not included. '
           'This CSV contains financial information outside workspace encryption. Save it somewhere private. '
           'It is not a backup. Formula-like text is prefixed with "Text: " and control characters are replaced.'),
         actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
@@ -119,10 +148,21 @@ class _ReportPanelState extends State<ReportPanel> {
     final accounts = LocalLedger.rows(data['accounts']);
     final (from, through) = _range();
     FinanceReport? report;
-    String? error;
+    String? error, comparisonError;
+    FinanceReport? comparisonReport;
+    List<ReportComparisonValue>? comparisonValues;
     try {
-      report = ReportEngine.calculate(data, from: from, through: through, today: _today, accountIds: _accounts);
+      report = ReportEngine.calculate(data, from: from, through: through, today: _today, accountIds: _accounts, categoryIds: _categoryIds);
     } on FormatException catch (e) { error = e.message; }
+    if (report != null && _comparison != ReportComparisonPeriod.none) {
+      try {
+        final range = ReportComparisonRange.forPeriod(from, through, _comparison);
+        final previous = ReportEngine.calculate(data, from: range.from, through: range.through,
+          today: _today, accountIds: _accounts, categoryIds: _categoryIds);
+        comparisonValues = ReportComparisonValue.from(report, previous);
+        comparisonReport = previous;
+      } on FormatException catch (e) { comparisonError = e.message; }
+    }
     final canExport = widget.saveCsv != null || (!kIsWeb &&
       [TargetPlatform.windows, TargetPlatform.macOS, TargetPlatform.linux].contains(defaultTargetPlatform));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -140,6 +180,27 @@ class _ReportPanelState extends State<ReportPanel> {
       ]),
       const SizedBox(height: 12),
       Text('$from through $through (inclusive) - USD'),
+      const SizedBox(height: 12),
+      Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        OutlinedButton.icon(key: const ValueKey('report-category-scope'), onPressed: _exporting ? null :
+          () => _chooseCategories(LocalLedger.rows(data['categories'])), icon: const Icon(Icons.filter_alt_outlined),
+          label: Text(_categoryIds == null ? 'All categories' : _categoryIds!.isEmpty ? 'No categories' : '${_categoryIds!.length} selected categories')),
+        SizedBox(width: 280, child: DropdownButtonFormField<ReportComparisonPeriod>(
+          key: ValueKey('report-comparison-${_comparison.name}'), initialValue: _comparison, isExpanded: true,
+          decoration: const InputDecoration(labelText: 'Compare with', border: OutlineInputBorder()),
+          items: [for (final mode in ReportComparisonPeriod.values) DropdownMenuItem(value: mode,
+            child: Text(mode.label, overflow: TextOverflow.ellipsis))],
+          onChanged: _exporting ? null : (value) => setState(() { _comparison = value!; }))),
+        TextButton(key: const ValueKey('reset-report-controls'), onPressed: _exporting ? null : () => setState(() {
+          _accounts = null; _categoryIds = null; _comparison = ReportComparisonPeriod.none;
+          _period = 'This month'; _customFrom = null; _customThrough = null; _view = 'Overview'; _message = null;
+        }), child: const Text('Reset report')),
+      ]),
+      const Padding(padding: EdgeInsets.only(top: 8), child: Text('Session-only controls. Category scope affects income, expenses and net income, not account balances or transfers.')),
+      if (report != null) Text('Category scope: ${report.categoryScope}'),
+      if (comparisonError != null) Text('Comparison unavailable: $comparisonError',
+        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+
       if (accounts.isEmpty) const Padding(padding: EdgeInsets.all(16), child: Text('Create an account to start reporting.')),
       if (error != null) Padding(padding: const EdgeInsets.all(12), child: Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error))),
       if (report != null && accounts.isNotEmpty) ...[
@@ -148,6 +209,10 @@ class _ReportPanelState extends State<ReportPanel> {
           ChoiceChip(key: ValueKey('report-view-$view'), label: Text(view), selected: _view == view,
             onSelected: (_) => setState(() => _view = view))]),
         const SizedBox(height: 16),
+        if (comparisonReport != null && comparisonValues != null) ...[
+          ReportComparisonPanel(current: report, previous: comparisonReport, values: comparisonValues),
+          const SizedBox(height: 16),
+        ],
         if (_view == 'Overview') _overview(report),
         if (_view == 'Graphs') ReportCharts(report: report),
         if (_view == 'Categories') _categories(report),
@@ -176,11 +241,11 @@ class _ReportPanelState extends State<ReportPanel> {
   Widget _overview(FinanceReport report) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     Wrap(spacing: 10, runSpacing: 10, children: [
       _metric('Income', report.income), _metric('Expenses', report.expense),
-      _metric('Net income', report.netIncome), _metric('Closing recorded net balance', report.closing),
+      _metric('Net income', report.netIncome), _metric('Whole-account closing balance', report.closing),
     ]),
     const SizedBox(height: 16),
-    Text('${report.transactions.length} income/expense transactions; ${report.transferCount} transfers excluded from income/spending.'),
-    Text('Selected account balance change: ${money(report.balanceChange)}. Transfers outside the selected accounts can make this differ from net income.'),
+    Text('${report.transactions.length} transactions contributing to selected categories; ${report.transferCount} transfers excluded from income/spending.'),
+    Text('Selected account balance change: ${money(report.balanceChange)}. Transfers outside selected accounts and category filters can make this differ from scoped net income.'),
     if (report.transactions.isEmpty) const Padding(padding: EdgeInsets.only(top: 12), child: Text('No income or expenses in this selection.')),
     const SizedBox(height: 12),
     TextButton.icon(onPressed: () => setState(() => _view = 'Categories'),
@@ -220,7 +285,7 @@ class _ReportPanelState extends State<ReportPanel> {
         Text(BudgetEngine.label(m.month), style: Theme.of(context).textTheme.titleMedium),
         _bar('Income', m.income, maximum, Theme.of(context).colorScheme.primary),
         _bar('Expenses', m.expense, maximum, Theme.of(context).colorScheme.secondary),
-        Wrap(spacing: 16, runSpacing: 4, children: [Text('Net income: ${money(m.net)}'), Text('Closing recorded net balance: ${money(m.closing)}')]),
+        Wrap(spacing: 16, runSpacing: 4, children: [Text('Net income: ${money(m.net)}'), Text('Whole-account closing balance: ${money(m.closing)}')]),
       ]))),
     ]);
   }
@@ -232,7 +297,7 @@ class _ReportPanelState extends State<ReportPanel> {
     ]));
 
   Widget _balances(FinanceReport report) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text('Selected recorded net balance: ${money(report.closing)}'),
+    Text('Whole-account recorded net balance: ${money(report.closing)} (category filter does not apply)'),
     const Text('Starting balances are immediately before the selected period. Transfers change individual accounts, not income or spending.'),
     for (final a in report.balances) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(a.name, style: Theme.of(context).textTheme.titleMedium), Text(a.type.replaceAll('_', ' ')),

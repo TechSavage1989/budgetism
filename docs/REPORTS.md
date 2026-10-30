@@ -1,5 +1,7 @@
 # Financial reports
 
+Dev.26 candidate adds [category scopes and historical comparisons](REPORT_CONTROLS_DEV26.md). These are session-only read controls; category filters affect income/spending contributions, never whole selected-account balances. CSV carries category/balance scope metadata and remains current-period-only. Final validation is pending.
+
 Dev.10 adds a read-only Reports destination in the saved local workspace. No financial schema, encryption, SQLite, security preference or dependency change is introduced. Reporting does not create transactions, mark items cleared, change reconciliation locks, post schedules or synchronize records.
 
 ## Scope and dates

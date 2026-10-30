@@ -173,7 +173,7 @@ class _ReportChartsState extends State<ReportCharts> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Monthly totals; first and last months may be partial. ${_metric == ReportChartMetric.recordedBalance ? 'Closing signed balances, including debt and transfers; not market values or a bank forecast.' : 'Transfers and opening balances are excluded. Negative spending means net refunds.'}',
+          'Monthly totals; first and last months may be partial. ${_metric == ReportChartMetric.recordedBalance ? 'Whole-account closing signed balances, unaffected by category filters; includes debt and transfers, not market values or a bank forecast.' : 'Transfers and opening balances are excluded. Negative spending means net refunds.'}',
         ),
         if (scale.minimum == 0 && scale.maximum == 0)
           const Padding(
