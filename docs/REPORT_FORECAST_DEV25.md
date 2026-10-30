@@ -1,6 +1,6 @@
 # Dev.25 report graphs and forecast controls
 
-Client-only development candidate following verified dev.24. No new financial
+Verified client-only development package following dev.24. No new financial
 schema, encryption, database/API deployment or dependency is required. It operates
 on the same loaded local or server display snapshots; no provider is contacted.
 
@@ -31,17 +31,15 @@ this increment. Forecasts are plans, not predictions or bank-reported balances.
 
 ## Verification and delivery
 
-At candidate creation, local/native CI and package scans are pending. Do not
-install or call the candidate verified until final source tests, Windows native
-checks, package identity/hashes and exact ZIP/extracted Defender scans pass.
-The installed dev.24 API, database, keys and client are preserved. Its actual
-planning first-use acceptance remains user-unconfirmed; synthetic test evidence
-must not be described as authenticated live-user validation.
+[Final verification](DEV25_VALIDATION.md) records all six passing hosted jobs,
+372 tests, all 34 retained/extended native Windows commands, inspected fictional
+screenshots and independent package/hash/Defender checks. The exact verified
+client ZIP is delivered separately. No private installation was attempted.
+The installed dev.24 API, database, keys and client are preserved. Actual user
+acceptance remains unconfirmed; synthetic tests are not authenticated live-user
+validation.
 
 Local source-layout and Windows-package negative controls passed. Local Flutter
 validation was not run: SDK bootstrap was stopped by automatic review for an
-unexpected instance-metadata request. No workaround or retry was used. The
-existing authorized hosted workflow will supply Flutter/native/package evidence.
-Local server-package guards could not run because PowerShell is absent; the
-system go command is not the Go compiler. These unchanged components retain
-their hosted checks. No missing local check is reported as passed.
+unexpected instance-metadata request. No workaround or retry was used. Hosted
+checks supplied Flutter/native evidence without changing security permissions.

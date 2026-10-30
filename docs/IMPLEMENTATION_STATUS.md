@@ -1,6 +1,6 @@
 # Current implementation state
 
-Dev.25 is an unverified client-only candidate for configurable report graphs and read-only forecast scenarios. See [scope and boundaries](REPORT_FORECAST_DEV25.md). Dev.24 remains the verified delivery; no new package or private installation is claimed.
+Dev.25 is a verified client-only development package for configurable report graphs and read-only forecast scenarios. All six jobs, 372 tests, 34 native commands and exact package scans passed; see [verification](DEV25_VALIDATION.md). Configuration remains session-only. No private installation, server change, new migration or live-bank access occurred.
 
 Dev.24 delivers the verified [server planning suite](SERVER_PLANNING.md): budgets, recurring schedules, calendar/forecasts, report/account trends, custom categories, labels and saved searches. All six CI jobs, 359 client tests, 34 native Windows commands and exact package scans passed; see [DEV24_VALIDATION.md](DEV24_VALIDATION.md). The explicit private additive upgrade preserved all 14 prior table digests, and fresh isolated recovery matched all 17 tables with a protected key copy. Verified API health/owner/enrollment/authentication checks passed. The separately staged client is the owned shortcut target; the prior executable and current window remain. New planning first use is not yet user-confirmed. Local advanced mutation tools and workspaces remain separate.
 
