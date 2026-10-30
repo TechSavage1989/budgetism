@@ -163,12 +163,14 @@ Future<UpdateStartupResult> applyPendingClientUpdate() async {
 
 /// The helper chooses the challenge. Never write a path outside this app's
 /// update-attempt directory, even if environment variables were manipulated.
-Future<void> markClientUpdateReady() async {
-  if (!Platform.isWindows) return;
+bool requiresClientUpdateCommit() => Platform.isWindows && Platform.environment.containsKey('BUDGETISM_UPDATE_READY_PATH');
+
+Future<bool> markClientUpdateReady() async {
+  if (!Platform.isWindows) return true;
   final env = Platform.environment, path = Platform.environment['BUDGETISM_UPDATE_READY_PATH'];
-  if (path == null) return;
+  if (path == null) return true;
   final nonce = env['BUDGETISM_UPDATE_READY_NONCE'], version = env['BUDGETISM_UPDATE_VERSION'];
-  if (nonce == null || !RegExp(r'^[a-f0-9]{64}$').hasMatch(nonce) || version != budgetismVersion) return;
+  if (nonce == null || !RegExp(r'^[a-f0-9]{64}$').hasMatch(nonce) || version != budgetismVersion) return false;
   try {
     final root = await _root(), file = File(path);
     final attempts = Directory(_join(root.path, 'attempts'));
@@ -177,13 +179,28 @@ Future<void> markClientUpdateReady() async {
         !RegExp(r'^[a-f0-9-]{36}$').hasMatch(parent.uri.pathSegments.where((s) => s.isNotEmpty).last) ||
         parent.parent.absolute.path.toLowerCase() != attempts.absolute.path.toLowerCase() ||
         await FileSystemEntity.type(parent.path, followLinks: false) != FileSystemEntityType.directory) {
-      return;
+      return false;
     }
     // Canonical parent containment also rejects junction/symlink escapes.
     final canonicalAttempts = (await attempts.resolveSymbolicLinks()).toLowerCase();
     final canonicalParent = Directory(await parent.resolveSymbolicLinks());
-    if (canonicalParent.parent.path.toLowerCase() != canonicalAttempts) return;
+    if (canonicalParent.parent.path.toLowerCase() != canonicalAttempts) return false;
     await _installedHelper();
+    final requestId = parent.uri.pathSegments.where((s) => s.isNotEmpty).last;
+    final admitted = await _readObject(File(_join(parent.path, 'admitted.json')));
+    if (admitted['requestId'] != requestId || admitted['status'] != 'admitted') return false;
     await _writeObject(file, {'version': budgetismVersion, 'nonce': nonce, 'pid': pid});
+    final receipt = File(_join(parent.path, 'result.json'));
+    final deadline = DateTime.now().add(const Duration(minutes: 2));
+    while (DateTime.now().isBefore(deadline)) {
+      if (await receipt.exists()) {
+        final result = await _readObject(receipt);
+        if (result['requestId'] != requestId || result['version'] != admitted['version']) return false;
+        return (result['status'] == 'installed' && result['version'] == budgetismVersion) ||
+          (result['status'] == 'rolledBack' && env['BUDGETISM_UPDATE_ROLLBACK'] == '1');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
   } catch (_) { /* Missing readiness safely triggers helper rollback. */ }
+  return false;
 }

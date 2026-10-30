@@ -79,3 +79,14 @@ bootstrap is required before later automatic updates can operate.
 
 This document is a candidate contract, not completed acceptance evidence. Record
 the final exact source, tests, artifacts and remaining limits before delivery.
+
+### Candidate-process interaction barrier
+
+A process launched by the updater first renders a neutral verification screen,
+not the connection screen or a financial workspace. It acknowledges its exact
+version, nonce and process identity only after that Flutter frame succeeds, then
+waits for the matching helper completion receipt before constructing the real
+application. Failed or mismatched candidates remain inert while program rollback
+occurs. The restored process also waits for its rollback receipt. Startup health
+is not an authenticated financial-workflow acceptance test. Ordinary launches
+without an updater challenge do not take this trial path.

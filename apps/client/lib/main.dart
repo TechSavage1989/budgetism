@@ -52,13 +52,55 @@ Future<void> startBudgetism({Future<UpdateStartupResult> Function()? startup,
   UpdateStartupResult result;
   try { result = await (startup ?? applyPendingClientUpdate)(); }
   catch (_) { result = const UpdateStartupResult(message: 'Update startup checks failed. The existing application is available.'); }
-  if (mount == null) {
+  final trial = requiresClientUpdateCommit();
+  if (trial && mount == null) {
     _startupHadFrameworkError = false;
     _startupErrorHandler = FlutterError.onError;
     _startupErrorHook = true;
     FlutterError.onError = (details) { _startupHadFrameworkError = true; _startupErrorHandler?.call(details); };
   }
-  (mount ?? runApp)(BudgetismApp(startupMessage: result.message));
+  final app = trial ? UpdateCommitGate(
+    acknowledge: () async {
+      if (_startupErrorHook) { FlutterError.onError = _startupErrorHandler; _startupErrorHook = false; }
+      if (_startupHadFrameworkError) return false;
+      return markClientUpdateReady();
+    },
+    builder: () => BudgetismApp(startupMessage: result.message),
+  ) : BudgetismApp(startupMessage: result.message);
+  (mount ?? runApp)(app);
+}
+
+/// The candidate/rollback process may not create a financial or sign-in screen
+/// until the helper has committed its exact attempt. Failed trials stay inert.
+class UpdateCommitGate extends StatefulWidget {
+  const UpdateCommitGate({required this.acknowledge, required this.builder, super.key});
+  final Future<bool> Function() acknowledge;
+  final Widget Function() builder;
+  @override
+  State<UpdateCommitGate> createState() => _UpdateCommitGateState();
+}
+class _UpdateCommitGateState extends State<UpdateCommitGate> {
+  bool? _accepted;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var accepted = false;
+      try { accepted = await widget.acknowledge(); } catch (_) { /* Fail closed. */ }
+      if (mounted) setState(() => _accepted = accepted);
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    if (_accepted == true) return widget.builder();
+    return MaterialApp(home: Scaffold(body: Center(child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(_accepted == null
+        ? 'Finishing Budgetism update verification. Your financial workspace is not open.'
+        : 'Update verification did not complete. Keep this window open while recovery finishes. No financial workspace has been opened.',
+        textAlign: TextAlign.center),
+    ))));
+  }
 }
 
 class BudgetismApp extends StatefulWidget {
@@ -97,10 +139,6 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     _updateNotice = widget.startupMessage;
     _startReleaseChecks();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_startupErrorHook) { FlutterError.onError = _startupErrorHandler; _startupErrorHook = false; }
-      if (mounted && !_startupHadFrameworkError) unawaited(markClientUpdateReady());
-    });
   }
 
   Future<void> _startReleaseChecks() async {

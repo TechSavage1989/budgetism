@@ -44,6 +44,26 @@ void main() {
       archiveUrl: old.archiveUrl, sha256: 'b' * 64);
     expect(isCurrentDownloadSelection(old, ReleaseCheckResult(ReleaseCheckStatus.updateAvailable, '', latest: changed)), isFalse);
   });
+  testWidgets('trial process cannot create financial UI until helper commits', (tester) async {
+    final receipt = Completer<bool>(); var created = 0;
+    await tester.pumpWidget(UpdateCommitGate(acknowledge: () => receipt.future,
+      builder: () { created++; return const MaterialApp(home: Text('Financial session')); }));
+    await tester.pump();
+    expect(created, 0);
+    expect(find.text('Financial session'), findsNothing);
+    receipt.complete(true); await tester.pumpAndSettle();
+    expect(created, 1);
+    expect(find.text('Financial session'), findsOneWidget);
+  });
+  testWidgets('failed trial stays inert rather than opening a session during rollback', (tester) async {
+    var created = 0;
+    await tester.pumpWidget(UpdateCommitGate(acknowledge: () async => false,
+      builder: () { created++; return const MaterialApp(home: Text('Financial session')); }));
+    await tester.pumpAndSettle();
+    expect(created, 0);
+    expect(find.textContaining('Keep this window open'), findsOneWidget);
+  });
+
   testWidgets('startup admission blocks mounting every financial/session screen', (tester) async {
     final wait = Completer<UpdateStartupResult>(); Widget? mounted;
     final starting = startBudgetism(startup: () => wait.future, mount: (widget) => mounted = widget);
