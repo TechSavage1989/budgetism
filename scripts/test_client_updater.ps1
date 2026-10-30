@@ -114,8 +114,17 @@ try {
   # Corrupt content must fail before installation or launching a package executable.
   $corrupt=Join-Path $root 'corrupt.zip';Copy-Item $future $corrupt;[IO.File]::AppendAllText($corrupt,'corrupt')
   $digest=(Get-FileHash $future -Algorithm SHA256).Hash.ToLowerInvariant()
-  & (Join-Path $ProjectRoot 'build/tools/Budgetism-Updater.exe') --archive $corrupt --sha256 $digest --version 0.1.0-dev.28 --verify-only --require-update-protocol 1 --require-client-api-contract 1
-  Assert ($LASTEXITCODE -ne 0) 'Corrupt archive was accepted.'
+  # The shipped helper is a Windows GUI-subsystem executable. Capture its own
+  # process exit code, not PowerShell's potentially stale LASTEXITCODE.
+  $verifyInfo=[Diagnostics.ProcessStartInfo]::new((Join-Path $ProjectRoot 'build/tools/Budgetism-Updater.exe'))
+  $verifyInfo.UseShellExecute=$false; $verifyInfo.RedirectStandardError=$true
+  foreach($argument in @('--archive',$corrupt,'--sha256',$digest,'--version','0.1.0-dev.28','--verify-only','--require-update-protocol','1','--require-client-api-contract','1')) { $verifyInfo.ArgumentList.Add($argument) }
+  $verification=[Diagnostics.Process]::Start($verifyInfo)
+  try {
+    $errorText=$verification.StandardError.ReadToEndAsync()
+    if(-not $verification.WaitForExit(30000)) { $verification.Kill(); $verification.WaitForExit(); throw 'Corrupt-package verification timed out.' }
+    Assert ($verification.ExitCode -eq 1 -and $errorText.GetAwaiter().GetResult() -match 'release SHA-256 mismatch') 'Corrupt archive was not rejected with the expected digest failure.'
+  } finally { $verification.Dispose() }
   $results.Add([ordered]@{case='corrupt-package-refused';status='passed'})
   Assert ((Get-FileHash $PackageArchive -Algorithm SHA256).Hash -eq $originalHash) 'Final deliverable archive was changed by fixture tests.'
   [ordered]@{scope='Native fixture dev27 to dev28; not a shipped dev26 bootstrap';results=$results;finalArchiveUnchanged=$true}|ConvertTo-Json -Depth 8|Set-Content (Join-Path $evidence 'summary.json') -Encoding utf8
