@@ -1,6 +1,6 @@
 # Current implementation state
 
-Dev.23 candidate adds the [private-server dashboard](SERVER_DASHBOARD.md): signed through-day balances, month-to-date income/spending, top category/recent scope labels and full saved review counts. Cached provider values stay separate. It is read-only and schema-free; full validation and private program delivery remain pending.
+Dev.23 adds the [private-server dashboard](SERVER_DASHBOARD.md): signed through-day balances, month-to-date income/spending, category/recent scope labels and complete saved review counts. Cached provider values remain separate. All six CI jobs, 354 tests, 33 native commands and package scans passed; see [DEV23_VALIDATION.md](DEV23_VALIDATION.md). After a fresh protected 14-table recovery check, the schema-free API program upgrade passed HTTPS/owner/enrollment/authentication checks. A separate verified client was staged and the owned shortcut updated, preserving the previous program and current window. No financial/provider mutation or local upload occurred. User confirmation of the new Home remains pending.
 
 Dev.22 adds [themes and server review controls](THEMES_AND_REVIEW.md)
 from the user's selected [reference roadmap](PRODUCT_REFERENCE_PLAN.md). It adds

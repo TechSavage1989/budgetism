@@ -1,6 +1,10 @@
 # Budgetism development handoff
 
-Current candidate: dev.23 [private-server dashboard](docs/SERVER_DASHBOARD.md), authorized as the next milestone. Adds through-day recorded balances, month-to-date spending/income, category summaries, recent activity, full review counts and distinct cached provider references. Reads never call the provider or change finances/decisions. Local/demo remain separate. No schema migration; exact candidate CI/scans and protected private API/client delivery remain pending. Preserve the working dev.22 installation until verified.
+Dev.23 [private-server dashboard](docs/SERVER_DASHBOARD.md) is verified and privately delivered. It adds through-day recorded balances, month-to-date spending/income, category summaries, recent activity, full review counts and distinct cached provider references. Reads never call the provider or change finances/decisions; local/demo remain separate.
+
+All six CI jobs and the source archive passed for aaee33e9b711b3cc80e61811336dfce361c5ebf4: 354 client tests, 33 native commands, database/HTTP/recovery contracts and exact ZIP/extracted Defender scans. See [dev.23 verification](docs/DEV23_VALIDATION.md). A fresh protected isolated restore matched all 14 tables. Only the API program was upgraded; HTTPS health, owner, disabled enrollment, separate automatic service identities and unauthenticated dashboard rejection passed. No schema migration or data/provider mutation was performed.
+
+The verified client was staged separately and only the existing owned desktop shortcut updated. The previous executable hash and current window were preserved; no new client was automatically launched or authenticated. User confirmation of the new Home remains pending. Host details and credentials stay outside source. No real bank, public/LAN listener, release or tag was enabled.
 
 The user confirmed the dev.21 desktop shortcut works and requested themes/QoL
 using PocketSmith/MoneyWiz as functional references. Selected priorities are

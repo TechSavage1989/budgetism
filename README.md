@@ -2,7 +2,7 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.23 dashboard candidate.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. Candidate verification/delivery is pending.
+**0.1.0-dev.23 private-server dashboard.** Adds the [private-server overview](docs/SERVER_DASHBOARD.md): through-day recorded balances, spending/income, recent activity, category summaries and saved review counts, with cached provider balances kept separate. All six CI jobs passed: 354 tests, 33 native Windows commands and exact package scans. The schema-free private API program upgrade and separately staged client delivery passed; see [dev.23 verification](docs/DEV23_VALIDATION.md).
 
 **Verified dev.22 themes and review.** Adds [preset/custom-accent themes and server review controls](docs/THEMES_AND_REVIEW.md), following the user-selected [PocketSmith/MoneyWiz reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md). Preview appearance before Apply, combine source filters and explicitly batch Ignore, Keep unchanged or Reopen decisions. Financial posting remains individual review; local workspaces remain separate. The verified [address continuity](docs/SERVER_ADDRESS.md) and [fictional source pipeline](docs/SERVER_SANDBOX_REVIEW.md) remain intact. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification. This is not a production release.
 
