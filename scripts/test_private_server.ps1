@@ -115,6 +115,7 @@ try {
     Assert-Check $healthy 'API starts with bundled .NET and isolated PostgreSQL'
     Assert-Status 'GET' '/api/accounts' $null '' 401
     Assert-Status 'GET' '/api/bank/sandbox/state' $null '' 401
+    Assert-Status 'GET' '/api/dashboard?through=2026-10-30' $null '' 401
     $null = Invoke-Api 'POST' '/api/setup/owner' @{username='fictional_test_owner';password=$ownerPassword;bootstrapToken=$bootstrap}
     Assert-Status 'POST' '/api/bank/sandbox/preview' @{} '' 401
     $auth = Invoke-Api 'POST' '/api/auth/login' @{username='fictional_test_owner';password=$ownerPassword}
@@ -128,14 +129,22 @@ try {
     Assert-Status 'POST' '/api/accounts' $request $auth.token 409
     $categories = Invoke-Api 'GET' '/api/categories' $null $auth.token
     $expense = $categories | Where-Object kind -eq 'Expense' | Select-Object -First 1
-    $transaction = @{operationId=[Guid]::NewGuid().ToString();kind='expense';accountId=$account.id;counterpartyAccountId=$expense.id;amountMinor=8031;currency='USD';effectiveDate='2026-10-29';payee='Fictional Store';notes='Server smoke test only'}
+    $dashboardDay = [DateTime]::UtcNow.ToString('yyyy-MM-dd')
+    $transaction = @{operationId=[Guid]::NewGuid().ToString();kind='expense';accountId=$account.id;counterpartyAccountId=$expense.id;amountMinor=8031;currency='USD';effectiveDate=$dashboardDay;payee='Fictional Store';notes='Server smoke test only'}
     $saved = Invoke-Api 'POST' '/api/transactions' $transaction $auth.token
     $repeated = Invoke-Api 'POST' '/api/transactions' $transaction $auth.token
     Assert-Check ($saved.id -eq $repeated.id) 'Transaction retry does not duplicate'
     $accounts = @(Invoke-Api 'GET' '/api/accounts' $null $auth.token)
     Assert-Check ($accounts.Count -eq 1 -and $accounts[0].balanceMinor -eq 91969) 'Exact balance after fictional expense'
+    Assert-Status 'GET' '/api/dashboard?through=2026-02-30' $null $auth.token 400
+    $overview = Invoke-Api 'GET' ('/api/dashboard?through='+$dashboardDay) $null $auth.token
+    Assert-Check ($overview.netBalanceMinor -eq 91969 -and $overview.expenseMinor -eq 8031 -and
+        $overview.incomeMinor -eq 0 -and $overview.bank.status -eq 'disabled' -and $null -eq $overview.bank.needsReviewCount) 'Authenticated dashboard returns exact recorded totals and unavailable disabled review count'
+    $again = Invoke-Api 'GET' '/api/sync/snapshot' $null $auth.token
+    Assert-Check (@($again.transactions).Count -eq 2) 'Dashboard request did not create recorded entries'
     $null = Invoke-Api 'POST' '/api/auth/logout' $null $auth.token
     Assert-Status 'GET' '/api/accounts' $null $auth.token 401
+    Assert-Status 'GET' '/api/dashboard?through=2026-10-30' $null $auth.token 401
     Write-Output 'PASS: Server smoke test complete. No bank connection or persistent service installed.'
 } finally {
     if ($null -ne $api -and -not $api.HasExited) { Stop-Process -Id $api.Id; $api.WaitForExit(10000) | Out-Null }

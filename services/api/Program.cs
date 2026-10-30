@@ -65,6 +65,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 app.MapServerBank();
+app.MapDashboard();
 app.UseRouting();
 app.UseRateLimiter();
 

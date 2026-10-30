@@ -1,5 +1,7 @@
 # Budgetism development handoff
 
+Current candidate: dev.23 [private-server dashboard](docs/SERVER_DASHBOARD.md), authorized as the next milestone. Adds through-day recorded balances, month-to-date spending/income, category summaries, recent activity, full review counts and distinct cached provider references. Reads never call the provider or change finances/decisions. Local/demo remain separate. No schema migration; exact candidate CI/scans and protected private API/client delivery remain pending. Preserve the working dev.22 installation until verified.
+
 The user confirmed the dev.21 desktop shortcut works and requested themes/QoL
 using PocketSmith/MoneyWiz as functional references. Selected priorities are
 presets plus a custom accent, and clearer review filters/batch controls.

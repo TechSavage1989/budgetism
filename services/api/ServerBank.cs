@@ -100,6 +100,12 @@ public sealed class ServerBank(FinanceDb db, IPlaidSandboxFeed feed, Func<Sandbo
     {
         Require(offset is >= 0 and <= 100000, "invalid_page", 400);
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, token);
+        return await ReadStateAsync(owner, offset, expectedVersion, token);
+    }
+
+    // Reuses the caller's consistent read transaction; never calls the provider.
+    internal async Task<BankState> ReadStateAsync(Guid owner, int offset, int? expectedVersion, CancellationToken token)
+    {
         var connection = await db.BankConnections.AsNoTracking().SingleOrDefaultAsync(x => x.OwnerId == owner, token);
         if (connection is null) return new(true, null, [], [], 0, 0, false, 0);
         Require(connection.Provider == "plaid-sandbox", "sandbox_only", 403);

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'server_sandbox.dart';
+import 'server_dashboard.dart';
 
 class FinanceApiException implements Exception {
   FinanceApiException(this.message, this.statusCode);
@@ -135,6 +136,39 @@ class FinanceApi {
 
   Future<Map<String, dynamic>> snapshot() async =>
       Map<String, dynamic>.from(await request('GET', '/api/sync/snapshot') as Map);
+
+  Future<ServerDashboard> dashboard(String through) async {
+    requireHttpsServer();
+    final session = token;
+    if (session == null || session.isEmpty) throw FinanceApiException('Sign in again.', 401);
+    final client = _previewClientFactory();
+    try {
+      Future<ServerDashboard> fetch() async {
+        final request = http.Request('GET', _uri('/api/dashboard').replace(queryParameters: {'through': through}))
+          ..followRedirects = false
+          ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $session'});
+        final response = await client.send(request);
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw FinanceApiException(switch (response.statusCode) {
+            401 || 403 => 'Your session expired. Sign in again.',
+            404 => 'This server needs the dashboard program update.',
+            >= 300 && < 400 => 'Server redirects are blocked.',
+            _ => 'Dashboard unavailable. Saved records are unchanged.',
+          }, response.statusCode);
+        }
+        final bytes = BytesBuilder(copy: false);
+        await for (final chunk in response.stream) {
+          if (bytes.length + chunk.length > 1024 * 1024) throw const FormatException();
+          bytes.add(chunk);
+        }
+        if (session != token) throw FinanceApiException('Your session changed. Sign in again.', 401);
+        return ServerDashboard.parse(Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes.takeBytes())) as Map), through);
+      }
+      return await fetch().timeout(const Duration(seconds: 20));
+    } on FinanceApiException { rethrow; }
+    catch (_) { throw FinanceApiException('Dashboard unavailable. Saved records are unchanged.', 0); }
+    finally { client.close(); }
+  }
 
   Future<Map<String, dynamic>> bankRequest(String route, [Map<String, dynamic>? body, int? offset, int? version]) async {
     if (!{'state', 'connect', 'map', 'refresh', 'active', 'review', 'review-batch'}.contains(route)) {

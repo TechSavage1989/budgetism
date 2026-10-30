@@ -264,6 +264,17 @@ internal static class Contracts
         }));
         Check(results.Count(x => x) == 1, "Concurrent mutations serialize; stale second request is rejected");
         Check((await State()).Sources.Count == 9, "New database contexts preserve durable source/review history");
+        var dashboardBefore = await Digests("postgres");
+        await using (var db = Db())
+        {
+            var overview = await Dashboard.ReadAsync(db, new ServerBank(db, feed, () => throw new Exception("No dashboard credentials")),
+                owner.Id, new(2026, 10, 30), true, default);
+            var expected = await State();
+            Check(overview.Bank.NeedsReviewCount == expected.NeedsReviewCount && overview.Bank.TotalSources == expected.TotalSources &&
+                overview.Bank.Connection!.Version == expected.Connection!.Version, "Dashboard review count shares full source review semantics");
+        }
+        Check(await Digests("postgres") == dashboardBefore, "Dashboard with saved source history preserves all table digests");
+        await DashboardContracts.RunAsync(Db, Digests);
         await File.WriteAllTextAsync(Path.Combine(directory, "expected-digests.json"), await Digests("postgres"));
         Console.WriteLine("PASS: All server bank contracts used invented data in an isolated loopback cluster.");
     }

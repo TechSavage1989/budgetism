@@ -1,5 +1,7 @@
 # Current implementation state
 
+Dev.23 candidate adds the [private-server dashboard](SERVER_DASHBOARD.md): signed through-day balances, month-to-date income/spending, top category/recent scope labels and full saved review counts. Cached provider values stay separate. It is read-only and schema-free; full validation and private program delivery remain pending.
+
 Dev.22 adds [themes and server review controls](THEMES_AND_REVIEW.md)
 from the user's selected [reference roadmap](PRODUCT_REFERENCE_PLAN.md). It adds
 device-only preset/custom-accent appearance, generated contrast/spacing and

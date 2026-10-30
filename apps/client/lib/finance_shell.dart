@@ -208,7 +208,9 @@ class _FinanceShellState extends State<FinanceShell> {
                       if (index == 3) _budgetMonth = DateTime.now().toIso8601String().substring(0, 7);
                     }), onAdd: _createTransaction,
                     onAddAccount: _createAccount, onInspect: _inspectHome),
-                  if (_page == 0 && !_local) _dashboard(),
+                  if (_page == 0 && !_local && widget.api.isDemo) _dashboard(),
+                  if (_page == 0 && !_local && !widget.api.isDemo) ServerDashboardPanel(api: widget.api,
+                    revision: _lastUpdated, onNavigate: (index) => setState(() => _page = index)),
                   if (_page == 9 && _local) BankConnectionsPanel(api: widget.api as LocalFinanceApi,
                     onChanged: () => _refresh(silent: true), onReview: () => setState(() => _page = 10)),
                   if (_page == 10 && _local) NeedsReviewPanel(api: widget.api as LocalFinanceApi,
