@@ -1,0 +1,32 @@
+name: Publish tested Budgetism dev27 prerelease
+on:
+  push:
+    branches: [development/coordinated-updates-dev27]
+    paths: [.github/release-requests/dev27.json]
+permissions:
+  contents: read
+concurrency:
+  group: budgetism-dev27-prerelease
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'TechSavage1989/budgetism'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate publication guards without credentials
+        run: python -m unittest discover -s tests -p test_publish_dev27.py -v
+      - name: Publish only exact tested application files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/publish_dev27.py

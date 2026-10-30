@@ -28,6 +28,8 @@ $identity = [ordered]@{
   version = $Version
   platform = 'windows-x64'
   executable = 'Budgetism.exe'
+  updateProtocol = 1
+  clientApiContract = 1
 }
 $identity | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $folder 'app-release.json') -Encoding utf8
 $archive = Join-Path $packages 'Budgetism-Windows-x64.zip'

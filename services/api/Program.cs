@@ -70,6 +70,21 @@ app.MapPlanning();
 app.UseRouting();
 app.UseRateLimiter();
 
+// A staged API must not accept any financial/authentication writes before its
+// coordinator verifies readiness. A malformed marker also means maintenance.
+app.Use(async (context, next) =>
+{
+    if (UpdateReadiness.Maintenance && context.Request.Path.StartsWithSegments("/api") &&
+        context.Request.Path != "/api/version")
+    {
+        context.Response.StatusCode = 503;
+        context.Response.Headers.RetryAfter = "30";
+        await context.Response.WriteAsJsonAsync(new { error = "update_maintenance" });
+        return;
+    }
+    await next();
+});
+
 // A very small bearer-token middleware. Token hashes, not raw bearer tokens, are stored.
 // A session can be revoked by deletion. No client registration is implied yet.
 app.Use(async (ctx, next) =>
@@ -111,8 +126,24 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", version = "0.1.0-dev.1" }));
-app.MapGet("/api/version", () => Results.Ok(new { version = "0.1.0-dev.1", apiMajor = 1 }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", appId = "budgetism-api", version = UpdateReadiness.Version, apiMajor = 1 }));
+app.MapGet("/api/version", () => Results.Ok(UpdateReadiness.Identity));
+app.MapGet("/health/update-readiness", async Task<IResult> (HttpContext context, FinanceDb db) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    if (!UpdateReadiness.IsLoopback(context.Connection.RemoteIpAddress)) return Results.NotFound();
+    using var timeout = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+    timeout.CancelAfter(TimeSpan.FromSeconds(10));
+    try
+    {
+        if (await UpdateReadiness.ReadyAsync(db, timeout.Token))
+            return Results.Ok(new { appId = "budgetism-api", version = UpdateReadiness.Version, sourceCommit = UpdateReadiness.SourceCommit,
+                apiMajor = 1, clientApiContract = 1, updateContract = 1, bankSchema = 1, planningSchema = 1,
+                ready = true, database = "ready", maintenance = UpdateReadiness.Maintenance });
+    }
+    catch { /* Never expose host/credential/database details. */ }
+    return Results.Json(new { ready = false, error = "update_readiness_failed" }, statusCode: 503);
+});
 // Existing bearer middleware protects this endpoint. Never accept provider tokens from clients.
 app.MapPost("/api/bank/sandbox/preview", async Task<IResult> (HttpContext context, PlaidSandbox sandbox) =>
 {
@@ -374,7 +405,12 @@ app.MapGet("/api/sync/changes", async Task<IResult> (HttpContext http, FinanceDb
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<FinanceDb>();
-    if (await db.Database.EnsureCreatedAsync())
+    if (UpdateReadiness.UpdateMode)
+    {
+        if (!await UpdateReadiness.ReadyAsync(db))
+            throw new InvalidOperationException("API-only update requires an existing compatible database and planning key; no initialization was attempted.");
+    }
+    else if (await db.Database.EnsureCreatedAsync())
     {
         db.BankSchemaVersions.Add(new BankSchemaVersion());
         db.PlanningSchemaVersions.Add(new PlanningSchemaVersion());

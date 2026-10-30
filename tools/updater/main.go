@@ -17,7 +17,17 @@ func main() {
 	exe := flag.String("launch-name", "Budgetism.exe", "actual stable launch filename")
 	parentPID := flag.Int("parent-pid", 0, "current application process ID")
 	verify := flag.Bool("verify-only", false, "validate archive and identity without installing")
+	flag.StringVar(&options.RequestID, "request-id", "", "unique startup attempt")
+	flag.StringVar(&options.AdmissionFile, "admission-file", "", "startup admission receipt")
+	flag.StringVar(&options.ResultFile, "result-file", "", "startup result receipt")
+	flag.StringVar(&options.CancelFile, "cancel-file", "", "startup cancellation receipt")
+	flag.StringVar(&options.ReadyFile, "ready-file", "", "new app readiness receipt")
+	flag.IntVar(&options.Protocol, "require-update-protocol", 0, "required update protocol")
+	flag.IntVar(&options.APIContract, "require-client-api-contract", 0, "required client API contract")
 	flag.Parse()
+	if options.ReadyFile == "" && options.AdmissionFile != "" {
+		options.ReadyFile = filepath.Join(filepath.Dir(options.AdmissionFile), "ready.json")
+	}
 	if err := run(*archive, *sha, *version, *target, *exe, *parentPID, *verify); err != nil {
 		logUpdate("ERROR: " + err.Error())
 		fmt.Fprintln(os.Stderr, "Budgetism update error:", err)
@@ -60,12 +70,34 @@ func run(archive, digest, version, target, exe string, pid int, verifyOnly bool)
 	if err != nil {
 		return err
 	}
+	if err := validateProtocol(stage, options.Protocol, options.APIContract); err != nil {
+		os.RemoveAll(stage)
+		return err
+	}
 	if verifyOnly {
 		defer os.RemoveAll(stage)
 		fmt.Printf("Verified Budgetism %s package identity, archive integrity and Windows x64 executable.\n", version)
 		return nil
 	}
-	return installStaged(stage, target, exe, pid)
+	defer os.RemoveAll(stage)
+	if options.Protocol != 1 || options.APIContract != 1 {
+		return errors.New("installation requires update protocol and API contract 1")
+	}
+	if err := validateOptions(options); err != nil {
+		return err
+	}
+	err = installStaged(stage, target, exe, pid, version)
+	status, message := "installed", "Update installed and ready"
+	if err != nil {
+		status, message = "failed", "Update did not complete; inspect local updater log before retrying"
+	}
+	if errors.Is(err, errRolledBack) {
+		status, message = "rolledBack", "Update failed; prior application restored and startup readiness verified"
+	}
+	if receiptErr := writeStatus(options.ResultFile, options.RequestID, version, status, message); receiptErr != nil && err == nil {
+		return receiptErr
+	}
+	return err
 }
 
 // Logging is entirely local. No tokens, passwords or financial data are logged.

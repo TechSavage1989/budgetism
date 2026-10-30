@@ -1,5 +1,7 @@
 # Budgetism update architecture and release gate
 
+Dev.27 is implementing next-launch desktop updates and a separate API-only coordinator under the later request for both. See the [candidate contract](COORDINATED_UPDATES_DEV27.md). These paths are not yet verified or installed. The description below records the delivered dev.26 baseline and its gates; existing installations do not gain a working updater merely because newer source exists.
+
 Current release state: no GitHub Releases published. Verified compiled Windows development artifacts exist (see the current handoff), but native in-app installation remains disabled. Full previous-release download/install/relaunch and real native timer/focus acceptance have not been established.
 
 ## Update discovery

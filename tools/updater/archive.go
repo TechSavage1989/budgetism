@@ -89,6 +89,11 @@ func safeZipEntry(f *zip.File) (string, error) {
 		return "", errors.New("absolute path rejected")
 	}
 	for _, part := range strings.Split(relative, "/") {
+		base := strings.ToUpper(strings.SplitN(part, ".", 2)[0])
+		reserved := base == "CON" || base == "PRN" || base == "AUX" || base == "NUL" || len(base) == 4 && (strings.HasPrefix(base, "COM") || strings.HasPrefix(base, "LPT")) && base[3] >= '1' && base[3] <= '9'
+		if reserved || strings.TrimRight(part, " .") != part || strings.ContainsAny(part, `<>"|?*`) {
+			return "", errors.New("ambiguous Windows archive component")
+		}
 		if part == ".." || part == "." || part == "" {
 			return "", fmt.Errorf("traversal or empty component %q", name)
 		}
@@ -115,6 +120,36 @@ func safeZipEntry(f *zip.File) (string, error) {
 }
 
 func stageVerifiedArchive(zipPath, digest, expectedVersion, parent string) (string, error) {
+	// Verify and extract the same private snapshot, never reopen the caller's mutable path.
+	snapshot, err := os.CreateTemp("", "budgetism-archive-*.zip")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(snapshot.Name())
+	source, err := os.Open(zipPath)
+	if err != nil {
+		snapshot.Close()
+		return "", err
+	}
+	info, statErr := source.Stat()
+	if statErr != nil || !info.Mode().IsRegular() || info.Size() <= 0 || info.Size() > maxArchiveBytes {
+		source.Close()
+		snapshot.Close()
+		return "", errors.New("archive must be a bounded regular file")
+	}
+	n, copyErr := io.Copy(snapshot, io.LimitReader(source, maxArchiveBytes+1))
+	source.Close()
+	closeErr := snapshot.Close()
+	if copyErr != nil {
+		return "", copyErr
+	}
+	if closeErr != nil {
+		return "", closeErr
+	}
+	if n > maxArchiveBytes {
+		return "", errors.New("archive too large")
+	}
+	zipPath = snapshot.Name()
 	if err := validateDigest(zipPath, digest); err != nil {
 		return "", err
 	}

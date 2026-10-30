@@ -10,6 +10,8 @@ build/
 .pub/
 **/bin/
 **/obj/
+**/__pycache__/
+*.pyc
 **/.vs/
 **/.idea/
 **/.vscode/

@@ -30,7 +30,9 @@ import 'local/security_dialogs.dart';
 import 'local/transaction_editor.dart';
 import 'demo_finance_api.dart';
 import 'release_feed.dart';
-import 'release_download.dart';
+import 'update_startup.dart';
+import 'update_pending.dart';
+import 'update_actions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,18 +40,38 @@ export 'money.dart';
 
 part 'finance_shell.dart';
 
-void main() {
+bool _startupHadFrameworkError = false;
+FlutterExceptionHandler? _startupErrorHandler;
+bool _startupErrorHook = false;
+Future<void> main() => startBudgetism();
+
+/// Startup update admission completes before any financial screen can exist.
+Future<void> startBudgetism({Future<UpdateStartupResult> Function()? startup,
+    void Function(Widget)? mount}) async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BudgetismApp());
+  UpdateStartupResult result;
+  try { result = await (startup ?? applyPendingClientUpdate)(); }
+  catch (_) { result = const UpdateStartupResult(message: 'Update startup checks failed. The existing application is available.'); }
+  if (mount == null) {
+    _startupHadFrameworkError = false;
+    _startupErrorHandler = FlutterError.onError;
+    _startupErrorHook = true;
+    FlutterError.onError = (details) { _startupHadFrameworkError = true; _startupErrorHandler?.call(details); };
+  }
+  (mount ?? runApp)(BudgetismApp(startupMessage: result.message));
 }
 
 class BudgetismApp extends StatefulWidget {
-  const BudgetismApp({super.key});
+  const BudgetismApp({this.startupMessage, this.updateActions, this.releaseFeedFactory, super.key});
+  final String? startupMessage;
+  final ClientUpdateActions? updateActions;
+  final ReleaseFeed Function(SharedPreferences)? releaseFeedFactory;
   @override
   State<BudgetismApp> createState() => _BudgetismAppState();
 }
 
 class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver {
+  ClientUpdateActions get _updateActions => widget.updateActions ?? ClientUpdateActions.production();
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _appearancePreferences = AppearancePreferences();
@@ -64,12 +86,21 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
   double _downloadProgress = 0;
   String? _downloadPath;
   String? _downloadError;
+  String? _downloadIdentity;
+  bool _automaticUpdates = false, _updateSettingsOpen = false;
+  final Set<String> _automaticDownloads = {};
+  String? _updateNotice;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _updateNotice = widget.startupMessage;
     _startReleaseChecks();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_startupErrorHook) { FlutterError.onError = _startupErrorHandler; _startupErrorHook = false; }
+      if (mounted && !_startupHadFrameworkError) unawaited(markClientUpdateReady());
+    });
   }
 
   Future<void> _startReleaseChecks() async {
@@ -78,7 +109,8 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
       if (appearanceRevision == _appearanceRevision) setState(() => _appearance = AppAppearance.read(prefs));
-      _releaseFeed = ReleaseFeed(prefs: prefs);
+      _automaticUpdates = prefs.getBool(automaticUpdatesPreference) == true;
+      _releaseFeed = widget.releaseFeedFactory?.call(prefs) ?? ReleaseFeed(prefs: prefs);
       _checkUpdates();
       _releaseTimer = Timer.periodic(const Duration(minutes: 5), (_) {
         if (_active) _checkUpdates();
@@ -104,7 +136,10 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
     if (!mounted) return;
     setState(() => _releaseResult = result);
     if (manual) {
-      _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(result.message)));
+      await _openUpdateSettings();
+    }
+    if (_automaticUpdates && result.status == ReleaseCheckStatus.updateAvailable && result.latest?.hasVerifiedArchive == true) {
+      unawaited(_downloadRelease(result.latest!, automatic: true));
     }
   }
 
@@ -141,18 +176,88 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
     if (_active) _checkUpdates(focusReturn: true);
   }
 
-  Future<void> _downloadRelease(ReleaseInfo release) async {
-    if (_downloading) return;
+  Future<void> _openUpdateSettings() async {
+    final overlay = _navigatorKey.currentState?.overlay;
+    if (_updateSettingsOpen || overlay == null) return;
+    _updateSettingsOpen = true;
+    var enabled = _automaticUpdates;
+    final windows = _updateActions.supported;
+    try {
+      final accepted = await showDialog<bool>(context: overlay.context, builder: (dialogContext) =>
+        StatefulBuilder(builder: (context, update) => AlertDialog(title: const Text('Budgetism updates'),
+          content: SizedBox(width: 480, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_releaseResult?.message ?? 'Update status is not available yet.'),
+            const SizedBox(height: 12),
+            SwitchListTile(key: const ValueKey('automatic-client-updates'), contentPadding: EdgeInsets.zero,
+              title: const Text('Automatic updates on next launch'), value: enabled,
+              onChanged: windows ? (value) => update(() => enabled = value) : null),
+            const Text('When enabled, compatible published Windows packages download automatically. Installation happens only on a later launch, before signing in or opening a workspace. Your active session is never automatically closed.'),
+            const SizedBox(height: 8),
+            const Text('SHA-256 and package identity checks are not publisher signatures. Unsupported API/update contracts are refused. This does not update the private backend or its database.'),
+            if (!windows) const Text('Automatic installation is supported only on Windows.'),
+            if (_updateNotice != null) Text(_updateNotice!),
+          ]))),
+          actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save update settings'))])));
+      if (accepted != true || !mounted) return;
+      if (!await _updateActions.savePreference(enabled)) throw StateError('Update preference was not saved.');
+      if (!mounted) return;
+      final wasEnabled = _automaticUpdates;
+      if (enabled && !wasEnabled) _automaticDownloads.clear();
+      setState(() { _automaticUpdates = enabled; _updateNotice = enabled
+        ? 'Automatic updates enabled: download now when eligible, apply on a future launch only.'
+        : 'Automatic installation is off; queued installation has been cancelled.'; });
+      if (!enabled) await _updateActions.cancel();
+      final release = _releaseResult?.latest;
+      if (enabled && release != null && _releaseResult?.status == ReleaseCheckStatus.updateAvailable) {
+        unawaited(_downloadRelease(release, automatic: true));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _updateNotice = 'Update settings could not be saved. No installation was started.');
+    } finally { _updateSettingsOpen = false; }
+  }
+
+  Future<void> _downloadRelease(ReleaseInfo release, {bool automatic = false}) async {
+    if (_downloading || !_updateActions.supported) return;
+    final identity = '${release.version}-${release.sha256}';
+    if (automatic && (!_automaticUpdates || _automaticDownloads.contains(identity))) return;
+    if (automatic) _automaticDownloads.add(identity);
     setState(() { _downloading = true; _downloadProgress = 0; _downloadError = null; });
     try {
-      final path = await downloadVerifiedRelease(release, onProgress: (fraction) {
+      if (automatic && await _updateActions.attempted(release)) {
+        if (mounted) setState(() => _updateNotice = 'This version already had an update attempt. Use Download to retry explicitly; it will not be retried automatically.');
+        return;
+      }
+      final path = await _updateActions.download(release, (fraction) {
         if (mounted) setState(() => _downloadProgress = fraction);
       });
-      if (mounted) setState(() => _downloadPath = path);
-    } catch (error) {
-      if (mounted) setState(() => _downloadError = error.toString());
+      if (!isCurrentDownloadSelection(release, _releaseResult)) {
+        if (mounted) setState(() => _updateNotice = 'The update selection changed while downloading. The older archive was not queued.');
+        return;
+      }
+      await _updateActions.prepare(release, path, !automatic, _automaticUpdates);
+      if (!_automaticUpdates || !isCurrentDownloadSelection(release, _releaseResult)) await _updateActions.cancel();
+      if (!isCurrentDownloadSelection(release, _releaseResult)) {
+        if (mounted) setState(() => _updateNotice = 'The update selection changed during verification. The older installation was cancelled.');
+        return;
+      }
+      if (mounted) setState(() {
+        _downloadPath = path; _downloadIdentity = identity;
+        _updateNotice = _automaticUpdates ? 'Verified compatible update queued for next launch. Continue working; no session will be restarted.'
+          : 'Verified compatible archive downloaded. Automatic installation remains off.';
+      });
+    } catch (_) {
+      if (mounted) setState(() => _downloadError = 'Download, package identity or client/API compatibility verification failed. Your installed application was not changed.');
     } finally {
-      if (mounted) setState(() => _downloading = false);
+      if (mounted) {
+        setState(() => _downloading = false);
+        final newest = _releaseResult?.latest;
+        if (_automaticUpdates && _releaseResult?.status == ReleaseCheckStatus.updateAvailable && newest != null && newest.hasVerifiedArchive &&
+            '${newest.version}-${newest.sha256}' != identity && !_automaticDownloads.contains('${newest.version}-${newest.sha256}')) {
+          unawaited(_downloadRelease(newest, automatic: true));
+        }
+      }
     }
   }
 
@@ -167,10 +272,14 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
   Widget _updateBanner(BuildContext themedContext) {
     final result = _releaseResult;
     if (result?.status != ReleaseCheckStatus.updateAvailable || result?.latest == null) {
-      return const SizedBox.shrink();
+      if (_updateNotice == null) return const SizedBox.shrink();
+      return Material(child: Padding(padding: const EdgeInsets.all(8), child: Wrap(spacing: 8, children: [
+        Text(_updateNotice!), TextButton(onPressed: _openUpdateSettings, child: const Text('Update settings')),
+      ])));
     }
     final release = result!.latest!;
-    final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+    final downloaded = _downloadPath != null && _downloadIdentity == '${release.version}-${release.sha256}';
+    final isWindows = _updateActions.supported;
     return Material(
       color: Theme.of(themedContext).colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -181,12 +290,10 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
               const Icon(Icons.system_update_alt, size: 19),
               Text('Budgetism ${release.version} available (installed $budgetismVersion)',
                 style: const TextStyle(fontWeight: FontWeight.w700)),
-              if (_downloadPath == null && release.hasVerifiedArchive && isWindows)
+              if ((!downloaded || _downloadError != null) && release.hasVerifiedArchive && isWindows)
                 OutlinedButton(onPressed: _downloading ? null : () => _downloadRelease(release),
                   child: const Text('Download')),
-              if (_downloadPath != null)
-                const Tooltip(message: 'Installation stays disabled until native Windows validation.',
-                  child: OutlinedButton(onPressed: null, child: Text('Install and restart'))),
+              TextButton(onPressed: _openUpdateSettings, child: const Text('Update settings')),
               if (release.hasMoreNotes)
                 TextButton(onPressed: () => launchUrl(Uri.parse(release.url), mode: LaunchMode.externalApplication),
                   child: const Text('Read more')),
@@ -198,9 +305,10 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
             Text('No verified Windows ZIP is available for this release.',
               style: Theme.of(themedContext).textTheme.bodySmall),
           if (_downloading) LinearProgressIndicator(value: _downloadProgress > 0 ? _downloadProgress : null),
-          if (_downloadPath != null)
-            SelectableText('Verified download: $_downloadPath. Installation is not enabled in this development build.',
+          if (downloaded)
+            Text(_automaticUpdates ? 'Verified update queued for next launch; active sessions are never restarted.' : 'Verified download ready; automatic installation is off.',
               style: Theme.of(themedContext).textTheme.bodySmall),
+          if (_updateNotice != null) Text(_updateNotice!),
           if (_downloadError != null)
             Text('Download error: $_downloadError', style: TextStyle(color: Theme.of(themedContext).colorScheme.error)),
         ]),

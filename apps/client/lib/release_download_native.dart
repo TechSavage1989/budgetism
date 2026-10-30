@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'release_feed.dart';
+import 'update_pending.dart';
 
 const _maxBytes = 700 * 1024 * 1024;
 
@@ -17,14 +18,22 @@ Future<String> downloadVerifiedRelease(ReleaseInfo release,
   var uri = Uri.parse(release.archiveUrl!);
   if (!_allowed(uri, firstHop: true)) throw const FormatException('Untrusted release download URL.');
 
+  final update = PendingClientUpdate.fromRelease(release);
   final base = await getApplicationSupportDirectory();
-  final stage = Directory('${base.path}${Platform.pathSeparator}updates${Platform.pathSeparator}staging');
+  final stage = Directory('${base.path}${Platform.pathSeparator}updates${Platform.pathSeparator}packages${Platform.pathSeparator}${update.identity}');
   await stage.create(recursive: true);
   final pending = File('${stage.path}${Platform.pathSeparator}Budgetism-Windows-x64.zip.part');
   final completed = File('${stage.path}${Platform.pathSeparator}Budgetism-Windows-x64.zip');
-  if (await pending.exists()) await pending.delete();
+  final lock = await File('${stage.path}${Platform.pathSeparator}download.lock').open(mode: FileMode.append);
   final client = http.Client();
   try {
+    await lock.lock(FileLock.exclusive);
+    if (await completed.exists()) {
+      final digest = await sha256.bind(completed.openRead()).first;
+      if (digest.toString() == update.sha256) { onProgress?.call(1); return completed.path; }
+      await completed.delete();
+    }
+    if (await pending.exists()) await pending.delete();
     http.StreamedResponse? response;
     for (var i = 0; i < 5; i++) {
       final request = http.Request('GET', uri)..followRedirects = false;
@@ -35,7 +44,7 @@ Future<String> downloadVerifiedRelease(ReleaseInfo release,
         final next = uri.resolve(target);
         if (!_allowed(next, firstHop: false)) throw const FormatException('Release redirected outside trusted hosts.');
         uri = next;
-        await response.stream.drain<void>();
+        await response.stream.drain<void>().timeout(const Duration(seconds: 40));
         continue;
       }
       break;
@@ -73,6 +82,7 @@ Future<String> downloadVerifiedRelease(ReleaseInfo release,
     rethrow;
   } finally {
     client.close();
+    try { await lock.unlock(); } finally { await lock.close(); }
   }
 }
 

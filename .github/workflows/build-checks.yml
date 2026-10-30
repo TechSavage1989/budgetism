@@ -2,6 +2,8 @@ name: Budgetism source and portable build checks
 
 on:
   push:
+    paths-ignore:
+      - '.github/release-requests/**'
   pull_request:
   workflow_dispatch:
 
@@ -11,7 +13,7 @@ permissions:
 jobs:
   windows-server-test:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     defaults:
       run:
         shell: pwsh
@@ -55,10 +57,32 @@ jobs:
           $global:LASTEXITCODE = 0
           Stop-Service BudgetismApi
           Stop-Service BudgetismDatabase
+      - name: Test API-only updates and program rollback on disposable services
+        run: ./scripts/test_api_update.ps1 -DotnetPath (Get-Command dotnet).Source -InstallDirectory "$PWD/build/private-service" -SourceCommit '${{ github.sha }}'
+      - name: Package exact API-only update candidate
+        run: |
+          ./scripts/package_api_update.ps1 -DotnetPath (Get-Command dotnet).Source -OutputDirectory "$PWD/build/api-update-release" -SourceCommit '${{ github.sha }}'
+          python scripts/archive_api_update.py build/api-update-release build/Budgetism-API-Windows-x64.zip --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Initialize Defender on ephemeral runner
         run: powershell.exe -NoProfile -File ./scripts/prepare_ci_defender.ps1 -ReportDirectory build/security
       - name: Scan exact server archive and extracted files
         run: ./scripts/scan_windows_package.ps1 -Archive "$PWD/build/Budgetism-Windows-Server-Test.zip" -ReportDirectory "$PWD/build/server-scan"
+      - name: Scan exact API-only archive and extracted files
+        run: ./scripts/scan_windows_package.ps1 -Archive "$PWD/build/Budgetism-API-Windows-x64.zip" -ReportDirectory "$PWD/build/api-update-scan"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-API-Windows-x64-development
+          path: build/Budgetism-API-Windows-x64.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Budgetism-api-update-evidence
+          path: |
+            build/api-update-scan/*.json
+            build/api-update-tests/*.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: Budgetism-Windows-Server-Test
@@ -81,6 +105,8 @@ jobs:
       - run: python scripts/check_layout.py
       - run: python scripts/check_readme.py --self-test
       - run: python scripts/verify_windows_package.py --self-test
+      - run: python scripts/archive_api_update.py --self-test
+      - run: python -m unittest discover -s tests -p test_publish_dev27.py -v
 
   backend-source:
     runs-on: ubuntu-latest
@@ -130,7 +156,7 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.26
+          flutter build web --release --dart-define=APP_VERSION=0.1.0-dev.27
 
   windows-portable:
     runs-on: windows-latest
@@ -293,7 +319,11 @@ jobs:
       - name: Test native server Sandbox preview isolation
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
         run: flutter test integration_test/server_sandbox_native_test.dart -d windows
+      - name: Test native automatic-update settings without restarting sessions
+        working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
+        run: flutter test integration_test/update_settings_native_test.dart -d windows
       - name: Retain fictional Sandbox preview screenshot
+        # All screenshots are fictional native acceptance fixtures, not live data.
         uses: actions/upload-artifact@v4
         with:
           name: Budgetism-Sandbox-preview-UI
@@ -316,16 +346,28 @@ jobs:
             ${{ env.BUDGETISM_SOURCE }}/apps/client/build/report-graphs-dev25-native.png
             ${{ env.BUDGETISM_SOURCE }}/apps/client/build/report-controls-dev26-native.png
             ${{ env.BUDGETISM_SOURCE }}/apps/client/build/forecast-scenario-dev25-native.png
+            ${{ env.BUDGETISM_SOURCE }}/apps/client/build/update-settings-dev27-native.png
           if-no-files-found: error
       - name: Build Flutter Windows app
         working-directory: ${{ env.BUDGETISM_SOURCE }}/apps/client
-        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.26
+        run: flutter build windows --release --dart-define=APP_VERSION=0.1.0-dev.27
       - name: Package portable app with stable filename
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.26'
+        run: ./scripts/package_windows.ps1 -Version '0.1.0-dev.27'
       - name: Verify portable package and native dependencies
         working-directory: ${{ env.BUDGETISM_SOURCE }}
-        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.26 --checksums build/packages/checksums.sha256 --self-test
+        run: python scripts/verify_windows_package.py build/packages/Budgetism-Windows-x64.zip --version 0.1.0-dev.27 --checksums build/packages/checksums.sha256 --self-test
+      - name: Test genuine next-launch client update and rollback
+        timeout-minutes: 25
+        working-directory: ${{ env.BUDGETISM_SOURCE }}
+        run: ./scripts/test_client_updater.ps1 -ProjectRoot "$PWD" -PackageArchive "$PWD/build/packages/Budgetism-Windows-x64.zip"
+      - name: Retain native updater evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Budgetism-client-update-evidence
+          path: ${{ env.BUDGETISM_SOURCE }}/build/updater-native/*.json
+          if-no-files-found: warn
       - name: Scan the exact Windows archive and extracted contents with Defender
         timeout-minutes: 10
         working-directory: ${{ env.BUDGETISM_SOURCE }}

@@ -48,7 +48,8 @@ def verify(path: pathlib.Path, version: str, digest: str | None = None) -> str:
             raise ValueError('Missing required runtime files: ' + ', '.join(sorted(missing)))
         identity = json.loads(archive.read('Budgetism/app-release.json').decode('utf-8-sig'))
         expected = {'appId': 'TechSavage1989.Budgetism', 'version': version,
-                    'platform': 'windows-x64', 'executable': 'Budgetism.exe'}
+                    'platform': 'windows-x64', 'executable': 'Budgetism.exe',
+                    'updateProtocol': 1, 'clientApiContract': 1}
         if identity != expected:
             raise ValueError('Wrong package identity, version or platform.')
         for e in entries:
@@ -72,7 +73,8 @@ def self_test() -> None:
         pe[64:68] = b'PE\0\0'; struct.pack_into('<H', pe, 68, 0x8664); struct.pack_into('<H', pe, 88, 0x20b)
         payload = {n: bytes(pe) if n.endswith(('.dll', '.exe')) else b'fixture' for n in REQUIRED}
         payload['Budgetism/app-release.json'] = json.dumps({'appId': 'TechSavage1989.Budgetism',
-            'version': 'fixture', 'platform': 'windows-x64', 'executable': 'Budgetism.exe'}).encode()
+            'version': 'fixture', 'platform': 'windows-x64', 'executable': 'Budgetism.exe',
+            'updateProtocol': 1, 'clientApiContract': 1}).encode()
         def create(name: str, files: dict[str, bytes]) -> pathlib.Path:
             path = directory / name
             with zipfile.ZipFile(path, 'w') as z:
@@ -90,6 +92,14 @@ def self_test() -> None:
         try: verify(valid, 'fixture', '0' * 64)
         except ValueError: pass
         else: raise AssertionError('Wrong digest was not detected.')
+        for field in ('updateProtocol', 'clientApiContract'):
+            bad = dict(payload)
+            marker = json.loads(bad['Budgetism/app-release.json'])
+            marker[field] = 2
+            bad['Budgetism/app-release.json'] = json.dumps(marker).encode()
+            try: verify(create(field + '.zip', bad), 'fixture')
+            except ValueError: pass
+            else: raise AssertionError('Unsupported update contract was not detected: ' + field)
     print('PASS: native dependency, version and digest negative controls.')
 
 if __name__ == '__main__':

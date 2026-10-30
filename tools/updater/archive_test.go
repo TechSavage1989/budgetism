@@ -125,3 +125,15 @@ func TestRejectBadCustomLaunchName(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestRejectWindowsAliasPaths(t *testing.T) {
+	for _, name := range []string{"Budgetism/data/NUL.txt", "Budgetism/data/COM1", "Budgetism/data/alias. ", "Budgetism/data/name?"} {
+		files := normalFiles()
+		files[name] = []byte("ambiguous")
+		path, digest := samplePackage(t, files)
+		if stage, err := stageVerifiedArchive(path, digest, "0.1.0-dev.1", t.TempDir()); err == nil {
+			os.RemoveAll(stage)
+			t.Fatalf("accepted Windows alias %s", name)
+		}
+	}
+}

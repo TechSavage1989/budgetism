@@ -2,7 +2,9 @@
 
 ## Current checkpoint
 
-- **Verified delivered client:** dev.26, application `b8d21ed69fd1cc137461919ae3b2e0c3d8a37020`, branch `development/report-controls-dev26`. [Full provenance](docs/DEV26_VALIDATION.md). Further increments are paused for user review.
+- **Current engineering candidate:** dev.27 coordinated desktop/backend update paths on `development/coordinated-updates-dev27`, continuing dev.26. Read [candidate safety contract](docs/COORDINATED_UPDATES_DEV27.md). Runtime/upgrade verification is pending; no installation or publication is claimed.
+
+- **Verified delivered client:** dev.26, application `b8d21ed69fd1cc137461919ae3b2e0c3d8a37020`, branch `development/report-controls-dev26`. [Full provenance](docs/DEV26_VALIDATION.md). User acceptance remains unconfirmed; later update-engineering work does not replace this verified package.
 - Prior verified dev.25 remains preserved on `development/report-forecast-dev25`, documentation closure `cc0e815e832cedeab2f5a5e584c7f3b597992750`.
 - Repository is public: [TechSavage1989/budgetism](https://github.com/TechSavage1989/budgetism). Main `8bd6472bc0bd567f90b491b1767736e5a030521e` is an older dev.18 checkpoint. Do not overwrite newer development with main. No release or tag exists.
 - Prior `development/plaid-dev19` head `15cc77a8171bea3fd70048f267d19b05c0bc76fa` contains the verified dev.24 server planning suite. The existing private API, database, protected keys, current window and rollback files remain untouched.
@@ -36,9 +38,9 @@ historical periods without changing money or whole-account balances. Saved
 cross-session report/scenario presets remain a future encrypted-contract feature,
 not plaintext device preferences. Existing local/server data remain separate.
 
-The latest standard prompt explicitly excludes **server setup, Codex CLI
+The earlier standard prompt explicitly excluded **server setup, Codex CLI
 automation, unattended workers, payment setup and API-account setup**. Do not
-reapply earlier private deployment instructions. No real bank linkage, credentials,
+reapply earlier private deployment instructions. The later 17:06–17:08 request authorizes engineering automatic updates for both existing desktop and backend, but not inaccessible-host access, new privileges, release publication or migrations. No real bank linkage, credentials,
 network/access changes, release/tag publication or automatic installation is in
 this increment. Existing development-source/workflow sync authorization does not
 authorize main promotion or a release. BankFive/United States and Plaid-first are

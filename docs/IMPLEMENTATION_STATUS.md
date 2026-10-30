@@ -1,5 +1,7 @@
 # Current implementation state
 
+Dev.27 is an in-progress candidate for compatible desktop next-launch updates and API-only program upgrades. No hosted completion, release publication or private installation is claimed. See [scope and delivery gates](COORDINATED_UPDATES_DEV27.md).
+
 Dev.26 is the verified client-only package for category-scoped report contributions and historical period comparisons. All six jobs, 381 tests on both platforms, 34 native commands and exact package scans passed; see [verification](DEV26_VALIDATION.md). No stored presets, server/schema changes or new bank setup are included. User acceptance is unconfirmed.
 
 Dev.25 is a verified client-only development package for configurable report graphs and read-only forecast scenarios. All six jobs, 372 tests, 34 native commands and exact package scans passed; see [verification](DEV25_VALIDATION.md). Configuration remains session-only. No private installation, server change, new migration or live-bank access occurred.
