@@ -11,7 +11,13 @@ addresses repeated setup and stale-destination responses. It starts with a blank
 HTTPS field, explicitly remembers only an opted-in successful address, supports
 Forget, clears credentials when destinations change and never auto-connects from
 remembered preferences. The existing dev.20 API and database stay installed.
-New client/native/package verification and separate delivery remain pending.
+All six jobs in run 40986681227 passed for source dba4830610dc23c91c179c3cfee25f5f52c12d46:
+344 client tests, 29 native commands including independent-process address restore/
+Forget, and exact package scans. See [dev.21 verification](docs/DEV21_VALIDATION.md).
+The verified client was extracted separately and a clearly named private launcher
+created. The user's current window was left open; first use of the new client and
+its Remember option remains a user action. The working API/database were not
+redeployed. Do not imply that manual financial posting was user-confirmed.
 
 Current work: dev.20 [durable private-server fictional review](docs/SERVER_SANDBOX_REVIEW.md).
 The user confirmed the delivered dev.19 preview is visible after local sign-in.

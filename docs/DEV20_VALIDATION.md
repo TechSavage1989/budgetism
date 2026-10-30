@@ -69,8 +69,10 @@ provider refresh or installed-ledger posting was performed. The separately
 extracted client identifies as `0.1.0-dev.20+20` and opened at its welcome screen.
 Local URL entry/sign-in and explicit review choices remain the user's actions.
 Plaid credentials need no re-entry and never belong in the client. The earlier
-dev.19 GUI preview was user-confirmed; authenticated dev.20 GUI review has not yet
-been user-confirmed. Desktop data and prior programs were preserved. Server
+dev.19 GUI preview was user-confirmed. The user subsequently confirmed dev.20
+discovery/mapping/refresh; one mapped fictional account and four saved sources
+passed independent recovery. Manual posting has not been user-confirmed. Desktop
+data and prior programs were preserved. Server
 corrections/voids, real banks, automatic provider retrieval, LAN/public exposure
 and local-workspace synchronization remain unavailable. After recording refunds,
 use the dev.20 client; the older preview client's refund display is unsupported.

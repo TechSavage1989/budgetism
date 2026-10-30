@@ -4,7 +4,7 @@
 
 **0.1.0-dev.21 client candidate.** Adds [optional private-server address continuity](docs/SERVER_ADDRESS.md) and stale-destination guards. It remembers only an opted-in successful HTTPS address, never a password or session. The user-confirmed dev.20 [fictional source review](docs/SERVER_SANDBOX_REVIEW.md) remains intact: dedicated Sandbox accounts, atomic source/checkpoint history and explicit record, match, transfer pair, ignore and keep choices. Local workspaces remain separate. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification and [validation](docs/VALIDATION.md) for earlier milestones. This is not a production release.
 
-Dev.21 native/package verification is pending. The verified dev.20 baseline passed all six jobs, 335 client tests, 27 native commands and database upgrade/review/recovery contracts; see [dev.20 verification](docs/DEV20_VALIDATION.md). Its mapped fictional source history passed a fresh independent restore after user confirmation. Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
+Dev.21 passed all six jobs, 344 client tests, 29 native Windows commands and exact package scans; see [dev.21 verification](docs/DEV21_VALIDATION.md). The working dev.20 API and mapped fictional source history remain intact and passed an independent restore after user confirmation; see [dev.20 verification](docs/DEV20_VALIDATION.md). Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
 
 ## Features
 

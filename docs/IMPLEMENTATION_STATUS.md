@@ -4,8 +4,11 @@ The user confirmed dev.20 Sandbox discovery/mapping/refresh works; four saved
 sources and a fresh complete 14-table restore were independently verified, with
 no journal entries or pending postings. Dev.21 is a client-only
 [optional HTTPS address continuity](SERVER_ADDRESS.md) candidate, with stale
-response and credential-destination guards. Full candidate validation/delivery
-remains pending; the verified dev.20 API/database stay installed.
+response and credential-destination guards. All six jobs, 344 tests, 29 native
+commands and package scans passed; see [DEV21_VALIDATION.md](DEV21_VALIDATION.md).
+A separate verified client and named private launcher were delivered while the
+current window remained open. The verified dev.20 API/database stay installed;
+dev.21's optional Remember setting has not yet been user-confirmed.
 
 Dev.20 candidate adds [durable server Sandbox source review](SERVER_SANDBOX_REVIEW.md),
 with explicit zero-baseline mapping, atomic checkpoints/history, record/match/pair/
