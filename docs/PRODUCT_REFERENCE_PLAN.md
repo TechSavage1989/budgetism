@@ -30,10 +30,10 @@ a historical workflow reference, not a claim about current Windows availability.
 | Appearance | Device light/dark mode | Dev.22: six presets, custom accent, system/light/dark, contrast, compact spacing, preview/apply/cancel |
 | Transaction search | Rich local register filters | Retain local filters; dev.22 adds combinable session-only filters to server source review |
 | Bulk review | Explicit single-source decisions | Dev.22: select visible eligible sources, atomic Ignore/Keep/Reopen with a reason; no bulk financial posting |
-| Budgets and reports | Implemented locally; server parity incomplete | Dev.24 candidate: server budget progress, category drilldown, monthly comparisons and explicit CSV export |
-| Calendar and cash flow | Local schedules and read-only forecast | Dev.24 candidate: server schedules/calendar/cash-flow with explicit recording and distinct actual/planned amounts |
-| Accounts/net worth | Recorded balances and transfers | Dev.23 overview; dev.24 candidate adds dated account balances and monthly recorded trends; investment complexity remains later |
-| Labels/saved searches | Local search is session-only | Dev.24 candidate: opt-in encrypted server saved activity filters and labels; no financial text in device preferences |
+| Budgets and reports | Implemented locally and on the private server | Verified dev.24: server budget progress, category drilldown, monthly comparisons and explicit CSV export |
+| Calendar and cash flow | Local/server schedules and read-only forecast | Verified dev.24: server schedules/calendar/cash-flow with explicit recording and distinct actual/planned amounts |
+| Accounts/net worth | Recorded balances and transfers | Dev.23 overview; verified dev.24 adds dated account balances and monthly recorded trends; investment complexity remains later |
+| Labels/saved searches | Local search is session-only | Verified dev.24: opt-in encrypted server saved activity filters and labels; no financial text in device preferences |
 | Cross-device use | Private server records separate from encrypted local workspace | Separate sync/conflict milestone; no silent local upload or merging |
 | Live banks | Controlled fictional Sandbox only | Remains outside authorization; no real linkage, paid subscriptions or background refresh |
 
@@ -52,3 +52,11 @@ reconciliation protections remain in force.
 
 References reviewed October 29, 2026. This mapping describes Budgetism design
 decisions, not endorsement or an assertion that the products share an architecture.
+
+The authorized planning suite was privately delivered after the complete native,
+package, scan and recovery gates; see [dev.24 evidence](DEV24_VALIDATION.md).
+This completes these roadmap items, not PocketSmith/MoneyWiz feature parity.
+Local imports, profiles, rules/history, splits/edits/voids and statement
+reconciliation retain their existing local contracts. Porting those mutations
+to server journals, investment valuation, multi-currency, real bank linkage and
+local/server synchronization are distinct future work.

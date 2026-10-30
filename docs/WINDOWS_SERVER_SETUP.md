@@ -1,6 +1,6 @@
 # Windows Server preparation
 
-Dev.24 candidate adds [server planning](SERVER_PLANNING.md). Existing databases need its explicit additive planning upgrade after protected recovery, bringing the inventory to 17 tables. A separate protected planning key must accompany database recovery sets. Startup does not migrate existing databases, and the installer must never be rerun over them. Exact candidate package verification and private deployment remain pending.
+Dev.24 adds verified [server planning](SERVER_PLANNING.md); see [validation](DEV24_VALIDATION.md). Existing databases need its explicit additive planning upgrade after protected recovery, bringing the inventory to 17 tables. The private upgrade preserved all 14 prior table digests; subsequent isolated restore matched all 17 tables and included a separate protected planning key copy. The verified API program and separately staged client were delivered after all CI/package/scan gates passed. A protected planning key must accompany every database recovery set and must never be overwritten or rotated during an upgrade. Startup does not migrate existing databases, and the installer must never be rerun over them. Host-specific paths and secrets remain outside source.
 
 Dev.20 candidate adds a separately disabled
 [durable fictional source review](SERVER_SANDBOX_REVIEW.md). Existing databases
