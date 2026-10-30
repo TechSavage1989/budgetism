@@ -2,9 +2,9 @@
 <p align="center">Your finances. Your control.</p>
 <p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
 
-**0.1.0-dev.21 client candidate.** Adds [optional private-server address continuity](docs/SERVER_ADDRESS.md) and stale-destination guards. It remembers only an opted-in successful HTTPS address, never a password or session. The user-confirmed dev.20 [fictional source review](docs/SERVER_SANDBOX_REVIEW.md) remains intact: dedicated Sandbox accounts, atomic source/checkpoint history and explicit record, match, transfer pair, ignore and keep choices. Local workspaces remain separate. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification and [validation](docs/VALIDATION.md) for earlier milestones. This is not a production release.
+**0.1.0-dev.22 themes and review candidate.** Adds [preset/custom-accent themes and server review controls](docs/THEMES_AND_REVIEW.md), following the user-selected [PocketSmith/MoneyWiz reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md). Preview appearance before Apply, combine source filters and explicitly batch Ignore, Keep unchanged or Reopen decisions. Financial posting remains individual review; local workspaces remain separate. The verified [address continuity](docs/SERVER_ADDRESS.md) and [fictional source pipeline](docs/SERVER_SANDBOX_REVIEW.md) remain intact. Check [the handoff](DEVELOPMENT_HANDOFF.md) for verification. This is not a production release.
 
-Dev.21 passed all six jobs, 344 client tests, 29 native Windows commands and exact package scans; see [dev.21 verification](docs/DEV21_VALIDATION.md). The working dev.20 API and mapped fictional source history remain intact and passed an independent restore after user confirmation; see [dev.20 verification](docs/DEV20_VALIDATION.md). Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
+Dev.22 package/native verification is pending. Dev.21 passed all six jobs, 344 tests, 29 native commands and package scans; see [dev.21 verification](docs/DEV21_VALIDATION.md). The working dev.20 API and mapped fictional source history passed an independent restore after user confirmation; see [dev.20 verification](docs/DEV20_VALIDATION.md). Earlier preview evidence remains in [dev.19 client verification](docs/DEV19_CLIENT_VALIDATION.md).
 
 ## Features
 
@@ -12,6 +12,8 @@ Dev.21 passed all six jobs, 344 client tests, 29 native Windows commands and exa
 | --- | --- |
 | Everyday use | Through-today Home summaries and direct actions, Settings tools, searchable entry choices, local payee completion and explicit repeat entry |
 | Server address | Opt-in device-only HTTPS address, Forget, no automatic connection from remembered values, cleared credentials on destination changes |
+| Themes | Six presets/custom accent, Light/Dark/System, contrast, compact spacing and preview/Apply/Cancel; device-only preferences |
+| Server source review controls | Combined session-only filters, visible selection and reasoned atomic Ignore/Keep/Reopen; recorded money is unchanged |
 | Private server Sandbox preview | Authenticated HTTPS, explicit fictional retrieval, exact cents, pending/posted/removed status and memory-only preview; no ledger writes |
 | Private server fictional review | Explicit zero-baseline account mapping, durable source/checkpoint history, reviewed record/match/pair/ignore/keep and disconnect; server correction/void tools remain future work |
 | Fictional bank simulation | Account mapping, source identities, atomic paged refresh, reported/available balances, timestamps, interruption/retry and disconnect |

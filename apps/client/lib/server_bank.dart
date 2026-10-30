@@ -6,12 +6,14 @@ class ServerBankState {
     this.sources,
     this.total,
     this.needsReview,
-    this.hasMore,
-  );
+    this.hasMore, {
+    this.batchSupported = false,
+  });
   final Map<String, dynamic>? connection;
   final List<Map<String, dynamic>> accounts, sources;
   final int total, needsReview;
   final bool hasMore;
+  final bool batchSupported;
   int get version => connection?['version'] as int? ?? 0;
   static ServerBankState parse(Map<String, dynamic> data) {
     Never invalid() => throw const FormatException('Invalid bank state');
@@ -59,7 +61,8 @@ class ServerBankState {
         invalid();
       }
       for (final key in ['reportedBalanceMinor', 'availableBalanceMinor']) {
-        if (a[key] != null && !integer(a[key], -99999999999999, 99999999999999)) {
+        if (a[key] != null &&
+            !integer(a[key], -99999999999999, 99999999999999)) {
           invalid();
         }
       }
@@ -85,7 +88,8 @@ class ServerBankState {
       final date = s['date'];
       if (date != null) {
         final parsed = date is String ? DateTime.tryParse(date) : null;
-        if (parsed == null || parsed.toIso8601String().substring(0, 10) != date) {
+        if (parsed == null ||
+            parsed.toIso8601String().substring(0, 10) != date) {
           invalid();
         }
       }
@@ -103,6 +107,7 @@ class ServerBankState {
       data['totalSources'] as int,
       data['needsReviewCount'] as int,
       data['hasMore'] as bool,
+      batchSupported: data['batchReviewSupported'] == true,
     );
   }
 }

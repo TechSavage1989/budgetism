@@ -163,7 +163,7 @@ class WorkspaceToolsPanel extends StatelessWidget {
       'Password prompting is off. Records remain encrypted for this OS account.', Icons.lock_outline),
     _action('backups', 'Backups and storage', 'Export an encrypted backup or restore a separately saved copy.', Icons.backup_outlined),
     const SizedBox(height: 12), Text('Application', style: Theme.of(context).textTheme.titleLarge),
-    _action('theme', 'Switch light / dark mode', 'Change the application appearance.', Icons.brightness_6_outlined, localOnly: false),
+    _action('theme', 'Appearance and themes', 'Presets, custom accent, light/dark mode, contrast and spacing.', Icons.palette_outlined, localOnly: false),
     _action('updates', 'Check for updates', 'Check published release information. In-app installation is not enabled.', Icons.system_update_alt, localOnly: false),
     const SizedBox(height: 12), Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(
       crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const budgetismRepository = 'TechSavage1989/budgetism';
-const budgetismVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0-dev.21');
+const budgetismVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0-dev.22');
 const _releasesApi = 'https://api.github.com/repos/$budgetismRepository/releases?per_page=10';
 const _windowsArchive = 'Budgetism-Windows-x64.zip';
 

@@ -137,7 +137,7 @@ class FinanceApi {
       Map<String, dynamic>.from(await request('GET', '/api/sync/snapshot') as Map);
 
   Future<Map<String, dynamic>> bankRequest(String route, [Map<String, dynamic>? body, int? offset, int? version]) async {
-    if (!{'state', 'connect', 'map', 'refresh', 'active', 'review'}.contains(route)) {
+    if (!{'state', 'connect', 'map', 'refresh', 'active', 'review', 'review-batch'}.contains(route)) {
       throw ArgumentError('Unknown bank operation.');
     }
     requireHttpsServer();

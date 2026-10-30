@@ -3,6 +3,8 @@ import 'package:uuid/uuid.dart';
 import 'finance_api.dart';
 import 'money.dart';
 import 'server_bank.dart';
+import 'review_filter.dart';
+import 'batch_decision_dialog.dart';
 
 class ServerBankLauncher extends StatefulWidget {
   const ServerBankLauncher({
@@ -50,6 +52,15 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
   String? _error, _pendingRoute;
   Map<String, dynamic>? _pendingBody;
   int _generation = 0;
+  ReviewFilter _filter = const ReviewFilter();
+  final Set<String> _selected = {};
+  final _search = TextEditingController();
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +76,9 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
       _pendingRoute = null;
       _pendingBody = null;
       _busy = false;
+      _filter = const ReviewFilter();
+      _search.clear();
+      _selected.clear();
       _load();
     }
   }
@@ -105,9 +119,11 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
                       fresh.total,
                       fresh.needsReview,
                       fresh.hasMore,
+                      batchSupported: fresh.batchSupported,
                     )
                     : fresh,
       );
+      _selected.clear();
     } catch (e) {
       if (mounted && generation == _generation) {
         setState(() {
@@ -312,6 +328,89 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
     }
   }
 
+  void _filterChanged(ReviewFilter value) => setState(() {
+    _filter = value;
+    _selected.clear();
+  });
+  Future<void> _dates() async {
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2200),
+      initialDateRange:
+          _filter.from == null || _filter.to == null
+              ? null
+              : DateTimeRange(
+                start: DateTime.parse(_filter.from!),
+                end: DateTime.parse(_filter.to!),
+              ),
+    );
+    if (range != null && mounted) {
+      _filterChanged(
+        _filter.copyWith(
+          from: range.start.toIso8601String().substring(0, 10),
+          to: range.end.toIso8601String().substring(0, 10),
+        ),
+      );
+    }
+  }
+
+  Future<void> _batch(String action) async {
+    final state = _state!, session = widget.api.token;
+    final selected =
+        state.sources.where((s) => _selected.contains(s['id'])).toList();
+    if (selected.isEmpty ||
+        selected.length > 100 ||
+        selected.any((s) => !ReviewFilter.batchEligible(s))) {
+      return;
+    }
+    Map<String, dynamic>? snapshot;
+    if (action == 'keep') {
+      setState(() => _busy = true);
+      try {
+        snapshot = await widget.api.snapshot();
+      } catch (_) {
+        if (mounted) {
+          setState(
+            () => _error = 'Could not load recorded entries for review.',
+          );
+        }
+        return;
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+    }
+    if (!mounted || !identical(state, _state) || session != widget.api.token) {
+      return;
+    }
+    final reason = await showDialog<String>(
+      context: context,
+      builder:
+          (_) => BatchDecisionDialog(
+            action: action,
+            sources: selected,
+            snapshot: snapshot,
+          ),
+    );
+    if (reason == null ||
+        !mounted ||
+        session != widget.api.token ||
+        !identical(state, _state)) {
+      return;
+    }
+    selected.sort((a, b) => (a['id'] as String).compareTo(b['id'] as String));
+    await _mutate('review-batch', {
+      ..._operation(),
+      'action': action,
+      'reason': reason,
+      'confirmed': true,
+      'sources': [
+        for (final s in selected)
+          {'sourceId': s['id'], 'expectedSourceVersion': s['version']},
+      ],
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = _state, enabled = !_busy && _pendingRoute == null;
@@ -319,6 +418,9 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
       for (final a in state?.accounts ?? <Map<String, dynamic>>[])
         a['id']: a['name'],
     };
+    final visible = _filter.apply(state?.sources ?? [], names);
+    final eligible = visible.where(ReviewFilter.batchEligible).toList();
+    final selected = visible.where((s) => _selected.contains(s['id'])).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -447,9 +549,275 @@ class _ServerBankPanelState extends State<ServerBankPanel> {
             const Text(
               'The last refresh did not complete. Earlier saved data and checkpoint were retained.',
             ),
-          for (final s in state.sources)
+          const SizedBox(height: 14),
+          TextField(
+            key: const Key('review-search'),
+            controller: _search,
+            enabled: enabled,
+            decoration: const InputDecoration(
+              labelText: 'Search loaded activity',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged:
+                (value) => _filterChanged(_filter.copyWith(query: value)),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              SizedBox(
+                width: 200,
+                child: DropdownButtonFormField<ReviewView>(
+                  key: ValueKey('review-view-${_filter.view}'),
+                  isExpanded: true,
+                  initialValue: _filter.view,
+                  decoration: const InputDecoration(labelText: 'Review status'),
+                  items: [
+                    for (final v in ReviewView.values)
+                      DropdownMenuItem(
+                        value: v,
+                        child: Text(switch (v) {
+                          ReviewView.all => 'All activity',
+                          ReviewView.needsReview => 'Needs review',
+                          ReviewView.pending => 'Pending',
+                          ReviewView.linked => 'Linked',
+                          ReviewView.unlinked => 'Unlinked',
+                          ReviewView.ignored => 'Ignored',
+                          ReviewView.removed => 'Removed',
+                          ReviewView.superseded => 'Superseded',
+                        }),
+                      ),
+                  ],
+                  onChanged:
+                      enabled
+                          ? (v) => _filterChanged(_filter.copyWith(view: v))
+                          : null,
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey('review-account-${_filter.account}'),
+                  isExpanded: true,
+                  initialValue: _filter.account,
+                  decoration: const InputDecoration(labelText: 'Account'),
+                  items: [
+                    const DropdownMenuItem(
+                      value: '',
+                      child: Text('All accounts'),
+                    ),
+                    for (final a in state.accounts)
+                      DropdownMenuItem(
+                        value: a['id'] as String,
+                        child: Text(
+                          a['name'] as String,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged:
+                      enabled
+                          ? (v) => _filterChanged(_filter.copyWith(account: v))
+                          : null,
+                ),
+              ),
+              SizedBox(
+                width: 160,
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey('review-direction-${_filter.direction}'),
+                  isExpanded: true,
+                  initialValue: _filter.direction,
+                  decoration: const InputDecoration(labelText: 'Direction'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'all',
+                      child: Text('Money in / out'),
+                    ),
+                    DropdownMenuItem(value: 'in', child: Text('Money in')),
+                    DropdownMenuItem(value: 'out', child: Text('Money out')),
+                  ],
+                  onChanged:
+                      enabled
+                          ? (v) =>
+                              _filterChanged(_filter.copyWith(direction: v))
+                          : null,
+                ),
+              ),
+              SizedBox(
+                width: 170,
+                child: DropdownButtonFormField<ReviewOrder>(
+                  key: ValueKey('review-order-${_filter.order}'),
+                  isExpanded: true,
+                  initialValue: _filter.order,
+                  decoration: const InputDecoration(labelText: 'Sort'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ReviewOrder.newest,
+                      child: Text('Newest first'),
+                    ),
+                    DropdownMenuItem(
+                      value: ReviewOrder.oldest,
+                      child: Text('Oldest first'),
+                    ),
+                    DropdownMenuItem(
+                      value: ReviewOrder.largest,
+                      child: Text('Largest amount'),
+                    ),
+                  ],
+                  onChanged:
+                      enabled
+                          ? (v) => _filterChanged(_filter.copyWith(order: v))
+                          : null,
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: enabled ? _dates : null,
+                icon: const Icon(Icons.date_range),
+                label: Text(
+                  _filter.from == null
+                      ? 'Date range'
+                      : '${_filter.from} — ${_filter.to}',
+                ),
+              ),
+              if (_filter.from != null)
+                TextButton(
+                  onPressed:
+                      enabled
+                          ? () =>
+                              _filterChanged(_filter.copyWith(clearDates: true))
+                          : null,
+                  child: const Text('Clear dates'),
+                ),
+              TextButton(
+                onPressed:
+                    enabled
+                        ? () {
+                          _search.clear();
+                          _filterChanged(const ReviewFilter());
+                        }
+                        : null,
+                child: const Text('Reset filters'),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              '${visible.length} shown · ${state.sources.length} loaded · ${state.total} saved sources. Filters do not change balances.',
+            ),
+          ),
+          if (state.batchSupported)
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed:
+                      enabled && eligible.isNotEmpty && eligible.length <= 100
+                          ? () => setState(
+                            () => _selected.addAll(
+                              eligible.map((s) => s['id'] as String),
+                            ),
+                          )
+                          : null,
+                  child: const Text('Select visible eligible'),
+                ),
+                TextButton(
+                  onPressed:
+                      enabled && _selected.isNotEmpty
+                          ? () => setState(_selected.clear)
+                          : null,
+                  child: const Text('Clear selection'),
+                ),
+                Text('${_selected.length} selected'),
+                FilledButton(
+                  onPressed:
+                      enabled &&
+                              selected.isNotEmpty &&
+                              selected.every(
+                                (s) =>
+                                    s['linkedJournalEntryId'] == null &&
+                                    s['needsReview'] == true,
+                              )
+                          ? () => _batch('ignore')
+                          : null,
+                  child: const Text('Ignore selected'),
+                ),
+                OutlinedButton(
+                  onPressed:
+                      enabled &&
+                              selected.isNotEmpty &&
+                              selected.every(
+                                (s) =>
+                                    s['linkedJournalEntryId'] != null &&
+                                    s['needsReview'] == true,
+                              )
+                          ? () => _batch('keep')
+                          : null,
+                  child: const Text('Keep recorded unchanged'),
+                ),
+                OutlinedButton(
+                  onPressed:
+                      enabled &&
+                              selected.isNotEmpty &&
+                              selected.every(ReviewFilter.reopenEligible)
+                          ? () => _batch('reopen')
+                          : null,
+                  child: const Text('Reopen decisions'),
+                ),
+              ],
+            ),
+          if (eligible.length > 100)
+            const Text(
+              'Narrow the filter to at most 100 eligible sources for Select visible.',
+            ),
+          if (selected
+                  .map(
+                    (s) =>
+                        ReviewFilter.reopenEligible(s)
+                            ? 'reopen'
+                            : s['linkedJournalEntryId'] == null
+                            ? 'ignore'
+                            : 'keep',
+                  )
+                  .toSet()
+                  .length >
+              1)
+            const Text(
+              'Choose one decision group: unreviewed sources, linked conflicts, or previously ignored/kept decisions. Use the status filter to narrow this selection.',
+            ),
+          if (!state.batchSupported && state.connection != null)
+            const Text(
+              'Batch decisions require the updated server. Individual review remains available.',
+            ),
+          if (visible.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('No loaded activity matches these filters.'),
+            ),
+          for (final s in visible)
             Card(
               child: ListTile(
+                leading:
+                    !state.batchSupported
+                        ? null
+                        : Checkbox(
+                          value: _selected.contains(s['id']),
+                          onChanged:
+                              enabled &&
+                                      ReviewFilter.batchEligible(s) &&
+                                      (_selected.length < 100 ||
+                                          _selected.contains(s['id']))
+                                  ? (v) => setState(() {
+                                    if (v == true) {
+                                      _selected.add(s['id'] as String);
+                                    } else {
+                                      _selected.remove(s['id']);
+                                    }
+                                  })
+                                  : null,
+                        ),
                 title: Text(s['description'] as String? ?? 'Removed source'),
                 subtitle: Text(
                   '${names[s['bankAccountId']]} · ${s['date'] ?? 'undated tombstone'} · ${s['status']}'

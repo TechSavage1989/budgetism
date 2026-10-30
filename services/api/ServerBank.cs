@@ -19,12 +19,15 @@ public sealed record BankMapInput(Guid OperationId, int ExpectedConnectionVersio
     string Name, bool ConfirmFictional, bool ConfirmZeroBaseline);
 public sealed record BankRefreshInput(Guid OperationId, int ExpectedConnectionVersion);
 public sealed record BankActiveInput(Guid OperationId, int ExpectedConnectionVersion, bool Active);
+public sealed record BankBatchSource(Guid SourceId, int ExpectedSourceVersion);
+public sealed record BankReviewBatchInput(Guid OperationId, int ExpectedConnectionVersion,
+    string Action, IReadOnlyList<BankBatchSource> Sources, string Reason, bool Confirmed);
 public sealed record BankReviewInput(Guid OperationId, int ExpectedConnectionVersion, Guid SourceId,
     int ExpectedSourceVersion, string Action, string? Kind, Guid? CategoryId, Guid? ExistingJournalId,
     Guid? OtherSourceId, int? OtherSourceVersion, string? Payee, string? Notes, string? Reason,
     bool Confirmed, bool ReviewedDuplicates, bool ReviewedTransfers);
 public sealed record BankMutation(int ConnectionVersion, int SourceChanges = 0, Guid? SourceId = null,
-    Guid? JournalEntryId = null, Guid? LedgerAccountId = null, bool Ready = true);
+    Guid? JournalEntryId = null, Guid? LedgerAccountId = null, bool Ready = true, int ReviewedSources = 0);
 public sealed record BankConnectionView(Guid Id, bool Active, int Version, DateTimeOffset? LastAttemptUtc,
     DateTimeOffset? LastSuccessUtc, string? LastErrorCode);
 public sealed record BankAccountView(Guid Id, string Name, string? Mask, string Type, string Currency,
@@ -35,7 +38,7 @@ public sealed record BankSourceView(Guid Id, Guid BankAccountId, int Version, st
     bool NeedsReview, string? Decision, int? ReviewedVersion, Guid? LinkedJournalEntryId);
 public sealed record BankState(bool StorageReady, BankConnectionView? Connection,
     IReadOnlyList<BankAccountView> Accounts, IReadOnlyList<BankSourceView> Sources,
-    int TotalSources, int NeedsReviewCount, bool HasMore, int NextOffset);
+    int TotalSources, int NeedsReviewCount, bool HasMore, int NextOffset, bool BatchReviewSupported = true);
 
 public sealed class ServerBank(FinanceDb db, IPlaidSandboxFeed feed, Func<SandboxCredentials> credentialsFactory)
 {
@@ -286,6 +289,53 @@ public sealed class ServerBank(FinanceDb db, IPlaidSandboxFeed feed, Func<Sandbo
         connection.Active = input.Active;
         Event(connection, input.OperationId, "connection-state", new { active = input.Active });
         var result = await SaveAsync(owner, connection, input.OperationId, "bank-active", input, new(0), token);
+        await tx.CommitAsync(token); return result;
+    }
+
+    public async Task<BankMutation> ReviewBatchAsync(Guid owner, BankReviewBatchInput input, CancellationToken token)
+    {
+        Require(input.Confirmed && (input.Action is "ignore" or "keep" or "reopen"), "invalid_batch_action", 400);
+        Require(input.Sources is not null && input.Sources.Count is > 0 and <= 100 &&
+            input.Sources.All(x => x is not null && x.SourceId != Guid.Empty && x.ExpectedSourceVersion > 0) &&
+            input.Sources.Select(x => x.SourceId).Distinct().Count() == input.Sources.Count,
+            "invalid_batch_selection", 400);
+        Require(!string.IsNullOrWhiteSpace(input.Reason) && input.Reason.Length <= 500, "review_reason_required", 400);
+        var canonical = input with { Sources = input.Sources.OrderBy(x => x.SourceId).ToArray(), Reason = input.Reason.Trim() };
+        await using var tx = await LockAsync(owner, token);
+        var cached = await CachedAsync(owner, input.OperationId, "bank-review-batch", canonical, token);
+        if (cached is not null) return cached;
+        var connection = await ConnectionAsync(owner, input.ExpectedConnectionVersion, token);
+        var mapped = await db.BankAccounts.Where(x => x.OwnerId == owner && x.ConnectionId == connection.Id &&
+            x.LedgerAccountId != null).Select(x => x.Id).ToArrayAsync(token);
+        var all = await db.BankSources.Where(x => x.OwnerId == owner && mapped.Contains(x.BankAccountId)).Take(100001).ToListAsync(token);
+        Require(all.Count <= 100000, "source_limit");
+        var replaced = Replaced(all);
+        var selected = new List<BankSource>();
+        foreach (var item in canonical.Sources)
+        {
+            var source = all.SingleOrDefault(x => x.Id == item.SourceId);
+            Require(source is not null && source.Version == item.ExpectedSourceVersion, "source_changed");
+            if (input.Action == "reopen")
+                Require(source.ReviewedVersion == source.Version && (source.Decision is "ignored" or "kept"), "source_changed");
+            else
+            {
+                Require(ReviewNeeded(source, true, replaced.Contains((source.BankAccountId, source.ProviderSourceId))), "source_changed");
+                Require(input.Action == "ignore" ? source.LinkedJournalEntryId is null && source.Status == "posted" &&
+                    !replaced.Contains((source.BankAccountId, source.ProviderSourceId)) : source.LinkedJournalEntryId is not null,
+                    "invalid_batch_selection", 400);
+            }
+            selected.Add(source);
+        }
+        // Validate the entire selection before changing any decision. Journals and postings are immutable here.
+        foreach (var source in selected)
+        {
+            source.Decision = input.Action == "reopen" ? null : input.Action == "ignore" ? "ignored" : "kept";
+            source.ReviewedVersion = input.Action == "reopen" ? null : source.Version;
+            Event(connection, input.OperationId, input.Action, new { source.Version, reason = canonical.Reason, batch = true }, source.Id);
+        }
+        Event(connection, input.OperationId, "batch-review", new { input.Action, count = selected.Count });
+        var result = await SaveAsync(owner, connection, input.OperationId, "bank-review-batch", canonical,
+            new(0, ReviewedSources: selected.Count), token);
         await tx.CommitAsync(token); return result;
     }
 

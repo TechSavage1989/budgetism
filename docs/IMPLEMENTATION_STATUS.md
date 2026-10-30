@@ -1,5 +1,14 @@
 # Current implementation state
 
+Dev.22 candidate adds [themes and server review controls](THEMES_AND_REVIEW.md)
+from the user's selected [reference roadmap](PRODUCT_REFERENCE_PLAN.md). It adds
+device-only preset/custom-accent appearance, generated contrast/spacing and
+session-only source filters/selection. Atomic reasoned batch Ignore/Keep changes
+source decisions/audit only, preserving journals/postings/checkpoints. It requires
+a verified API program update, not a database migration. Full candidate checks,
+scanned delivery and private update remain pending. The dev.21 launcher works;
+existing financial data and authorization boundaries remain unchanged.
+
 The user confirmed dev.20 Sandbox discovery/mapping/refresh works; four saved
 sources and a fresh complete 14-table restore were independently verified, with
 no journal entries or pending postings. Dev.21 is a client-only

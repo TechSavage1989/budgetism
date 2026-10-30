@@ -2,15 +2,17 @@ part of 'main.dart';
 
 class FinanceShell extends StatefulWidget {
   const FinanceShell({required this.api, required this.username, required this.onLogout,
-      required this.onToggleTheme, required this.onCheckUpdates, super.key});
+      required this.onToggleTheme, required this.onCheckUpdates, this.onAppearance, super.key});
   final FinanceApi api;
   final String username;
   final VoidCallback onLogout, onToggleTheme, onCheckUpdates;
+  final VoidCallback? onAppearance;
   @override
   State<FinanceShell> createState() => _FinanceShellState();
 }
 
 class _FinanceShellState extends State<FinanceShell> {
+  Color get _accent => Theme.of(context).colorScheme.primary;
   int _page = 0;
   String _budgetMonth = DateTime.now().toIso8601String().substring(0, 7);
   String _query = '', _filterAccount = '';
@@ -103,7 +105,7 @@ class _FinanceShellState extends State<FinanceShell> {
       if (_local) setState(() => _page = value == 'connections' ? 9 : 10);
       return;
     }
-    if (value == 'theme') { widget.onToggleTheme(); return; }
+    if (value == 'theme') { (widget.onAppearance ?? widget.onToggleTheme)(); return; }
     if (value == 'updates') { widget.onCheckUpdates(); return; }
     if (!_local || _toolBusy) return;
     setState(() => _toolBusy = true);
@@ -154,15 +156,15 @@ class _FinanceShellState extends State<FinanceShell> {
         ]),
       appBar: AppBar(
         title: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.account_balance_wallet_outlined, color: _accent), const SizedBox(width: 10),
+          Icon(Icons.account_balance_wallet_outlined, color: _accent), const SizedBox(width: 10),
           Flexible(child: Text(isWide ? 'Budgetism' : _destinations[_page].label, maxLines: 1,
             overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
         ]),
         actions: [
-          if (widget.api.isDemo) const Tooltip(message: 'Demo data exists only in memory', child: Icon(Icons.science_outlined, color: _accent))
-          else if (_local) const Tooltip(message: 'Encrypted local workspace. Not synchronized.', child: Icon(Icons.lock_outline, color: _accent))
-          else if (_error != null) Tooltip(message: 'Server unavailable; offline edits not yet implemented', child: const Icon(Icons.cloud_off_outlined, color: _accent))
-          else const Tooltip(message: 'Connected to private server', child: Icon(Icons.cloud_done_outlined, color: Colors.greenAccent)),
+          if (widget.api.isDemo) Tooltip(message: 'Demo data exists only in memory', child: Icon(Icons.science_outlined, color: _accent))
+          else if (_local) Tooltip(message: 'Encrypted local workspace. Not synchronized.', child: Icon(Icons.lock_outline, color: _accent))
+          else if (_error != null) Tooltip(message: 'Server unavailable; offline edits not yet implemented', child: Icon(Icons.cloud_off_outlined, color: _accent))
+          else Tooltip(message: 'Connected to private server', child: Icon(Icons.cloud_done_outlined, color: Theme.of(context).colorScheme.tertiary)),
           IconButton(tooltip: 'Refresh', onPressed: () => _refresh(), icon: const Icon(Icons.refresh)),
           IconButton(tooltip: 'Toggle light/dark mode', onPressed: widget.onToggleTheme, icon: const Icon(Icons.brightness_6_outlined)),
           PopupMenuButton<String>(tooltip: 'User options', onSelected: (v) {

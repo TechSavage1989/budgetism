@@ -1,5 +1,18 @@
 # Budgetism development handoff
 
+The user confirmed the dev.21 desktop shortcut works and requested themes/QoL
+using PocketSmith/MoneyWiz as functional references. Selected priorities are
+presets plus a custom accent, and clearer review filters/batch controls.
+Dev.22 [themes and review](docs/THEMES_AND_REVIEW.md) implements six presets,
+custom accent, Light/Dark/System, contrast/spacing and preview/Apply/Cancel.
+Server review filters and visible selection are session-only. Bounded, reasoned
+batch Ignore/Keep decisions are atomic, stale-safe and auditable, with no ledger
+or checkpoint changes. Financial posting remains individual review.
+See [the reference roadmap](docs/PRODUCT_REFERENCE_PLAN.md) for broader feature
+priorities. This does not connect to PocketSmith/MoneyWiz or copy their data.
+Candidate verification/delivery and its schema-free API program upgrade remain
+pending. Keep the working installation until exact package/scans pass.
+
 The user confirmed dev.20 works. Independent follow-up found one mapped fictional
 account and four durable sources, with no linked sources, journal entries or
 pending postings. A fresh full 14-table backup/restore passed with that source

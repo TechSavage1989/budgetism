@@ -19,6 +19,8 @@ public static class BankEndpoints
             Run(ctx, db, async token => Results.Ok(await bank.ActiveAsync(Owner(ctx), input, token))));
         group.MapPost("/review", (HttpContext ctx, FinanceDb db, ServerBank bank, BankReviewInput input) =>
             Run(ctx, db, async token => Results.Ok(await bank.ReviewAsync(Owner(ctx), input, token))));
+        group.MapPost("/review-batch", (HttpContext ctx, FinanceDb db, ServerBank bank, BankReviewBatchInput input) =>
+            Run(ctx, db, async token => Results.Ok(await bank.ReviewBatchAsync(Owner(ctx), input, token))));
     }
     private static Guid Owner(HttpContext ctx) => (Guid)ctx.Items["ownerId"]!;
     private static async Task<IResult> Run(HttpContext ctx, FinanceDb db, Func<CancellationToken, Task<IResult>> action)

@@ -179,6 +179,56 @@ internal static class Contracts
             "Pending replacement is retained; missing rows are not removals");
         await using (var db = Db()) Check((await db.JournalEntries.SingleAsync(x => x.Id == recorded.JournalEntryId)).AmountMinor == 1234,
             "Changed and removed linked sources never silently change recorded finances");
+        // Batch decisions are all-or-nothing, idempotent and never financial postings.
+        var expenseSource = await Source("expense"); var incomeSource = await Source("income");
+        var duplicateSource = await Source("duplicate-manual"); var postedSource = await Source("posted-pending");
+        state = await State();
+        var batchKeep = new BankReviewBatchInput(Guid.NewGuid(), state.Connection!.Version, "keep",
+            [new(expenseSource.Id, expenseSource.Version), new(incomeSource.Id, incomeSource.Version)], "Keep the recorded fictional entries", true);
+        var beforeBatch = await Digests("postgres");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Sources = [] }, default)); }, "invalid_batch_selection");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Sources = Enumerable.Range(0, 101).Select(_ => new BankBatchSource(Guid.NewGuid(), 1)).ToArray() }, default)); }, "invalid_batch_selection");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Reason = " " }, default)); }, "review_reason_required");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Action = "ignore", Sources = [new(pending.Id, pending.Version)] }, default)); }, "source_changed");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(otherOwner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), ExpectedConnectionVersion = 0 }, default)); }, "connect_first");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Sources = [new(expenseSource.Id, expenseSource.Version), new(incomeSource.Id, incomeSource.Version + 1)] }, default)); }, "source_changed");
+        Check(await Digests("postgres") == beforeBatch, "Stale batch leaves every table unchanged; no partial review or receipt");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Action = "ignore", Sources = [new(duplicateSource.Id, duplicateSource.Version), new(incomeSource.Id, incomeSource.Version)] }, default)); }, "invalid_batch_selection");
+        Check(await Digests("postgres") == beforeBatch, "Mixed invalid selection rolls back before any decision");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with { OperationId = Guid.NewGuid(), Action = "record" }, default)); }, "invalid_batch_action");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Sources = [new(expenseSource.Id, expenseSource.Version), new(expenseSource.Id, expenseSource.Version)] }, default)); }, "invalid_batch_selection");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with {
+            OperationId = Guid.NewGuid(), Sources = [new(expenseSource.Id, expenseSource.Version), new(Guid.NewGuid(), 1)] }, default)); }, "source_changed");
+        var kept = await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep, default));
+        Check(kept.ReviewedSources == 2 && kept.ConnectionVersion == batchKeep.ExpectedConnectionVersion + 1,
+            "Batch keeps two linked decisions with one connection version increment");
+        var afterKept = await Digests("postgres");
+        Check(await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with { Sources = batchKeep.Sources.Reverse().ToArray() }, default)) == kept &&
+            await Digests("postgres") == afterKept, "Batch retry canonicalizes selection order and creates no repeated audit or writes");
+        await Reject(async () => { await Use(b => b.ReviewBatchAsync(owner.Id, batchKeep with { Reason = "Different decision" }, default)); }, "operation_reused");
+        state = await State();
+        var ignoredBatch = new BankReviewBatchInput(Guid.NewGuid(), state.Connection!.Version, "ignore",
+            [new(duplicateSource.Id, duplicateSource.Version), new(postedSource.Id, postedSource.Version)], "Ignore these fictional sources", true);
+        await Use(b => b.ReviewBatchAsync(owner.Id, ignoredBatch, default));
+        state = await State();
+        var reopen = ignoredBatch with { OperationId = Guid.NewGuid(), ExpectedConnectionVersion = state.Connection!.Version,
+            Action = "reopen", Reason = "Review these fictional sources again" };
+        var reopened = await Use(b => b.ReviewBatchAsync(owner.Id, reopen, default));
+        Check(reopened.ReviewedSources == 2 && (await Source("duplicate-manual")).Decision is null &&
+            (await Source("posted-pending")).ReviewedVersion is null, "Explicit batch reopen restores review eligibility without touching recorded money");
+        using (var before = JsonDocument.Parse(beforeBatch))
+        using (var after = JsonDocument.Parse(await Digests("postgres")))
+            Check(new[] { "JournalEntries", "LedgerPostings", "ChangeRecords" }.All(name =>
+                before.RootElement.GetProperty(name).GetRawText() == after.RootElement.GetProperty(name).GetRawText()),
+                "Batch keep/ignore preserves journal, postings and financial change stream exactly");
         var keep = await Review("expense", "keep");
         await Use(b => b.ReviewAsync(owner.Id, keep with { Reason = "Keep recorded value while investigating" }, default));
         var ignored = await Review("duplicate-manual", "ignore");

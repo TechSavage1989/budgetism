@@ -7,6 +7,7 @@ import 'finance_api.dart';
 import 'server_sandbox_widgets.dart';
 import 'server_bank_widgets.dart';
 import 'server_address.dart';
+import 'appearance.dart';
 import 'money.dart';
 import 'local/local_api.dart';
 import 'local/bank_widgets.dart';
@@ -40,10 +41,6 @@ void main() {
   runApp(const BudgetismApp());
 }
 
-const _accent = Color(0xFFC97367);
-const _darkSurface = Color(0xFF16191E);
-const _darkBackground = Color(0xFF101216);
-
 class BudgetismApp extends StatefulWidget {
   const BudgetismApp({super.key});
   @override
@@ -52,7 +49,11 @@ class BudgetismApp extends StatefulWidget {
 
 class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver {
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
-  SharedPreferences? _preferences;
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  final _appearancePreferences = AppearancePreferences();
+  AppAppearance _appearance = const AppAppearance();
+  int _appearanceRevision = 0;
+  bool _appearanceOpen = false;
   ReleaseFeed? _releaseFeed;
   ReleaseCheckResult? _releaseResult;
   Timer? _releaseTimer;
@@ -70,11 +71,11 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
   }
 
   Future<void> _startReleaseChecks() async {
+    final appearanceRevision = _appearanceRevision;
     try {
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
-      _preferences = prefs;
-      setState(() => _theme = prefs.getString('appearance.theme') == 'light' ? ThemeMode.light : ThemeMode.dark);
+      if (appearanceRevision == _appearanceRevision) setState(() => _appearance = AppAppearance.read(prefs));
       _releaseFeed = ReleaseFeed(prefs: prefs);
       _checkUpdates();
       _releaseTimer = Timer.periodic(const Duration(minutes: 5), (_) {
@@ -106,9 +107,30 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
   }
 
   Future<void> _toggleTheme() async {
-    setState(() => _theme = _theme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
-    try { await _preferences?.setString('appearance.theme', _theme == ThemeMode.light ? 'light' : 'dark'); }
-    catch (_) { _messengerKey.currentState?.showSnackBar(const SnackBar(content: Text('Theme changed, but the preference could not be saved.'))); }
+    final dark = _appearance.mode == ThemeMode.dark || _appearance.mode == ThemeMode.system &&
+      WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    await _applyAppearance(_appearance.copyWith(mode: dark ? ThemeMode.light : ThemeMode.dark));
+  }
+
+  Future<void> _applyAppearance(AppAppearance value) async {
+    final revision = ++_appearanceRevision;
+    setState(() => _appearance = value);
+    try { await _appearancePreferences.save(value); }
+    catch (_) { if (mounted && revision == _appearanceRevision) {
+      _messengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Appearance applied for this session, but could not be saved.')));
+    } }
+  }
+
+  Future<void> _openAppearance() async {
+    final overlay = _navigatorKey.currentState?.overlay;
+    if (_appearanceOpen || overlay == null) return;
+    _appearanceOpen = true;
+    try {
+      final value = await showDialog<AppAppearance>(context: overlay.context,
+        builder: (_) => AppearanceDialog(initial: _appearance));
+      if (mounted && value != null) await _applyAppearance(value);
+    } finally { _appearanceOpen = false; }
   }
 
   @override
@@ -186,31 +208,21 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
 
   FinanceApi? _api;
   String _username = '';
-  ThemeMode _theme = ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
-    final light = ThemeData(
-      useMaterial3: true, colorSchemeSeed: _accent,
-      scaffoldBackgroundColor: const Color(0xFFF5F5F4),
-    );
-    final dark = ThemeData(
-      useMaterial3: true, brightness: Brightness.dark,
-      colorScheme: ColorScheme.fromSeed(seedColor: _accent, brightness: Brightness.dark),
-      scaffoldBackgroundColor: _darkBackground,
-      cardTheme: const CardThemeData(color: _darkSurface, elevation: 0),
-    );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _messengerKey,
+      navigatorKey: _navigatorKey,
       title: 'Budgetism',
       builder: (context, child) => Column(children: [
         _updateBanner(context),
         Expanded(child: child ?? const SizedBox.shrink()),
       ]),
-      theme: light, darkTheme: dark, themeMode: _theme,
+      theme: _appearance.theme(Brightness.light), darkTheme: _appearance.theme(Brightness.dark), themeMode: _appearance.mode,
       home: _api == null
-          ? ConnectionScreen(onCheckUpdates: () => _checkUpdates(manual: true),
+          ? ConnectionScreen(onCheckUpdates: () => _checkUpdates(manual: true), onAppearance: _openAppearance,
               onSignedIn: (api, username) {
               setState(() { _api = api; _username = username; });
             })
@@ -219,6 +231,7 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
               onCheckUpdates: () => _checkUpdates(manual: true),
               onLogout: () => setState(() { _api = null; _username = ''; }),
               onToggleTheme: _toggleTheme,
+              onAppearance: _openAppearance,
             ),
     );
   }
@@ -226,9 +239,10 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
 
 class ConnectionScreen extends StatefulWidget {
   const ConnectionScreen({required this.onSignedIn, required this.onCheckUpdates,
-    this.addressPreferences, this.apiFactory, super.key});
+    this.addressPreferences, this.apiFactory, this.onAppearance, super.key});
   final void Function(FinanceApi, String) onSignedIn;
   final VoidCallback onCheckUpdates;
+  final VoidCallback? onAppearance;
   final ServerAddressPreferences? addressPreferences;
   final FinanceApi Function(String)? apiFactory;
   @override
@@ -384,7 +398,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(28),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Icon(Icons.account_balance_wallet_outlined, color: _accent, size: 44),
+                  Icon(Icons.account_balance_wallet_outlined, color: Theme.of(context).colorScheme.primary, size: 44),
                   const SizedBox(height: 16),
                   Text('Budgetism', textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
@@ -445,7 +459,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                   if (_busy) const Padding(padding: EdgeInsets.symmetric(vertical: 16),
                     child: LinearProgressIndicator()),
                   if (_error != null) Padding(padding: const EdgeInsets.only(top: 16),
-                    child: Text(_error!, style: const TextStyle(color: Color(0xFFEA8B84)))),
+                    child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
                   if (_notice != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_notice!)),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
@@ -454,6 +468,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     label: const Text('Explore with sample data'),
                   ),
                   const SizedBox(height: 12),
+                  if (widget.onAppearance != null) TextButton.icon(onPressed: widget.onAppearance,
+                    icon: const Icon(Icons.palette_outlined), label: const Text('Appearance and themes')),
                   TextButton(onPressed: widget.onCheckUpdates,
                     child: const Text('Check for updates')),
                   const SizedBox(height: 6),
@@ -481,7 +497,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) => Card(child: Padding(
     padding: const EdgeInsets.symmetric(vertical: 55, horizontal: 20),
     child: Center(child: Column(children: [
-      Icon(icon, size: 45, color: _accent), const SizedBox(height: 15),
+      Icon(icon, size: 45, color: Theme.of(context).colorScheme.primary), const SizedBox(height: 15),
       Text(title, style: Theme.of(context).textTheme.titleMedium),
       const SizedBox(height: 6), Text(details, textAlign: TextAlign.center),
     ])),
