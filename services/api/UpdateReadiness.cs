@@ -11,6 +11,10 @@ public static class UpdateReadiness
     public static string Version => typeof(UpdateReadiness).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion.Split('+')[0];
     public static string SourceCommit => typeof(UpdateReadiness).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion.Split('+').Skip(1).FirstOrDefault() ?? "";
     public const int Contract = 1;
+    private static int activeRequests;
+    public static int ActiveRequests => Volatile.Read(ref activeRequests);
+    public static void EnterRequest() => Interlocked.Increment(ref activeRequests);
+    public static void ExitRequest() => Interlocked.Decrement(ref activeRequests);
     public static object Identity => new { appId = "budgetism-api", version = Version, sourceCommit = SourceCommit,
         apiMajor = 1, clientApiContract = 1, minimumClientApiMajor = 1, maximumClientApiMajor = 1,
         bankSchema = 1, planningSchema = 1, updateContract = Contract };

@@ -17,6 +17,8 @@ $env:PGPASSFILE=$pass; $env:PGPASSWORD=$null
 $port=$installed.databasePort
 $uri='http://127.0.0.1:'+$installed.apiPort
 $utf8=New-Object Text.UTF8Encoding $false
+$apiProgram=Join-Path $root 'api'
+$originalServicePath=(Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").PathName
 function Check([bool]$Condition,[string]$Description) { if (-not $Condition) { throw "FAIL: $Description" }; Write-Output "PASS: $Description" }
 function Hash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function TextHash([string]$Text) { $sha=[Security.Cryptography.SHA256]::Create(); try { ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() } }
@@ -33,9 +35,9 @@ function WaitApi([string]$Version) {
  for ($i=0;$i -lt 30;$i++) { try { $r=Invoke-RestMethod "$uri/health/update-readiness" -TimeoutSec 2; if ($r.version -eq $Version -and $r.ready -eq $true -and -not $r.maintenance) { return } } catch {}; Start-Sleep 1 }
  throw 'Fixture API readiness timed out.'
 }
-function Coordinator([string]$Archive,[string]$Version,[string]$Manifest,[string]$SchemaHash,[string]$ArchiveDigest='') {
+function Coordinator([string]$Archive,[string]$Version,[string]$Manifest,[string]$SchemaHash,[string]$ArchiveDigest='',[string]$Target=$apiProgram) {
  if (-not $ArchiveDigest) { $ArchiveDigest=Hash $Archive }
- $output = & powershell.exe -NoProfile -File (Join-Path $repo 'scripts\update_private_server.ps1') -InstallDirectory $root -Archive $Archive -ArchiveSha256 $ArchiveDigest -ExpectedCurrentVersion $Version -CurrentManifest $Manifest -CurrentManifestSha256 (Hash $Manifest) -ExpectedSchemaSha256 $SchemaHash -HealthUri "$uri/health/update-readiness" -DatabaseAdminPassFile $pass -DatabaseAdminUser budgetism_admin 2> (Join-Path $work 'last-error.txt')
+ $output = & powershell.exe -NoProfile -File (Join-Path $repo 'scripts\update_private_server.ps1') -InstallDirectory $root -ApiProgramDirectory $Target -Archive $Archive -ArchiveSha256 $ArchiveDigest -ExpectedCurrentVersion $Version -CurrentManifest $Manifest -CurrentManifestSha256 (Hash $Manifest) -ExpectedSchemaSha256 $SchemaHash -HealthUri "$uri/health/update-readiness" -DatabaseAdminPassFile $pass -DatabaseAdminUser budgetism_admin 2> (Join-Path $work 'last-error.txt')
  $code=$LASTEXITCODE
  foreach ($line in @($output)) { Write-Host $line }
  return $code
@@ -74,6 +76,14 @@ INSERT INTO "LedgerPostings" ("Id","JournalEntryId","LedgerAccountId","OwnerId",
  $serviceEnvironment=(Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\BudgetismApi').Environment | ConvertTo-Json -Compress
  Start-Service BudgetismApi; WaitApi '0.1.0-dev.26'
  $pidBefore=(Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId
+ $mismatchedTarget=Join-Path $root 'api-abcdefabcdef'
+ $null=New-Item -ItemType Directory $mismatchedTarget
+ $junctionTarget=Join-Path $root 'api-fedcbafedcba'
+ $null=New-Item -ItemType Junction -Path $junctionTarget -Target $apiProgram
+ foreach ($invalid in @($junctionTarget,(Join-Path $root 'admin'),(Join-Path $root 'api\nested'),(Join-Path $work 'api'),(Join-Path $root 'api-abcdefabcdef'))) {
+  $code=Coordinator (Join-Path $work 'v27.zip') '0.1.0-dev.26' $current $schema '' $invalid
+  Check ($code -ne 0 -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Invalid or mismatched target refuses before service stop'
+ }
  $code=Coordinator (Join-Path $work 'v27.zip') '0.1.0-dev.26' $current $schema ('0'*64)
  Check ($code -ne 0 -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Tampered archive digest refused before service stop'
  $code=Coordinator (Join-Path $work 'v27.zip') '0.1.0-dev.1' $current $schema
@@ -90,11 +100,38 @@ INSERT INTO "LedgerPostings" ("Id","JournalEntryId","LedgerAccountId","OwnerId",
  Compress-Archive -Path (Join-Path $forbidden '*') -DestinationPath (Join-Path $work 'forbidden.zip')
  $code=Coordinator (Join-Path $work 'forbidden.zip') '0.1.0-dev.26' $current $schema
  Check ($code -ne 0 -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Unmanifested migration content refused before stop'
- $marker=Join-Path $root 'update-maintenance.json'; [IO.File]::WriteAllText($marker,'malformed marker remains fail-closed',$utf8)
+ # A real incomplete HTTP body holds an admitted request without a production
+ # delay hook. The maintenance gate must not hide this in-flight work.
+ $held=New-Object Net.Sockets.TcpClient
+ try {
+  $held.Connect('127.0.0.1',[int]$installed.apiPort)
+  $stream=$held.GetStream()
+  $bytes=[Text.Encoding]::ASCII.GetBytes("POST /api/auth/login HTTP/1.1`r`nHost: localhost`r`nContent-Type: application/json`r`nContent-Length: 2`r`nConnection: close`r`n`r`n{")
+  $stream.Write($bytes,0,$bytes.Length); $stream.Flush()
+  $seen=$false
+  for ($i=0;$i -lt 20;$i++) {
+   $r=Invoke-RestMethod "$uri/health/update-readiness" -TimeoutSec 2
+   if ($r.activeRequests -eq 1) { $seen=$true; break }
+   Start-Sleep -Milliseconds 100
+  }
+  Check $seen 'Incomplete real request is tracked before its handler finishes'
+  $marker=Join-Path $root 'update-maintenance.json'; [IO.File]::WriteAllText($marker,'malformed marker remains fail-closed',$utf8)
+  $r=Invoke-RestMethod "$uri/health/update-readiness" -TimeoutSec 2
+  Check ($r.maintenance -eq $true -and $r.activeRequests -eq 1) 'Maintenance cannot report drained while prior work is active'
+ } finally { $held.Dispose() }
+ for ($i=0;$i -lt 30;$i++) {
+  $r=Invoke-RestMethod "$uri/health/update-readiness" -TimeoutSec 2
+  if ($r.activeRequests -eq 0) { break }
+  Start-Sleep -Milliseconds 100
+ }
+ Check ($r.activeRequests -eq 0) 'Aborted body releases the admission counter in finally'
+
  foreach ($route in @('/api/auth/login','/api/setup/owner','/api/transactions','/api/planning/command')) {
   $status=0; try { Invoke-RestMethod "$uri$route" -Method Post -ContentType 'application/json' -Body '{}' | Out-Null } catch { $status=[int]$_.Exception.Response.StatusCode }
   Check ($status -eq 503) 'Maintenance blocks authentication and financial mutation before handlers'
  }
+ $drained=Invoke-RestMethod "$uri/health/update-readiness"
+ Check ($drained.maintenance -eq $true -and $drained.activeRequests -eq 0) 'Readiness excludes itself and rejected requests drain to zero'
  Check ((DataProof) -eq $before) 'Maintenance attempts preserve every table'
  Remove-Item -LiteralPath $marker
  foreach ($n in @(27,28)) {
@@ -132,9 +169,51 @@ INSERT INTO "LedgerPostings" ("Id","JournalEntryId","LedgerAccountId","OwnerId",
  foreach ($name in @('BudgetismApi','BudgetismDatabase')) {
   $s=Get-CimInstance Win32_Service -Filter "Name='$name'"; Check ($s.StartName -eq "NT SERVICE\$name" -and $s.StartMode -eq 'Auto') 'Existing service identity and startup preserved'
  }
- [ordered]@{format=1;scope='Disposable synthetic API program updates only; not live legacy adoption';sequentialUpgrades=2;failedHealthRollback=$true;databaseRestoredOverLive=$false;tableCount=17;maintenanceGate=$true;interruptionRefused=$true;archiveTamperRefused=$true;schemaMismatchRefused=$true;futureSchemaRefused=$true;forbiddenContentRefused=$true;legacyBootstrapRefused=$true} | ConvertTo-Json | Set-Content (Join-Path $work 'verification.json')
+ # A second disposable fixture models the inspected versioned-directory layout.
+ # Only this test arranges SCM; the coordinator itself must never change it.
+ Stop-Service BudgetismApi
+ (Get-Service BudgetismApi).WaitForStatus('Stopped',[TimeSpan]::FromSeconds(30))
+ $apiProgram=Join-Path $root 'api-fc02d3d55074'
+ Copy-Item -LiteralPath (Join-Path $work 'v26\api') -Destination $apiProgram -Recurse
+ & sc.exe config BudgetismApi binPath= ('"'+(Join-Path $apiProgram 'Budgetism.Api.exe')+'"') | Out-Null
+ if ($LASTEXITCODE -ne 0) { throw 'Disposable versioned service fixture setup failed.' }
+ # Preserve stable-layout evidence before creating a separate known test baseline.
+ $null=New-Item -ItemType Directory (Join-Path $work 'stable-layout-receipts')
+ foreach ($name in @('api-update-journal.json','active-api-manifest.json','active-api-manifest.json.target.json','rollback-api-manifest.json','rollback-api-manifest.json.target.json')) {
+  Move-Item -LiteralPath (Join-Path $root ('admin\'+$name)) -Destination (Join-Path $work ('stable-layout-receipts\'+$name))
+ }
+ $current=Join-Path $root 'admin\fixture-current-manifest.json'
+ Copy-Item -LiteralPath (Join-Path $work 'v26\update-manifest.json') -Destination $current -Force
+ $versionedServicePath=(Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").PathName
+ Start-Service BudgetismApi; WaitApi '0.1.0-dev.26'
+ foreach ($n in @(27,28)) {
+  $prior=$n-1
+  $code=Coordinator (Join-Path $work "v$n.zip") "0.1.0-dev.$prior" $current $schema
+  Check ($code -eq 0) 'Versioned direct-child target upgrades without changing SCM path'
+  WaitApi "0.1.0-dev.$n"
+  Check ((Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").PathName -eq $versionedServicePath) 'Versioned SCM executable path remains exact'
+  Check ((DataProof) -eq $before -and (Hash (Join-Path $root 'api-secrets\planning-key')) -eq $keyHash) 'Versioned target preserves financial rows and key'
+  Check (((Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\BudgetismApi').Environment | ConvertTo-Json -Compress) -eq $serviceEnvironment) 'Versioned target preserves service environment'
+  $current=Join-Path $root 'admin\active-api-manifest.json'
+  $receipt=Get-Content ($current+'.target.json') -Raw | ConvertFrom-Json
+  Check ($receipt.programDirectory -eq 'api-fc02d3d55074' -and $receipt.manifestSha256 -eq (Hash $current)) 'Accepted receipt binds manifest to exact versioned target'
+ }
+ $code=Coordinator (Join-Path $work 'bad-health.zip') '0.1.0-dev.28' $current $schema
+ Check ($code -ne 0) 'Versioned target failed-health rollback restores original executable path'
+ WaitApi '0.1.0-dev.28'
+ Check ((DataProof) -eq $before -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").PathName -eq $versionedServicePath) 'Versioned rollback preserves data and SCM path'
+ $receiptPath=$current+'.target.json'; $receiptBytes=[IO.File]::ReadAllBytes($receiptPath)
+ $receipt=Get-Content $receiptPath -Raw | ConvertFrom-Json; $receipt.programDirectory='api'
+ [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json),$utf8)
+ $pidBefore=(Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId
+ $code=Coordinator (Join-Path $work 'bad-health.zip') '0.1.0-dev.28' $current $schema
+ Check ($code -ne 0 -and (Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'").ProcessId -eq $pidBefore) 'Foreign target receipt refuses before service stop'
+ [IO.File]::WriteAllBytes($receiptPath,$receiptBytes)
+ [ordered]@{format=1;scope='Disposable synthetic API program updates only; not live legacy adoption';sequentialUpgrades=4;stableAndVersionedTargets=$true;invalidTargetsRefused=$true;targetBoundReceipt=$true;failedHealthRollback=$true;databaseRestoredOverLive=$false;tableCount=17;maintenanceGate=$true;interruptionRefused=$true;archiveTamperRefused=$true;schemaMismatchRefused=$true;futureSchemaRefused=$true;forbiddenContentRefused=$true;legacyBootstrapRefused=$true} | ConvertTo-Json | Set-Content (Join-Path $work 'verification.json')
 } finally {
  Stop-Service BudgetismApi -ErrorAction SilentlyContinue
+ (Get-Service BudgetismApi).WaitForStatus('Stopped',[TimeSpan]::FromSeconds(30))
+ & sc.exe config BudgetismApi binPath= $originalServicePath | Out-Null
  Stop-Service BudgetismDatabase -ErrorAction SilentlyContinue
  $env:PGPASSFILE=$null; $env:PGPASSWORD=$null
 }

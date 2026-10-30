@@ -13,7 +13,7 @@ $output = [IO.Path]::GetFullPath($OutputDirectory)
 if (Test-Path -LiteralPath $output) { throw 'Output directory must be new.' }
 $null = New-Item -ItemType Directory -Path $output
 $api = Join-Path $output 'api'
-& $DotnetPath publish (Join-Path $repo 'services\api\Budgetism.Api.csproj') --configuration Release --runtime win-x64 --self-contained true --output $api --source https://api.nuget.org/v3/index.json -p:PublishSingleFile=false -p:IsTransformWebConfigDisabled=true -p:DebugType=None -p:DebugSymbols=false "-p:SourceRevisionId=$SourceCommit" "-p:Version=$Version"
+& $DotnetPath publish (Join-Path $repo 'services\api\Budgetism.Api.csproj') --configuration Release --runtime win-x64 --self-contained true --output $api --source https://api.nuget.org/v3/index.json -p:PublishSingleFile=false -p:IsTransformWebConfigDisabled=true -p:StaticWebAssetsEnabled=false -p:DebugType=None -p:DebugSymbols=false "-p:SourceRevisionId=$SourceCommit" "-p:Version=$Version"
 if ($LASTEXITCODE -ne 0) { throw 'API publish failed.' }
 $contract = [ordered]@{format=1;appId='budgetism-api';version=$Version;sourceCommit=$SourceCommit;runtime='win-x64';apiMajor=1;clientApiContract=1;bankSchema=1;planningSchema=1;updateContract=1;requiresMigration=$false}
 $utf8 = New-Object Text.UTF8Encoding $false

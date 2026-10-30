@@ -242,11 +242,13 @@ class _BudgetismAppState extends State<BudgetismApp> with WidgetsBindingObserver
         if (mounted) setState(() => _updateNotice = 'The update selection changed during verification. The older installation was cancelled.');
         return;
       }
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _downloadPath = path; _downloadIdentity = identity;
         _updateNotice = _automaticUpdates ? 'Verified compatible update queued for next launch. Continue working; no session will be restarted.'
           : 'Verified compatible archive downloaded. Automatic installation remains off.';
-      });
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _downloadError = 'Download, package identity or client/API compatibility verification failed. Your installed application was not changed.');
     } finally {

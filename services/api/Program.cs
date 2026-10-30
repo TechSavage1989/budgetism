@@ -74,15 +74,26 @@ app.UseRateLimiter();
 // coordinator verifies readiness. A malformed marker also means maintenance.
 app.Use(async (context, next) =>
 {
-    if (UpdateReadiness.Maintenance && context.Request.Path.StartsWithSegments("/api") &&
-        context.Request.Path != "/api/version")
+    if (!context.Request.Path.StartsWithSegments("/api") || context.Request.Path == "/api/version")
     {
-        context.Response.StatusCode = 503;
-        context.Response.Headers.RetryAfter = "30";
-        await context.Response.WriteAsJsonAsync(new { error = "update_maintenance" });
+        await next();
         return;
     }
-    await next();
+    // Count before checking the gate: maintenance can never observe zero while
+    // an admitted financial request is still entering its handler.
+    UpdateReadiness.EnterRequest();
+    try
+    {
+        if (UpdateReadiness.Maintenance)
+        {
+            context.Response.StatusCode = 503;
+            context.Response.Headers.RetryAfter = "30";
+            await context.Response.WriteAsJsonAsync(new { error = "update_maintenance" });
+            return;
+        }
+        await next();
+    }
+    finally { UpdateReadiness.ExitRequest(); }
 });
 
 // A very small bearer-token middleware. Token hashes, not raw bearer tokens, are stored.
@@ -139,7 +150,7 @@ app.MapGet("/health/update-readiness", async Task<IResult> (HttpContext context,
         if (await UpdateReadiness.ReadyAsync(db, timeout.Token))
             return Results.Ok(new { appId = "budgetism-api", version = UpdateReadiness.Version, sourceCommit = UpdateReadiness.SourceCommit,
                 apiMajor = 1, clientApiContract = 1, updateContract = 1, bankSchema = 1, planningSchema = 1,
-                ready = true, database = "ready", maintenance = UpdateReadiness.Maintenance });
+                ready = true, database = "ready", maintenance = UpdateReadiness.Maintenance, activeRequests = UpdateReadiness.ActiveRequests });
     }
     catch { /* Never expose host/credential/database details. */ }
     return Results.Json(new { ready = false, error = "update_readiness_failed" }, statusCode: 503);

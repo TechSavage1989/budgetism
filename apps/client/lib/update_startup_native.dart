@@ -176,7 +176,9 @@ Future<void> markClientUpdateReady() async {
     if (file.uri.pathSegments.last != 'ready.json' ||
         !RegExp(r'^[a-f0-9-]{36}$').hasMatch(parent.uri.pathSegments.where((s) => s.isNotEmpty).last) ||
         parent.parent.absolute.path.toLowerCase() != attempts.absolute.path.toLowerCase() ||
-        await FileSystemEntity.type(parent.path, followLinks: false) != FileSystemEntityType.directory) return;
+        await FileSystemEntity.type(parent.path, followLinks: false) != FileSystemEntityType.directory) {
+      return;
+    }
     // Canonical parent containment also rejects junction/symlink escapes.
     final canonicalAttempts = (await attempts.resolveSymbolicLinks()).toLowerCase();
     final canonicalParent = Directory(await parent.resolveSymbolicLinks());

@@ -2,6 +2,7 @@
 [CmdletBinding()]
 param(
  [Parameter(Mandatory=$true)][string]$InstallDirectory,
+ [string]$ApiProgramDirectory = '',
  [string]$Archive = '', [string]$ArchiveSha256 = '',
  [string]$ExpectedCurrentVersion = '', [string]$CurrentManifest = '', [string]$CurrentManifestSha256 = '',
  [string]$ExpectedSchemaSha256 = '', [string]$HealthUri = '', [string]$DatabaseAdminPassFile = '', [string]$DatabaseAdminUser = '',
@@ -92,7 +93,7 @@ function Assert-ProgramAcl([string]$Directory,[bool]$Recurse=$true) {
 function Service-Fingerprint {
  $s = Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'"
  if ($null -eq $s) { throw 'Existing BudgetismApi service required; installer is never invoked.' }
- if ($s.PathName.Trim('"') -ne (Join-Path $root 'api\Budgetism.Api.exe') -or $s.StartName -ne 'NT SERVICE\BudgetismApi') { throw 'Unknown service path/identity; separate bootstrap inspection required.' }
+ if ($s.PathName.Trim('"') -ne (Join-Path $program 'Budgetism.Api.exe') -or $s.StartName -ne 'NT SERVICE\BudgetismApi') { throw 'Unknown service path/identity; separate bootstrap inspection required.' }
  $registry = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Services\BudgetismApi'
  if (@($registry.DependOnService).Count -ne 1 -or @($registry.DependOnService)[0] -ne 'BudgetismDatabase') { throw 'Unknown service dependencies; separate inspection required.' }
  $encoded = [Text.Encoding]::UTF8.GetBytes((@($s.PathName,$s.StartName,$s.StartMode,(@($registry.DependOnService) -join "`n"),(@($registry.Environment) -join "`n")) -join "`0"))
@@ -104,6 +105,14 @@ function Write-Journal([string]$Phase) {
  $temp = $journalPath+'.tmp'
  [IO.File]::WriteAllText($temp,($journal | ConvertTo-Json -Depth 5),$utf8)
  if (Test-Path -LiteralPath $journalPath) { [IO.File]::Replace($temp,$journalPath,$null) } else { [IO.File]::Move($temp,$journalPath) }
+}
+function Write-TargetReceipt([string]$Manifest) {
+ $receipt=[ordered]@{format=1;programDirectory=$programLeaf;manifestSha256=(Hash $Manifest)}
+ [IO.File]::WriteAllText(($Manifest+'.target.json'),($receipt | ConvertTo-Json),$utf8)
+}
+function Assert-TargetReceipt([string]$Manifest) {
+ $receipt=Read-BoundedJson ($Manifest+'.target.json') 16384
+ if (($receipt.format -isnot [int] -and $receipt.format -isnot [long]) -or $receipt.format -ne 1 -or $receipt.programDirectory -ne $programLeaf -or $receipt.manifestSha256 -ne (Hash $Manifest)) { throw 'Protected manifest receipt is bound to a different target or digest.' }
 }
 function Stop-Api {
  $service = Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'"
@@ -121,7 +130,7 @@ function Readiness([string]$Version,[bool]$Maintenance,[string]$SourceCommit) {
    $r = Invoke-RestMethod -Uri $HealthUri -TimeoutSec 3 -MaximumRedirection 0
    $service = Get-CimInstance Win32_Service -Filter "Name='BudgetismApi'"
    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $healthPort -ErrorAction SilentlyContinue)
-   if ($r.appId -eq 'budgetism-api' -and $r.version -eq $Version -and $r.sourceCommit -eq $SourceCommit -and $r.ready -eq $true -and $r.database -eq 'ready' -and $r.updateContract -eq 1 -and $r.apiMajor -eq 1 -and $r.bankSchema -eq 1 -and $r.planningSchema -eq 1 -and $r.maintenance -eq $Maintenance -and $service.State -eq 'Running' -and $listeners.Count -gt 0 -and @($listeners | Where-Object OwningProcess -ne $service.ProcessId).Count -eq 0) { return }
+   if ($r.appId -eq 'budgetism-api' -and $r.version -eq $Version -and $r.sourceCommit -eq $SourceCommit -and $r.ready -eq $true -and $r.database -eq 'ready' -and $r.updateContract -eq 1 -and $r.apiMajor -eq 1 -and $r.bankSchema -eq 1 -and $r.planningSchema -eq 1 -and $r.maintenance -eq $Maintenance -and (-not $Maintenance -or ($r.activeRequests -is [long] -or $r.activeRequests -is [int]) -and $r.activeRequests -eq 0) -and $service.State -eq 'Running' -and $listeners.Count -gt 0 -and @($listeners | Where-Object OwningProcess -ne $service.ProcessId).Count -eq 0) { return }
   } catch { }
   Start-Sleep -Seconds 1
  }
@@ -146,6 +155,11 @@ function Schema-Proof([string]$Database) {
 }
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Existing administrator maintenance context required; no elevation or service creation is performed.' }
 $root = Assert-PlainPath $InstallDirectory
+if (-not $ApiProgramDirectory) { $ApiProgramDirectory=Join-Path $root 'api' }
+$program=Assert-PlainPath $ApiProgramDirectory
+$programLeaf=Split-Path $program -Leaf
+if ((Split-Path $program -Parent) -ne $root -or $programLeaf -cnotmatch '^api(?:-[a-f0-9]{12})?$' -or -not (Test-Path -LiteralPath $program -PathType Container)) { throw 'API program must be the existing approved direct-child directory; nested, alternate and reserved targets are refused.' }
+$rollbackLeaf=$programLeaf+'.rollback'
 $admin = Assert-PlainPath (Join-Path $root 'admin')
 if (-not (Test-Path -LiteralPath $admin -PathType Container)) { throw 'Existing protected admin directory required.' }
 $allowed = @('S-1-5-18','S-1-5-32-544',[Security.Principal.WindowsIdentity]::GetCurrent().User.Value)
@@ -160,6 +174,7 @@ try {
  $fingerprint = Service-Fingerprint
  if (Test-Path -LiteralPath $journalPath) {
   $prior = Read-BoundedJson $journalPath 16384
+  if ($prior.programDirectory -ne $programLeaf) { throw 'Update journal belongs to a different API target; separate inspection required.' }
   if ($prior.phase -notin @('Committed','RolledBack')) { throw 'Interrupted API update found. Preserve the journal and program folders; use reviewed recovery. No automatic database restore is permitted.' }
  }
  if ($Recover) { throw 'Automatic interruption recovery is intentionally unavailable; reviewed program-only recovery is required.' }
@@ -167,6 +182,7 @@ try {
  foreach ($digest in @($ArchiveSha256,$CurrentManifestSha256,$ExpectedSchemaSha256)) { Assert-Digest $digest }
  $Archive = Assert-PlainPath $Archive; $CurrentManifest = Assert-PlainPath $CurrentManifest
  if ((Hash $Archive) -ne $ArchiveSha256 -or (Hash $CurrentManifest) -ne $CurrentManifestSha256) { throw 'Pinned archive/current manifest digest mismatch.' }
+ if ($CurrentManifest -eq (Join-Path $admin 'active-api-manifest.json')) { Assert-TargetReceipt $CurrentManifest }
  $manifestBytes=Read-BoundedBytes $CurrentManifest 1048576
  $manifestHash=[Security.Cryptography.SHA256]::Create()
  try { $actualManifestHash=([BitConverter]::ToString($manifestHash.ComputeHash($manifestBytes))).Replace('-','').ToLowerInvariant() } finally { $manifestHash.Dispose() }
@@ -175,8 +191,8 @@ try {
  $current = $decoder.GetString($manifestBytes).TrimStart([char]0xfeff) | ConvertFrom-Json
  Assert-Contract $current
  if ($current.version -ne $ExpectedCurrentVersion) { throw 'Installed version is unknown; separate bootstrap inspection required.' }
- Assert-Files $root $current
- Assert-ProgramAcl $root $false; Assert-ProgramAcl (Join-Path $root 'api')
+ Assert-Files $root $current $programLeaf
+ Assert-ProgramAcl $root $false; Assert-ProgramAcl $program
  $health = [Uri]$HealthUri
  if ($health.Scheme -notin @('http','https') -or $health.Host -notin @('127.0.0.1','::1') -or $health.AbsolutePath -ne '/health/update-readiness' -or $health.UserInfo -or $health.Query -or $health.Fragment) { throw 'Explicit direct loopback readiness URL required.' }
  $healthPort = $health.Port
@@ -227,16 +243,27 @@ try {
  Assert-Contract $candidate; Assert-Files $stage $candidate; Assert-ProgramAcl $stage
  if ([int]($candidate.version.Split('.')[-1]) -le [int]($current.version.Split('.')[-1])) { throw 'Candidate must be a newer supported development version.' }
  if ($seen.Count -ne @($candidate.files).Count+1) { throw 'Unmanifested archive members.' }
- $rollback=Join-Path $root 'api.rollback'
+ $rollback=Join-Path $root $rollbackLeaf
  $rollbackManifest=Join-Path $admin 'rollback-api-manifest.json'
  $hasPriorRollback=Test-Path -LiteralPath $rollback
  if ($hasPriorRollback) {
   if (-not (Test-Path -LiteralPath $rollbackManifest)) { throw 'Retained rollback identity is unknown; inspect separately.' }
+  Assert-TargetReceipt $rollbackManifest
   $priorRollbackContract=Read-BoundedJson $rollbackManifest 1048576
-  Assert-Contract $priorRollbackContract; Assert-Files $root $priorRollbackContract 'api.rollback'
+  Assert-Contract $priorRollbackContract; Assert-Files $root $priorRollbackContract $rollbackLeaf
  }
- $journal=[ordered]@{format=1;phase='Validated';operation=(Split-Path $operation -Leaf);oldVersion=$current.version;newVersion=$candidate.version;archiveSha256=$ArchiveSha256;serviceFingerprint=$fingerprint}
+ $journal=[ordered]@{format=1;programDirectory=$programLeaf;phase='Validated';operation=(Split-Path $operation -Leaf);oldVersion=$current.version;newVersion=$candidate.version;archiveSha256=$ArchiveSha256;serviceFingerprint=$fingerprint}
  Write-Journal 'Validated'
+ # Close admission while the current API is still running, then drain before
+ # stopping. A timeout must leave existing in-flight work untouched.
+ [IO.File]::WriteAllText($marker,'{"format":1,"maintenance":true}',$utf8)
+ try { Readiness $current.version $true $current.sourceCommit }
+ catch {
+  Remove-Item -LiteralPath $marker
+  Write-Journal 'DrainRejected'
+  throw 'Existing API did not prove a clean drain; service was not stopped.'
+ }
+ Write-Journal 'Drained'
  $originalMoved=$false
  try {
   Stop-Api; Write-Journal 'Stopped'
@@ -255,22 +282,22 @@ try {
    if ($LASTEXITCODE -ne 0 -or (Data-Proof $restore) -ne $before -or (Schema-Proof $restore) -ne $schema) { throw 'Independent recovery verification failed.' }
   } finally { $null=Sql 'postgres' ('DROP DATABASE "'+$restore+'";') }
   Assert-Files $stage $candidate; Assert-ProgramAcl $stage
-  Assert-Files $root $current; Assert-ProgramAcl (Join-Path $root 'api')
+  Assert-Files $root $current $programLeaf; Assert-ProgramAcl $program
   Write-Journal 'RecoveryVerified'
-  [IO.File]::WriteAllText($marker,'{"format":1,"maintenance":true}',$utf8)
   Write-Journal 'Swapping'
   if ($hasPriorRollback) {
    [IO.Directory]::Move($rollback,(Join-Path $operation 'prior-rollback'))
    Copy-Item -LiteralPath $rollbackManifest -Destination (Join-Path $operation 'prior-rollback-manifest.json')
   }
-  [IO.Directory]::Move((Join-Path $root 'api'),$rollback)
+  [IO.Directory]::Move($program,$rollback)
   $originalMoved=$true
-  [IO.Directory]::Move((Join-Path $stage 'api'),(Join-Path $root 'api'))
+  [IO.Directory]::Move((Join-Path $stage 'api'),$program)
   Write-Journal 'Swapped'
   Start-Service BudgetismApi
   Readiness $candidate.version $true $candidate.sourceCommit
   if ((Service-Fingerprint) -ne $fingerprint -or (Data-Proof $dbName) -ne $before -or (Schema-Proof $dbName) -ne $schema -or (Hash $planningKey) -ne $keyHash) { throw 'Post-start preservation proof failed.' }
   [IO.File]::WriteAllBytes($rollbackManifest,$manifestBytes)
+  Write-TargetReceipt $rollbackManifest
   Copy-Item -LiteralPath (Join-Path $stage 'update-manifest.json') -Destination (Join-Path $operation 'accepted-manifest.json')
   Write-Journal 'Verified'
   Remove-Item -LiteralPath $marker
@@ -279,6 +306,7 @@ try {
   $acceptedBytes=Read-BoundedBytes (Join-Path $operation 'accepted-manifest.json') 1048576
   [IO.File]::WriteAllBytes(($activeManifest+'.tmp'),$acceptedBytes)
   if (Test-Path -LiteralPath $activeManifest) { [IO.File]::Replace(($activeManifest+'.tmp'),$activeManifest,$null) } else { [IO.File]::Move(($activeManifest+'.tmp'),$activeManifest) }
+  Write-TargetReceipt $activeManifest
   Write-Journal 'Committed'
   if (Test-Path -LiteralPath (Join-Path $operation 'prior-rollback')) {
    try { Remove-Item -LiteralPath (Join-Path $operation 'prior-rollback') -Recurse -Force }
@@ -290,17 +318,19 @@ try {
   try {
    Stop-Api
    if ($originalMoved -and (Test-Path -LiteralPath $rollback)) {
-    if (Test-Path -LiteralPath (Join-Path $root 'api')) { [IO.Directory]::Move((Join-Path $root 'api'),(Join-Path $operation 'failed-api')) }
-    [IO.Directory]::Move($rollback,(Join-Path $root 'api'))
+    if (Test-Path -LiteralPath $program) { [IO.Directory]::Move($program,(Join-Path $operation 'failed-api')) }
+    [IO.Directory]::Move($rollback,$program)
    }
    if (Test-Path -LiteralPath (Join-Path $operation 'prior-rollback')) {
     [IO.Directory]::Move((Join-Path $operation 'prior-rollback'),$rollback)
     Copy-Item -LiteralPath (Join-Path $operation 'prior-rollback-manifest.json') -Destination $rollbackManifest -Force
+    Write-TargetReceipt $rollbackManifest
    }
    if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker }
    if ((Service-Fingerprint) -ne $fingerprint) { throw 'Service configuration changed; manual review required.' }
    Start-Service BudgetismApi; Readiness $current.version $false $current.sourceCommit
    [IO.File]::WriteAllBytes((Join-Path $admin 'active-api-manifest.json'),$manifestBytes)
+   Write-TargetReceipt (Join-Path $admin 'active-api-manifest.json')
    Write-Journal 'RolledBack'
   } catch { Write-Journal 'RecoveryRequired'; throw 'API update interrupted or rollback failed. Preserve protected journal/program folders. Do not restore the database automatically; reviewed program-only recovery is required.' }
   throw ('API update rejected; previous program restored. No database restore was performed. '+$failure.Message)
