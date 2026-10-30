@@ -101,11 +101,20 @@ function Service-Fingerprint {
  $sha = [Security.Cryptography.SHA256]::Create()
  try { return ([BitConverter]::ToString($sha.ComputeHash($encoded))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
 }
+function Replace-ControlFile([string]$Source,[string]$Destination) {
+ # Windows PowerShell 5.1 coerces a null string argument to an empty path.
+ # An explicit same-directory backup keeps File.Replace atomic on that runtime.
+ if (Test-Path -LiteralPath $Destination) {
+  $backup=$Destination+'.previous.'+[Guid]::NewGuid().ToString('N')
+  [IO.File]::Replace($Source,$Destination,$backup)
+  Remove-Item -LiteralPath $backup
+ } else { [IO.File]::Move($Source,$Destination) }
+}
 function Write-Journal([string]$Phase) {
  $journal.phase = $Phase
  $temp = $journalPath+'.tmp'
  [IO.File]::WriteAllText($temp,($journal | ConvertTo-Json -Depth 5),$utf8)
- if (Test-Path -LiteralPath $journalPath) { [IO.File]::Replace($temp,$journalPath,$null) } else { [IO.File]::Move($temp,$journalPath) }
+ Replace-ControlFile $temp $journalPath
 }
 function Write-TargetReceipt([string]$Manifest) {
  $receipt=[ordered]@{format=1;programDirectory=$programLeaf;manifestSha256=(Hash $Manifest)}
@@ -306,7 +315,7 @@ try {
   $activeManifest=Join-Path $admin 'active-api-manifest.json'
   $acceptedBytes=Read-BoundedBytes (Join-Path $operation 'accepted-manifest.json') 1048576
   [IO.File]::WriteAllBytes(($activeManifest+'.tmp'),$acceptedBytes)
-  if (Test-Path -LiteralPath $activeManifest) { [IO.File]::Replace(($activeManifest+'.tmp'),$activeManifest,$null) } else { [IO.File]::Move(($activeManifest+'.tmp'),$activeManifest) }
+  Replace-ControlFile ($activeManifest+'.tmp') $activeManifest
   Write-TargetReceipt $activeManifest
   Write-Journal 'Committed'
   if (Test-Path -LiteralPath (Join-Path $operation 'prior-rollback')) {

@@ -7,7 +7,10 @@ if (-not $IsWindows) { throw 'Native updater acceptance requires Windows PowerSh
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $PackageArchive = (Resolve-Path $PackageArchive).Path
 $originalHash = (Get-FileHash $PackageArchive -Algorithm SHA256).Hash
-$root = Join-Path ([IO.Path]::GetTempPath()) ('budgetism-native-update-' + [guid]::NewGuid().ToString('N'))
+# Native C++ plugin builds still encounter legacy Windows path limits.
+# Keep the disposable fixture short; never change system long-path settings.
+$tempBase = if ($env:GITHUB_ACTIONS -eq 'true' -and $env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTempPath() }
+$root = Join-Path $tempBase ('bu-' + [guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item $root -ItemType Directory | Out-Null
 $evidence = Join-Path $ProjectRoot 'build/updater-native'
 New-Item $evidence -ItemType Directory -Force | Out-Null
