@@ -47,3 +47,15 @@
 30. Daily-use controls are presentation/read models. Home balances and month-to-date spending stop at today; future-dated actuals are disclosed, not counted early. Preserve direct Settings tools and prior routes. Search and payee suggestions stay local and in memory; completion changes text only. Save and add another is explicit, new-entry-only, single-flight, with a separate ID for each saved transaction and stable unchanged retry. Clear amounts, notes, payees, splits and transfer destinations between entries. Never bypass reconciliation locks, save on navigation or silently migrate. See docs/DAILY_USE.md. Dev.18 adds a fictional feed under rule 31; live provider enrollment remains excluded.
 
 31. Dev.18 bank activity uses fictional fixtures only. Financial schema 8 is opt-in on first account mapping, after backup and fictional-account consent. Keep provider records separate from ledger transactions; pending activity never posts. Collect complete consistent pages before one encrypted source/balance/checkpoint commit. Durable IDs and revision/content checks survive retries, edits, voids and backup/restore. Missing rows are never removals. Needs Review explicitly records/matches/pairs, corrects or voids; preserve user metadata and reciprocal schedule/import links. Never rewrite a reconciled entry. Disconnect preserves history. No live adapter, credentials, automatic refresh, rule application, server setup or background worker. See docs/BANK_SYNC.md.
+
+## Repository standards (all contributors and AI tools)
+
+This repository follows the shared TechSavage1989 standard in [`docs/REPOSITORY_STANDARDS.md`](docs/REPOSITORY_STANDARDS.md), the same file in every app repository. Read it before changing anything. In short:
+
+- **README:** centered header (real icon, one `<h1>`, tagline, quick links Download · Get started · Features · Screenshots · Updates · Development, hero image), then the standard section order. Update it in the same pull request as any user-visible change.
+- **Screenshots:** real captures with fictional data in `docs/images/` (`hero.png` + kebab-case names). Recapture any screenshot a UI change makes stale, in the same pull request.
+- **Layout:** compact root; respect the root allowlist and checks above. Never commit build output, binaries, archives, logs, caches or secrets.
+- **Branches:** short-lived `feat/` `fix/` `docs/` `chore/` `release/` branches, one focused change per pull request, merge only on green checks, delete the branch after merging.
+- **Instructions:** this file is the single source of project rules for every tool; `CLAUDE.md` imports it. Add new rules and gotchas here.
+
+Where this file's project-specific rules differ from the shared standard, this file wins; an enforced check script wins over both.
