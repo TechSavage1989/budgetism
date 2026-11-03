@@ -43,19 +43,48 @@ No local cross-device synchronization, live bank feeds, multi-currency, automati
 
 ## Screenshots
 
-Captured from the web build's sample-data mode, which contains only fictitious finances.
+Captured from the Flutter client running natively on Linux (not a validated target; the published build is Windows x64) with an encrypted local workspace that holds only fictional accounts, payees and amounts. The bank feed is the app's built-in fictional simulation.
 
-**Accounts overview**
+### Accounts and transactions
 
-<img src="docs/images/accounts.png" alt="Accounts overview" width="900">
+<table>
+  <tr>
+    <td><strong>Accounts</strong><br><img src="docs/images/accounts.png" alt="Accounts" width="440"></td>
+    <td><strong>Transaction register with search, sorting and filters</strong><br><img src="docs/images/transactions.png" alt="Transaction register with search, sorting and filters" width="440"></td>
+  </tr>
+  <tr>
+    <td><strong>Adding a transaction</strong><br><img src="docs/images/add-transaction.png" alt="Adding a transaction" width="440"></td>
+    <td><strong>Categorization rules with preview</strong><br><img src="docs/images/categorization-rules.png" alt="Categorization rules with preview" width="440"></td>
+  </tr>
+</table>
 
-**Transactions with search and account filter**
+### Budgets and planning
 
-<img src="docs/images/transactions.png" alt="Transactions with search and account filter" width="900">
+<table>
+  <tr>
+    <td><strong>Monthly budgets</strong><br><img src="docs/images/budgets.png" alt="Monthly budgets" width="440"></td>
+    <td><strong>Scheduled bills, income and transfers</strong><br><img src="docs/images/scheduled.png" alt="Scheduled bills, income and transfers" width="440"></td>
+  </tr>
+  <tr>
+    <td><strong>Financial calendar</strong><br><img src="docs/images/calendar.png" alt="Financial calendar" width="440"></td>
+    <td><strong>Scheduled cash-flow forecast</strong><br><img src="docs/images/forecasts.png" alt="Scheduled cash-flow forecast" width="440"></td>
+  </tr>
+</table>
 
-**Adding a transaction**
+### Reports
 
-<img src="docs/images/add-transaction.png" alt="Adding a transaction" width="900">
+**Financial reports with date, account and CSV export options**
+
+<img src="docs/images/reports.png" alt="Financial reports with date, account and CSV export options" width="900">
+
+### Fictional bank simulation and Needs Review
+
+<table>
+  <tr>
+    <td><strong>Fictional bank connection and refresh status</strong><br><img src="docs/images/connections.png" alt="Fictional bank connection and refresh status" width="440"></td>
+    <td><strong>Needs Review inbox</strong><br><img src="docs/images/needs-review.png" alt="Needs Review inbox" width="440"></td>
+  </tr>
+</table>
 
 ## Download
 
