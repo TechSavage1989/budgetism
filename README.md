@@ -1,6 +1,18 @@
 <h1 align="center">Budgetism</h1>
 <p align="center">Your finances. Your control.</p>
-<p align="center"><a href="#features">Features</a> | <a href="#download">Download</a> | <a href="#getting-started">Getting started</a> | <a href="#development">Development</a> | <a href="DEVELOPMENT_HANDOFF.md">Handoff</a></p>
+
+<p align="center">
+  <a href="#download">Download</a> ·
+  <a href="#getting-started">Get started</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#development">Development</a> ·
+  <a href="DEVELOPMENT_HANDOFF.md">Handoff</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/hero.png" alt="Budgetism main window" width="900">
+</p>
 
 **0.1.0-dev.18 development preview.** Building on user-confirmed dev.17, this iteration adds a provider-independent fictional bank feed, explicit account mapping and a unified Needs Review inbox. Pending records, reported balances and refresh checkpoints stay separate from recorded transactions. First mapping requires backup and format-8 consent; simply opening the app does not upgrade data. Check [validation](docs/VALIDATION.md) for exact test and package evidence. Keep independent encrypted backups. This is not a production release.
 
@@ -28,6 +40,22 @@
 | Statement reconciliation | Selected cleared transactions, exact zero difference, retained history, protected records and explicit latest-statement reopening |
 
 No local cross-device synchronization, live bank feeds, multi-currency, automatic posting, reminders or in-app installation is enabled. The web build retains the sample/existing-server interface; it does not provide browser-local financial storage. No server setup is required or added in this milestone.
+
+## Screenshots
+
+Captured from the web build's sample-data mode, which contains only fictitious finances.
+
+**Accounts overview**
+
+<img src="docs/images/accounts.png" alt="Accounts overview" width="900">
+
+**Transactions with search and account filter**
+
+<img src="docs/images/transactions.png" alt="Transactions with search and account filter" width="900">
+
+**Adding a transaction**
+
+<img src="docs/images/add-transaction.png" alt="Adding a transaction" width="900">
 
 ## Download
 
