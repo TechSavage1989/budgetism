@@ -7,7 +7,7 @@ import re
 import subprocess
 import tempfile
 
-FILES = {'README.md', 'AGENTS.md', 'DEVELOPMENT_HANDOFF.md', '.gitignore'}
+FILES = {'README.md', 'AGENTS.md', 'CLAUDE.md', 'DEVELOPMENT_HANDOFF.md', '.gitignore'}
 DIRS = {'apps','services','docs','scripts','tests','tools','assets','.github'}
 GENERATED = {'.git', '.dart_tool', '.idea', '.vscode', 'build', 'bin', 'obj', '__pycache__'}
 
